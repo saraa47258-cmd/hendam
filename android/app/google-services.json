@@ -1,0 +1,86 @@
+{
+  "project_info": {
+    "project_number": "508363344607",
+    "project_id": "thobi-40dc9",
+    "storage_bucket": "thobi-40dc9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508363344607:android:b6cc13e11567c88f6af76a",
+        "android_client_info": {
+          "package_name": "com.example.hindam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp6u8G3qMf5XoifnrItB4Pdw4PK7WefT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508363344607:android:3ef16fdf2b0666af6af76a",
+        "android_client_info": {
+          "package_name": "com.example.mytailor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp6u8G3qMf5XoifnrItB4Pdw4PK7WefT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508363344607:android:df1493a9a65b1edb6af76a",
+        "android_client_info": {
+          "package_name": "com.example.thob_admin_web"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp6u8G3qMf5XoifnrItB4Pdw4PK7WefT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:508363344607:android:bc4d699c3171a9636af76a",
+        "android_client_info": {
+          "package_name": "com.example.thobi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBp6u8G3qMf5XoifnrItB4Pdw4PK7WefT4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
