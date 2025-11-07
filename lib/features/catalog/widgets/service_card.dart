@@ -28,7 +28,7 @@ class ServiceCard extends StatelessWidget {
 
     // نثبت textScaleFactor للحفاظ على اتساق التصميم
     return MediaQuery(
-      data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
+      data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Card(

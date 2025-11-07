@@ -77,7 +77,7 @@ class OrderService {
             snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
   }
 
-  /// جلب طلب واحد بالتفصيل
+  /// جلب طلب واحد بالتفصيل (لمرة واحدة)
   static Future<OrderModel?> getOrderById(String orderId) async {
     try {
       final doc = await FirebaseService.firestore
@@ -93,6 +93,21 @@ class OrderService {
       print('❌ خطأ في جلب الطلب: $e');
       return null;
     }
+  }
+
+  /// جلب طلب واحد بالتفصيل مع التحديثات الفورية
+  static Stream<OrderModel?> getOrderByIdStream(String orderId) {
+    return FirebaseService.firestore
+        .collection(_ordersCollection)
+        .doc(orderId)
+        .snapshots()
+        .map((doc) {
+      if (doc.exists) {
+        print('🔄 Order updated: $orderId - ${doc.data()?['status']}');
+        return OrderModel.fromFirestore(doc);
+      }
+      return null;
+    });
   }
 
   /// تحديث حالة الطلب

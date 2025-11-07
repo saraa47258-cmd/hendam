@@ -2,9 +2,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../services/fabric_service.dart';
 import '../../orders/services/order_service.dart';
 import '../../orders/models/order_model.dart';
+import '../../auth/providers/auth_provider.dart';
 
 bool _isNetworkPath(String p) =>
     p.startsWith('http://') || p.startsWith('https://');
@@ -112,15 +114,30 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     );
 
     try {
+      // جلب معلومات المستخدم الحالي من AuthProvider
+      final authProvider = context.read<AuthProvider>();
+      final currentUser = authProvider.currentUser;
+
+      // التحقق من تسجيل الدخول
+      if (currentUser == null) {
+        Navigator.pop(context); // إخفاء مؤشر التحميل
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('يرجى تسجيل الدخول أولاً لإرسال الطلب'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      print('📦 Creating order for user: ${currentUser.uid} - ${currentUser.name}');
+
       // إنشاء الطلب
       final order = OrderModel(
         id: '', // سيتم إنشاؤه تلقائياً
-        customerId:
-            widget.customerId ?? 'customer_123', // TODO: جلب من نظام المصادقة
-        customerName:
-            widget.customerName ?? 'عميل', // TODO: جلب من نظام المصادقة
-        customerPhone: widget.customerPhone ??
-            '+968 12345678', // TODO: جلب من نظام المصادقة
+        customerId: currentUser.uid, // معرف المستخدم الحقيقي
+        customerName: currentUser.name, // اسم المستخدم الحقيقي
+        customerPhone: currentUser.phoneNumber ?? '+968 00000000', // رقم المستخدم
         tailorId: widget.tailorId,
         tailorName: widget.tailorName,
         fabricId: _selectedFabricId!,
@@ -1594,56 +1611,6 @@ class _ColorStep extends StatelessWidget {
                 ),
               );
             },
-          ),
-          const SizedBox(height: 16),
-
-          // شريط تعديل الظل
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'درجة الظل (تفتيح / تغميق)',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Slider(
-                  value: shadeFactor,
-                  min: 0.80,
-                  max: 1.20,
-                  divisions: 8,
-                  activeColor: _brand,
-                  onChanged: selected == null ? null : onShadeChanged,
-                ),
-                const SizedBox(height: 12),
-
-                // معاينة اللون
-                Container(
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: previewColor ?? cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: cs.outlineVariant),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    selected == null ? '- اختر لوناً أولاً -' : 'اللون المختار',
-                    style: TextStyle(
-                      color: cs.onSurface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

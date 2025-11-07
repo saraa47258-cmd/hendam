@@ -4,8 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
 import 'package:hindam/features/auth/models/user_model.dart';
-import 'package:hindam/core/state/cart_scope.dart';
 import 'package:hindam/features/favorites/services/favorite_service.dart';
+import 'package:hindam/features/orders/services/order_service.dart';
+import 'package:hindam/features/orders/models/order_model.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -102,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   position: _slideAnimation,
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                    child: _buildAdvancedStats(context, cs),
+                    child: _buildAdvancedStats(context, cs, user),
                   ),
                 ),
               ),
@@ -132,146 +133,208 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildProfessionalAppBar(ColorScheme cs) {
     return SliverAppBar(
       pinned: true,
-      expandedHeight: 200,
+      expandedHeight: 130,
       backgroundColor: Colors.transparent,
       elevation: 0,
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              cs.primary.withOpacity(0.8),
-              cs.secondary.withOpacity(0.6),
-              cs.tertiary.withOpacity(0.4),
-            ],
-          ),
-        ),
-        child: FlexibleSpaceBar(
-          titlePadding: const EdgeInsetsDirectional.only(start: 20, bottom: 16),
-          title: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  color: Colors.white,
-                  size: 20,
+      flexibleSpace: LayoutBuilder(
+        builder: (context, constraints) {
+          final t = ((constraints.biggest.height - kToolbarHeight) /
+                  (130 - kToolbarHeight))
+              .clamp(0.0, 1.0);
+
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  cs.primary.withOpacity(0.85),
+                  cs.secondary.withOpacity(0.6),
+                  cs.surface.withOpacity(0.0),
+                ],
+              ),
+            ),
+            child: FlexibleSpaceBar(
+              centerTitle: false,
+              titlePadding:
+                  const EdgeInsetsDirectional.only(start: 20, bottom: 12),
+              title: Opacity(
+                opacity: 0.7 + (0.3 * (1 - t)),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.18),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'حسابي',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'إدارة بياناتك وطلباتك',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'حسابي',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-            ],
-          ),
-          expandedTitleScale: 1.2,
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildAdvancedStats(BuildContext context, ColorScheme cs) {
-    // الحصول على البيانات الحقيقية من CartState
-    final cartState = CartScope.of(context);
-    final orderCount = cartState.orders.length;
+  Widget _buildAdvancedStats(
+      BuildContext context, ColorScheme cs, UserModel user) {
+    return StreamBuilder<List<OrderModel>>(
+      stream: OrderService.getCustomerOrders(user.uid),
+      builder: (context, snapshot) {
+        final orders = snapshot.data ?? [];
+        final totalOrders = orders.length;
+        final activeOrders = orders
+            .where((o) =>
+                o.status == OrderStatus.pending ||
+                o.status == OrderStatus.accepted ||
+                o.status == OrderStatus.inProgress)
+            .length;
+        final completedOrders =
+            orders.where((o) => o.status == OrderStatus.completed).length;
+        final cancelledOrders = orders
+            .where((o) =>
+                o.status == OrderStatus.rejected ||
+                o.status == OrderStatus.cancelled)
+            .length;
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            cs.surface,
-            cs.surfaceContainerHighest.withOpacity(0.3),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cs.surface,
+                cs.surfaceContainerHighest.withOpacity(0.3),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.analytics_rounded,
+              Row(
+                children: [
+                  Icon(
+                    Icons.analytics_rounded,
+                    color: cs.primary,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'إحصائياتي',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: cs.onSurface,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (snapshot.connectionState == ConnectionState.waiting)
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 1.8,
+                        color: cs.primary,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _AdvancedStatCard(
+                      icon: Icons.list_alt_rounded,
+                      label: 'إجمالي الطلبات',
+                      value: totalOrders.toString(),
+                      subtitle: 'كل الطلبات التي قمت بها',
+                      color: cs.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _AdvancedStatCard(
+                      icon: Icons.timelapse_rounded,
+                      label: 'طلبات نشطة',
+                      value: activeOrders.toString(),
+                      subtitle: 'قيد المتابعة حالياً',
+                      color: cs.secondary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _AdvancedStatCard(
+                      icon: Icons.check_circle_rounded,
+                      label: 'طلبات مكتملة',
+                      value: completedOrders.toString(),
+                      subtitle: 'تم تسليمها بنجاح',
+                      color: cs.tertiary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _AdvancedStatCard(
+                      icon: Icons.cancel_presentation_rounded,
+                      label: 'ملغاة / مرفوضة',
+                      value: cancelledOrders.toString(),
+                      subtitle: 'تم إلغاؤها أو رفضها',
+                      color: Colors.redAccent,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _FavoritesCard(
                 color: cs.primary,
-                size: 24,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'إحصائياتي',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _AdvancedStatCard(
-                  icon: Icons.shopping_bag_rounded,
-                  label: 'الطلبات',
-                  value: orderCount.toString(),
-                  subtitle: 'طلبات نشطة',
-                  color: cs.primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _FavoritesCard(
-                  color: cs.secondary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _AdvancedStatCard(
-                  icon: Icons.location_on_rounded,
-                  label: 'العناوين',
-                  value: '0',
-                  subtitle: 'عناوين محفوظة',
-                  color: cs.tertiary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: _AdvancedStatCard(
-                  icon: Icons.star_rounded,
-                  label: 'النقاط',
-                  value: '0',
-                  subtitle: 'نقاط الولاء',
-                  color: Colors.amber,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -310,7 +373,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           onTap: () {
             if (authProvider.isAuthenticated &&
                 authProvider.currentUser != null) {
-              context.push('/orders');
+              context.pushNamed('customer-orders');
             } else {
               _snack('يرجى تسجيل الدخول أولاً');
             }
@@ -335,7 +398,14 @@ class _ProfileScreenState extends State<ProfileScreen>
           icon: Icons.location_on_outlined,
           title: 'عناويني',
           subtitle: 'إدارة العناوين المحفوظة',
-          onTap: () => _snack('فتح العناوين'),
+          onTap: () {
+            if (authProvider.isAuthenticated &&
+                authProvider.currentUser != null) {
+              context.pushNamed('addresses');
+            } else {
+              _snack('يرجى تسجيل الدخول أولاً');
+            }
+          },
         ),
 
         _ModernNavTile(

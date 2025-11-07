@@ -79,7 +79,7 @@ class TailorDetailsScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 child: MediaQuery(
                   // يمنع تضخيم الخط داخل الصفحة
-                  data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1.0)),
+                  data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

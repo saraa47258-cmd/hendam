@@ -1,6 +1,4 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../models/fabric_item.dart';
 import '../../../core/styles/responsive.dart';
 import '../../../core/styles/dimens.dart';
@@ -765,59 +763,6 @@ class _ColorStep extends StatelessWidget {
                       ),
                     );
                   },
-                ),
-              ),
-              SizedBox(height: isTablet ? 24 : 16),
-
-              // شريط تعديل الظل
-              Container(
-                padding: EdgeInsets.all(isTablet ? 20 : 16),
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'درجة الظل (تفتيح / تغميق)',
-                      style: TextStyle(
-                        fontSize: isTablet ? 18 : 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: isTablet ? 16 : 12),
-                    Slider(
-                      value: shadeFactor,
-                      min: 0.80,
-                      max: 1.20,
-                      divisions: 8,
-                      activeColor: _brand,
-                      onChanged: selected == null ? null : onShadeChanged,
-                    ),
-                    SizedBox(height: isTablet ? 16 : 12),
-
-                    // معاينة اللون
-                    Container(
-                      height: isTablet ? 80 : 64,
-                      decoration: BoxDecoration(
-                        color: previewColor ?? cs.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: cs.outlineVariant),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        selected == null
-                            ? '- اختر لوناً أولاً -'
-                            : 'اللون المختار',
-                        style: TextStyle(
-                          color: cs.onSurface,
-                          fontWeight: FontWeight.w600,
-                          fontSize: isTablet ? 16 : 14,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],

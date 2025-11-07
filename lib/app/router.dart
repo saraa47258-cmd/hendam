@@ -15,6 +15,7 @@ import 'package:hindam/features/auth/presentation/forgot_password_screen.dart';
 import 'package:hindam/features/auth/presentation/edit_profile_screen.dart';
 import 'package:hindam/features/favorites/presentation/my_favorites_screen.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
+import 'package:hindam/features/address/presentation/addresses_screen.dart';
 import 'package:provider/provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -142,6 +143,12 @@ final GoRouter appRouter = GoRouter(
             final productId = state.pathParameters['id']!;
             return ProductPreviewScreen(productId: productId);
           },
+        ),
+
+        GoRoute(
+          path: 'addresses',
+          name: 'addresses',
+          builder: (context, state) => const AddressesScreen(),
         ),
 
         // اختبار Firebase
