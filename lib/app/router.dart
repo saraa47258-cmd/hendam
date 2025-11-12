@@ -57,13 +57,7 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/edit-profile',
       name: 'edit-profile',
-      builder: (context, state) {
-        final authProvider = context.read<AuthProvider>();
-        if (!authProvider.isAuthenticated) {
-          return const AuthWelcomeScreen();
-        }
-        return const EditProfileScreen();
-      },
+      builder: (context, state) => const EditProfileScreen(),
     ),
 
     // صفحة المفضلة

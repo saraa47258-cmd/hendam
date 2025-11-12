@@ -3,10 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/fabric_service.dart';
 import '../../orders/services/order_service.dart';
 import '../../orders/models/order_model.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../measurements/models/measurement_profile.dart';
+import '../../measurements/services/measurement_service.dart';
+import '../../measurements/widgets/measurement_guide_dialog.dart';
 
 bool _isNetworkPath(String p) =>
     p.startsWith('http://') || p.startsWith('https://');
@@ -20,7 +24,6 @@ extension MeasurementUnitX on MeasurementUnit {
 }
 
 const double _cmPerInch = 2.54;
-const Color _brand = Color(0xFF6D4C41);
 
 /// شاشة تفصيل الثوب - أنيقة بالعربي
 class TailoringDesignScreen extends StatefulWidget {
@@ -66,7 +69,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
   // ==== معالج الخطوات ====
   final _pager = PageController();
-  int _step = 0; // 0..3
+  int _step = 0; // 0..2 (القماش، المقاسات+اللون، التطريز)
 
   // ==== القماش ====
   String? _fabricType; // الاسم الظاهر
@@ -246,11 +249,6 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     return hsl.withLightness(l).toColor();
   }
 
-  Color _applyShade(Color base, double factor) {
-    final hsl = HSLColor.fromColor(base);
-    final l = (hsl.lightness * factor).clamp(0.0, 1.0);
-    return hsl.withLightness(l).toColor();
-  }
 
   @override
   void dispose() {
@@ -273,57 +271,120 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   }
 
   // ==== تنقّل الخطوات ====
-  void _next() {
+  void _next() async {
+    // إخفاء لوحة المفاتيح
     FocusScope.of(context).unfocus();
+    
+    // الانتظار قليلاً لإخفاء لوحة المفاتيح
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    // التحقق من إمكانية المتابعة
     if (!_canProceed(_step)) return;
-    if (_step < 3) {
+    
+    if (_step < 2) {
+      // الانتقال للخطوة التالية
       setState(() => _step++);
-      _pager.animateToPage(
+      await _pager.animateToPage(
         _step,
-        duration: const Duration(milliseconds: 320),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutCubic,
       );
-      HapticFeedback.selectionClick();
+      HapticFeedback.lightImpact();
     } else {
+      // إرسال الطلب
       _submitOrder();
     }
   }
 
-  void _back() {
+  void _back() async {
+    // إخفاء لوحة المفاتيح
     FocusScope.of(context).unfocus();
+    
     if (_step > 0) {
+      // العودة للخطوة السابقة
       setState(() => _step--);
-      _pager.animateToPage(
+      await _pager.animateToPage(
         _step,
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOutCubic,
       );
-      HapticFeedback.selectionClick();
+      HapticFeedback.lightImpact();
     } else {
-      Navigator.pop(context);
+      // الخروج من الشاشة
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
     }
   }
 
   bool _canProceed(int step) {
     final messenger = ScaffoldMessenger.of(context);
+    
     switch (step) {
       case 0:
-        if (_fabricType == null) {
+        // التحقق من اختيار القماش
+        if (_fabricType == null || _selectedFabricId == null) {
+          HapticFeedback.mediumImpact();
           messenger.showSnackBar(
-              const SnackBar(content: Text('اختر نوع القماش أولاً.')));
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(child: Text('⚠️ يرجى اختيار نوع القماش أولاً')),
+                ],
+              ),
+              backgroundColor: Colors.orange.shade700,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
           return false;
         }
         return true;
+        
       case 1:
+        // التحقق من اللون أولاً
         if (_fabricColor == null) {
-          messenger
-              .showSnackBar(const SnackBar(content: Text('اختر لون القماش.')));
+          HapticFeedback.mediumImpact();
+          messenger.showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.palette_rounded, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(child: Text('🎨 يرجى اختيار لون القماش')),
+                ],
+              ),
+              backgroundColor: Colors.deepPurple,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+          return false;
+        }
+        
+        // التحقق من المقاسات
+        if (!(_formKey.currentState?.validate() ?? false)) {
+          HapticFeedback.mediumImpact();
+          messenger.showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.straighten_rounded, color: Colors.white),
+                  SizedBox(width: 8),
+                  Expanded(child: Text('📏 يرجى إدخال جميع المقاسات بشكل صحيح')),
+                ],
+              ),
+              backgroundColor: Colors.red.shade700,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
           return false;
         }
         return true;
-      case 2:
-        if (!(_formKey.currentState?.validate() ?? false)) return false;
-        return true;
+        
       default:
         return true;
     }
@@ -521,11 +582,18 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        body: SafeArea(
+    return PopScope(
+      canPop: _step == 0,
+      onPopInvoked: (didPop) {
+        if (!didPop && _step > 0) {
+          _back();
+        }
+      },
+      child: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Scaffold(
+          backgroundColor: cs.surface,
+          body: SafeArea(
           child: Column(
             children: [
               // ===== الهيدر =====
@@ -611,7 +679,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                     constraints: const BoxConstraints(maxWidth: 840),
                     child: _StepperHeader(
                       current: _step,
-                      labels: const ['القماش', 'اللون', 'المقاسات', 'التطريز'],
+                      labels: const ['القماش', 'المقاسات و اللون', 'التطريز'],
                     ),
                   ),
                 ),
@@ -633,21 +701,13 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                         _selectedFabricId = fabricId;
                       }),
                     ),
-                    _ColorStep(
+                    _MeasurementsAndColorStep(
                       fabricId: _selectedFabricId ?? '',
-                      selected: _fabricColor,
-                      shadeFactor: _shadeFactor,
+                      selectedColor: _fabricColor,
                       onColorChanged: (c) => setState(() => _fabricColor = c),
-                      onShadeChanged: (f) => setState(() => _shadeFactor = f),
-                      previewColor: _fabricColor == null
-                          ? null
-                          : _applyShade(_fabricColor!, _shadeFactor),
-                    ),
-                    _MenMeasurementsStep(
                       formKey: _formKey,
                       unit: _unit,
                       onUnitChanged: _switchUnit,
-                      // controllers
                       lengthCtrl: _lengthCtrl,
                       shoulderCtrl: _shoulderCtrl,
                       sleeveCtrl: _sleeveCtrl,
@@ -712,11 +772,11 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                           const SizedBox(width: 8),
                           FilledButton.icon(
                             onPressed: _next,
-                            icon: Icon(_step == 3
+                            icon: Icon(_step == 2
                                 ? Icons.check_circle_rounded
                                 : Icons.arrow_forward_rounded),
                             label:
-                                Text(_step == 3 ? 'مراجعة وإرسال' : 'التالي'),
+                                Text(_step == 2 ? 'إرسال الطلب' : 'التالي'),
                             style: FilledButton.styleFrom(
                               minimumSize: const Size(152, 46),
                             ),
@@ -731,13 +791,14 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
           ),
         ),
       ),
+    ),
     );
   }
 }
 
 /* ===================== شريط التقدم ===================== */
 class _StepperHeader extends StatelessWidget {
-  final int current; // 0..3
+  final int current; // 0..2
   final List<String> labels;
   const _StepperHeader({required this.current, required this.labels});
 
@@ -825,53 +886,229 @@ class _FabricStep extends StatefulWidget {
 }
 
 class _FabricStepState extends State<_FabricStep> {
-  bool _showDetailView = false;
+
+  // حفظ القماش كمفضل
+  Future<void> _saveFabricAsFavorite(Map<String, dynamic> fabric) async {
+    final prefs = await SharedPreferences.getInstance();
+    final fabricId = fabric['id'] as String?;
+    
+    if (fabricId != null) {
+      // حفظ ID القماش المفضل
+      await prefs.setString('favorite_fabric_id', fabricId);
+      await prefs.setString('favorite_fabric_name', fabric['name'] ?? '');
+      
+      HapticFeedback.mediumImpact();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.favorite_rounded, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '💖 تم حفظ "${fabric['name']}" كمفضل!',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.pink.shade400,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'تراجع',
+              textColor: Colors.white,
+              onPressed: () async {
+                await prefs.remove('favorite_fabric_id');
+                await prefs.remove('favorite_fabric_name');
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    Widget grid(List<Map<String, dynamic>> fabrics) {
-      if (fabrics.isEmpty) {
-        return _ElegantFrame(
-          padding: const EdgeInsets.all(16),
-          useBlur: false,
-          child: Row(
-            children: [
-              const Icon(Icons.info_outline_rounded, size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'لا توجد أقمشة متاحة لهذا الخياط حالياً.',
-                  style: tt.bodySmall,
+    // عرض بطاقة القماش المختار بالتفصيل
+    Widget buildSelectedFabricDetailCard(Map<String, dynamic> fabric) {
+      final availableColors = fabric['availableColors'] as List<dynamic>? ?? [];
+      final originalPrice = fabric['originalPrice'] as num?;
+      final currentPrice = (fabric['pricePerMeter'] as num?)?.toDouble() ?? 0.0;
+      final hasDiscount = originalPrice != null && originalPrice > currentPrice;
+      
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: cs.primary, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: cs.primary.withOpacity(0.15),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // العنوان مع زر تغيير القماش
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    fabric['name'] ?? 'قماش',
+                    style: tt.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: cs.primary,
+                    ),
+                  ),
+                ),
+                // زر تغيير القماش
+                OutlinedButton.icon(
+                  onPressed: () {
+                    // إلغاء الاختيار لعرض القائمة
+                    widget.onTypeChanged(null, null, null);
+                    HapticFeedback.lightImpact();
+                  },
+                  icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                  label: const Text('تغيير'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: cs.primary,
+                    side: BorderSide(color: cs.primary),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // السعر
+            Row(
+              children: [
+                Text(
+                  'ر.ع ${currentPrice.toStringAsFixed(3)}',
+                  style: tt.headlineMedium?.copyWith(
+                    color: hasDiscount ? cs.error : cs.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                if (hasDiscount) ...[
+                  const SizedBox(width: 12),
+                  Text(
+                    'ر.ع ${originalPrice.toStringAsFixed(3)}',
+                    style: tt.titleMedium?.copyWith(
+                      decoration: TextDecoration.lineThrough,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: 20),
+            
+            // الوصف
+            if (fabric['description'] != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: cs.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        fabric['description'],
+                        style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            
+            // اختيار اللون - قائمة منسدلة
+            if (availableColors.isNotEmpty) ...[
+              Text(
+                'اللون *',
+                style: tt.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _ColorDropdown(
+                colors: availableColors,
+                onColorSelected: (colorData) {
+                  // سيتم معالجة اختيار اللون هنا لاحقاً
+                },
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'اختر',
+                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 20),
+              
+              // زر حفظ كمفضل
+              OutlinedButton.icon(
+                onPressed: () {
+                  _saveFabricAsFavorite(fabric);
+                },
+                icon: const Icon(Icons.favorite_border_rounded, size: 20),
+                label: const Text('حفظ هذا الاختيار كمفضل'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.pink,
+                  side: BorderSide(color: Colors.pink.shade200),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ],
+          ],
+        ),
+      );
+    }
+
+    Widget grid(List<Map<String, dynamic>> fabrics) {
+      if (fabrics.isEmpty) {
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.checkroom_outlined, size: 80, color: cs.onSurfaceVariant),
+                const SizedBox(height: 16),
+                Text(
+                  'لا توجد أقمشة متاحة حالياً',
+                  style: tt.titleMedium?.copyWith(color: cs.onSurfaceVariant),
+                ),
+              ],
+            ),
           ),
         );
       }
 
-      // شبكة متجاوبة
-      final width = MediaQuery.of(context).size.width;
-      int cross = 2;
-      if (width >= 360) cross = 3;
-      if (width >= 720) cross = 4;
-      if (width >= 1000) cross = 5;
-
-      return GridView.builder(
+      // قائمة عمودية بتصميم بسيط
+      return ListView.separated(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: fabrics.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: cross,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: .80,
-        ),
+        separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (_, i) {
           final fabric = fabrics[i];
-          // التحقق من الاختيار باستخدام ID بدلاً من الاسم فقط
           final sel = widget.selectedFabricId != null &&
               widget.selectedFabricId == fabric['id'];
 
@@ -879,7 +1116,6 @@ class _FabricStepState extends State<_FabricStep> {
               ? CachedNetworkImage(
                   imageUrl: path,
                   fit: BoxFit.cover,
-                  width: double.infinity,
                   memCacheWidth: 300,
                   memCacheHeight: 300,
                   placeholder: (context, url) => Container(
@@ -892,13 +1128,10 @@ class _FabricStepState extends State<_FabricStep> {
                     child: Icon(Icons.image_not_supported_rounded,
                         color: cs.onSurfaceVariant),
                   ),
-                  fadeInDuration: const Duration(milliseconds: 200),
-                  fadeOutDuration: const Duration(milliseconds: 100),
                 )
               : Image.asset(
                   path,
                   fit: BoxFit.cover,
-                  width: double.infinity,
                   errorBuilder: (_, __, ___) => Container(
                     color: cs.surfaceContainerHighest,
                     child: Icon(Icons.image_not_supported_rounded,
@@ -906,73 +1139,109 @@ class _FabricStepState extends State<_FabricStep> {
                   ),
                 );
 
+          final availableColors = fabric['availableColors'] as List<dynamic>? ?? [];
+          final currentPrice = (fabric['pricePerMeter'] as num?)?.toDouble() ?? 0.0;
+          
           return InkWell(
             onTap: () => widget.onTypeChanged(
                 fabric['name'], fabric['imageUrl'], fabric['id']),
-            borderRadius: BorderRadius.circular(16),
-            child: _ElegantFrame(
-              radius: 16,
-              useBlur: false,
-              child: Column(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: cs.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: sel ? cs.primary : cs.outlineVariant,
+                  width: sel ? 2 : 1,
+                ),
+              ),
+              child: Row(
                 children: [
+                  // الصورة
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: SizedBox(
+                      width: 80,
+                      height: 80,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(child: img(fabric['imageUrl'] ?? '')),
+                          if (sel)
+                            Positioned(
+                              top: 4,
+                              right: 4,
+                              child: Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  color: cs.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 14,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  
+                  // المعلومات
                   Expanded(
-                    child: ClipRRect(
-                      borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(14)),
-                      child: img(fabric['imageUrl'] ?? ''),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 10),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: Text(
-                            fabric['name'] ?? 'قماش',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: tt.labelLarge
-                                ?.copyWith(fontWeight: FontWeight.w800),
+                        Text(
+                          fabric['name'] ?? 'قماش',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tt.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: sel ? cs.primary : cs.onSurface,
                           ),
                         ),
-                        AnimatedScale(
-                          duration: const Duration(milliseconds: 180),
-                          scale: sel ? 1.0 : 0.0,
-                          child: Icon(Icons.check_circle_rounded,
-                              color: cs.primary, size: 20),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'ر.ع ${(fabric['pricePerMeter'] ?? 0.0).toStringAsFixed(3)}/متر',
-                            style: tt.bodySmall?.copyWith(
-                              color: cs.onSurfaceVariant,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'ر.ع ${currentPrice.toStringAsFixed(3)}',
+                          style: tt.titleSmall?.copyWith(
+                            color: cs.primary,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: cs.secondaryContainer,
-                            borderRadius: BorderRadius.circular(8),
+                        if (availableColors.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            children: availableColors.take(4).map((colorData) {
+                              final colorHex = colorData['colorHex'] as String? ?? '#CCCCCC';
+                              Color color;
+                              try {
+                                color = Color(int.parse(
+                                    colorHex.replaceFirst('#', '0xFF')));
+                              } catch (e) {
+                                color = Colors.grey;
+                              }
+                              
+                              return Container(
+                                margin: const EdgeInsets.only(left: 4),
+                                width: 18,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: color,
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                    width: 1,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
-                          child: Text(
-                            fabric['type'] ?? 'غير محدد',
-                            style: tt.labelSmall?.copyWith(
-                              color: cs.onSecondaryContainer,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
+                        ],
                       ],
                     ),
                   ),
@@ -996,28 +1265,8 @@ class _FabricStepState extends State<_FabricStep> {
                 Text('اختر نوع القماش من المتجر',
                     style:
                         tt.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 12),
-                // زر التبديل بين القائمة والتفاصيل
-                if (widget.selectedType != null)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        onPressed: () {
-                          setState(() => _showDetailView = !_showDetailView);
-                        },
-                        icon: Icon(
-                          _showDetailView ? Icons.grid_view : Icons.info,
-                          size: 18,
-                        ),
-                        label: Text(
-                          _showDetailView ? 'عرض الشبكة' : 'عرض التفاصيل',
-                          style: tt.labelMedium,
-                        ),
-                      ),
-                    ],
-                  ),
-                // العرض بناءً على الحالة
+                const SizedBox(height: 16),
+                // عرض القماش
                 StreamBuilder<List<Map<String, dynamic>>>(
                   stream: FabricService.getTailorFabrics(widget.tailorId),
                   builder: (context, snapshot) {
@@ -1048,18 +1297,25 @@ class _FabricStepState extends State<_FabricStep> {
                       );
                     }
                     final fabrics = snapshot.data ?? [];
-
-                    // إذا كان المفروض عرض التفاصيل والقماش مختار
-                    if (_showDetailView && widget.selectedType != null) {
-                      return _buildDetailView(fabrics, tt, cs);
+                    
+                    // عرض البطاقة التفصيلية إذا تم اختيار قماش
+                    if (widget.selectedFabricId != null) {
+                      final selectedFabric = fabrics.firstWhere(
+                        (fabric) => fabric['id'] == widget.selectedFabricId,
+                        orElse: () => <String, dynamic>{},
+                      );
+                      
+                      if (selectedFabric.isNotEmpty) {
+                        return buildSelectedFabricDetailCard(selectedFabric);
+                      }
                     }
-
+                    
                     return grid(fabrics);
                   },
                 ),
                 const SizedBox(height: 12),
-                // عرض القماش المختار بشكل كامل (فقط إذا لم يكن في وضع التفاصيل)
-                if (!_showDetailView && widget.selectedType != null)
+                // عرض القماش المختار
+                if (widget.selectedType != null)
                   _buildSelectedFabricCard(
                     context: context,
                     tailorId: widget.tailorId,
@@ -1068,171 +1324,6 @@ class _FabricStepState extends State<_FabricStep> {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // بناء عرض التفاصيل المفصلة للقماش المختار
-  Widget _buildDetailView(
-    List<Map<String, dynamic>> fabrics,
-    TextTheme tt,
-    ColorScheme cs,
-  ) {
-    // البحث باستخدام ID أولاً، وإذا لم يوجد فاستخدم الاسم
-    final selectedFabric = widget.selectedFabricId != null
-        ? fabrics.firstWhere(
-            (fabric) => fabric['id'] == widget.selectedFabricId,
-            orElse: () => <String, dynamic>{},
-          )
-        : fabrics.firstWhere(
-            (fabric) => fabric['name'] == widget.selectedType,
-            orElse: () => <String, dynamic>{},
-          );
-
-    if (selectedFabric.isEmpty) return const SizedBox.shrink();
-
-    return SingleChildScrollView(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: cs.primary.withOpacity(0.2), width: 2),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // صورة كبيرة للقماش
-            Container(
-              height: 250,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: cs.surfaceContainerHighest,
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: _isNetworkPath(selectedFabric['imageUrl'] ?? '')
-                    ? CachedNetworkImage(
-                        imageUrl: selectedFabric['imageUrl'] ?? '',
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        memCacheWidth: 600,
-                        memCacheHeight: 600,
-                        placeholder: (context, url) => Container(
-                          color: cs.surfaceContainerHighest,
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 3),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) => Container(
-                          color: cs.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.image_not_supported,
-                            size: 60,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      )
-                    : Image.asset(
-                        selectedFabric['imageUrl'] ?? '',
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: cs.surfaceContainerHighest,
-                          child: Icon(
-                            Icons.image_not_supported,
-                            size: 60,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // الاسم والسعر
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        selectedFabric['name'] ?? widget.selectedType,
-                        style: tt.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'ر.ع ${(selectedFabric['price'] ?? 0.0).toStringAsFixed(3)}',
-                        style: tt.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: cs.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: cs.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.check, color: cs.onPrimary),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // معلومات إضافية
-            if (selectedFabric['type'] != null) ...[
-              _DetailRow(
-                icon: Icons.category,
-                label: 'النوع',
-                value: selectedFabric['type'],
-                cs: cs,
-                tt: tt,
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (selectedFabric['season'] != null) ...[
-              _DetailRow(
-                icon: Icons.wb_sunny,
-                label: 'الموسم',
-                value: selectedFabric['season'],
-                cs: cs,
-                tt: tt,
-              ),
-              const SizedBox(height: 12),
-            ],
-            if (selectedFabric['quality'] != null) ...[
-              _DetailRow(
-                icon: Icons.workspace_premium,
-                label: 'الجودة',
-                value: selectedFabric['quality'],
-                cs: cs,
-                tt: tt,
-              ),
-              const SizedBox(height: 12),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.square_foot, size: 18, color: cs.primary),
-                const SizedBox(width: 8),
-                Text(
-                  'الوحدة: متر',
-                  style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
-            ),
-          ],
         ),
       ),
     );
@@ -1441,178 +1532,665 @@ class _FabricStepState extends State<_FabricStep> {
       },
     );
   }
+
+  bool _isNetworkPath(String path) {
+    return path.startsWith('http://') || path.startsWith('https://');
+  }
 }
 
-/* ===================== خطوة اللون ===================== */
-class _ColorStep extends StatelessWidget {
-  final String fabricId;
-  final Color? selected;
-  final double shadeFactor;
-  final ValueChanged<Color> onColorChanged;
-  final ValueChanged<double> onShadeChanged;
-  final Color? previewColor;
+/* ===================== قائمة منسدلة للألوان ===================== */
+class _ColorDropdown extends StatefulWidget {
+  final List<dynamic> colors;
+  final Function(Map<String, dynamic>) onColorSelected;
 
-  const _ColorStep({
-    required this.fabricId,
-    required this.selected,
-    required this.shadeFactor,
-    required this.onColorChanged,
-    required this.onShadeChanged,
-    required this.previewColor,
+  const _ColorDropdown({
+    required this.colors,
+    required this.onColorSelected,
   });
+
+  @override
+  State<_ColorDropdown> createState() => _ColorDropdownState();
+}
+
+class _ColorDropdownState extends State<_ColorDropdown> {
+  Map<String, dynamic>? _selectedColor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Text(
-            'اختر لون القماش',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+    // الحصول على اللون المختار
+    Color? selectedColorValue;
+    String? selectedColorName;
+    if (_selectedColor != null) {
+      final colorHex = _selectedColor!['colorHex'] as String? ?? '#CCCCCC';
+      selectedColorName = _selectedColor!['colorName'] as String? ?? '';
+      try {
+        selectedColorValue = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+      } catch (e) {
+        selectedColorValue = Colors.grey;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // القائمة المنسدلة
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<Map<String, dynamic>>(
+              isExpanded: true,
+              value: _selectedColor,
+              hint: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                child: Text(
+                  'اختر اللون',
+                  style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+                ),
+              ),
+          icon: Padding(
+            padding: const EdgeInsets.only(left: 12),
+            child: Icon(Icons.arrow_drop_down, color: cs.onSurfaceVariant),
+          ),
+          items: widget.colors.map((colorData) {
+            final colorName = colorData['colorName'] as String? ?? 'غير محدد';
+            final colorHex = colorData['colorHex'] as String? ?? '#CCCCCC';
+            
+            Color color;
+            try {
+              color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+            } catch (e) {
+              color = Colors.grey;
+            }
+
+            return DropdownMenuItem<Map<String, dynamic>>(
+              value: colorData,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Row(
+                  children: [
+                    // دائرة اللون
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: color,
+                        border: Border.all(
+                          color: Colors.grey.shade300,
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withOpacity(0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: color.computeLuminance() > 0.9
+                          ? Icon(
+                              Icons.circle_outlined,
+                              color: Colors.grey.shade400,
+                              size: 20,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    // اسم اللون
+                    Expanded(
+                      child: Text(
+                        colorName,
+                        style: tt.bodyLarge,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (colorData) {
+            setState(() {
+              _selectedColor = colorData;
+            });
+            if (colorData != null) {
+              widget.onColorSelected(colorData);
+            }
+          },
+              borderRadius: BorderRadius.circular(8),
+              dropdownColor: cs.surface,
             ),
           ),
+        ),
+        
+        // معاينة اللون المختار
+        if (_selectedColor != null && selectedColorValue != null) ...[
           const SizedBox(height: 16),
-
-          // لوحة الألوان من Firebase
-          StreamBuilder<Map<String, dynamic>?>(
-            stream: Stream.fromFuture(FabricService.getFabricById(fabricId)),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  cs.primaryContainer.withOpacity(0.3),
+                  cs.secondaryContainer.withOpacity(0.3),
+                ],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: cs.primary.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                // دائرة اللون الكبيرة
+                Container(
+                  width: 60,
+                  height: 60,
                   decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              }
-
-              if (snapshot.hasError) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cs.errorContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.error_outline_rounded),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'حدث خطأ في تحميل الألوان',
-                          style: TextStyle(color: cs.onErrorContainer),
-                        ),
+                    shape: BoxShape.circle,
+                    color: selectedColorValue,
+                    border: Border.all(
+                      color: Colors.white,
+                      width: 3,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: selectedColorValue.withOpacity(0.5),
+                        blurRadius: 12,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                );
-              }
-
-              final fabric = snapshot.data;
-              if (fabric == null) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'لا توجد ألوان متاحة لهذا القماش',
-                          style: TextStyle(color: cs.onSurfaceVariant),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              final availableColors =
-                  fabric['availableColors'] as List<dynamic>? ?? [];
-              if (availableColors.isEmpty) {
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'لا توجد ألوان متاحة لهذا القماش',
-                          style: TextStyle(color: cs.onSurfaceVariant),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: cs.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+                  child: selectedColorValue.computeLuminance() > 0.9
+                      ? Icon(
+                          Icons.circle_outlined,
+                          color: Colors.grey.shade400,
+                          size: 30,
+                        )
+                      : null,
                 ),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: availableColors.map((colorData) {
-                    final colorHex =
-                        colorData['colorHex'] as String? ?? '#FFFFFF';
-
-                    // تحويل hex إلى Color
-                    Color color;
-                    try {
-                      color =
-                          Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
-                    } catch (e) {
-                      color = Colors.white;
-                    }
-
-                    final sel =
-                        selected != null && selected!.value == color.value;
-                    return GestureDetector(
-                      onTap: () => onColorChanged(color),
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: color,
-                          border: Border.all(
-                            color: sel ? _brand : Colors.grey[300]!,
-                            width: sel ? 3 : 2,
+                const SizedBox(width: 16),
+                
+                // معلومات اللون
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: cs.primary,
+                            size: 20,
                           ),
-                        ),
-                        child: sel
-                            ? const Icon(Icons.check, color: Colors.white)
-                            : null,
+                          const SizedBox(width: 8),
+                          Text(
+                            'اللون المختار',
+                            style: tt.labelMedium?.copyWith(
+                              color: cs.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  }).toList(),
+                      const SizedBox(height: 4),
+                      Text(
+                        selectedColorName ?? '',
+                        style: tt.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: cs.onSurface,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              );
-            },
+                
+                // أيقونة تأكيد
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: cs.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+/* ===================== خطوة المقاسات + اللون (مدمجة) ===================== */
+class _MeasurementsAndColorStep extends StatefulWidget {
+  final String fabricId;
+  final Color? selectedColor;
+  final ValueChanged<Color> onColorChanged;
+  final GlobalKey<FormState> formKey;
+  final MeasurementUnit unit;
+  final ValueChanged<MeasurementUnit> onUnitChanged;
+
+  // controllers
+  final TextEditingController lengthCtrl,
+      shoulderCtrl,
+      sleeveCtrl,
+      upperSleeveCtrl,
+      lowerSleeveCtrl,
+      chestCtrl,
+      waistCtrl,
+      neckCtrl,
+      embroideryCtrl,
+      notesCtrl;
+
+  const _MeasurementsAndColorStep({
+    required this.fabricId,
+    required this.selectedColor,
+    required this.onColorChanged,
+    required this.formKey,
+    required this.unit,
+    required this.onUnitChanged,
+    required this.lengthCtrl,
+    required this.shoulderCtrl,
+    required this.sleeveCtrl,
+    required this.upperSleeveCtrl,
+    required this.lowerSleeveCtrl,
+    required this.chestCtrl,
+    required this.waistCtrl,
+    required this.neckCtrl,
+    required this.embroideryCtrl,
+    required this.notesCtrl,
+  });
+
+  @override
+  State<_MeasurementsAndColorStep> createState() =>
+      _MeasurementsAndColorStepState();
+}
+
+class _MeasurementsAndColorStepState extends State<_MeasurementsAndColorStep>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  double toUnit(double cm) =>
+      widget.unit == MeasurementUnit.inch ? cm / _cmPerInch : cm;
+  double step() => widget.unit == MeasurementUnit.inch ? 0.50 : 0.5;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final decimals = widget.unit == MeasurementUnit.inch ? 2 : 1;
+
+    final rows = <_RowSpec>[
+      _RowSpec('الطول الكلي', widget.lengthCtrl, toUnit(110), toUnit(170)),
+      _RowSpec('الكتف', widget.shoulderCtrl, toUnit(38), toUnit(56)),
+      _RowSpec('طول الكم', widget.sleeveCtrl, toUnit(45), toUnit(75)),
+      _RowSpec(
+          'محيط الكم العلوي', widget.upperSleeveCtrl, toUnit(24), toUnit(48)),
+      _RowSpec(
+          'محيط الكم السفلي', widget.lowerSleeveCtrl, toUnit(14), toUnit(24)),
+      _RowSpec('الصدر', widget.chestCtrl, toUnit(80), toUnit(140)),
+      _RowSpec('الخصر', widget.waistCtrl, toUnit(70), toUnit(130)),
+      _RowSpec('محيط الرقبة', widget.neckCtrl, toUnit(34), toUnit(48)),
+      _RowSpec(
+          'التطريز الامامي', widget.embroideryCtrl, toUnit(10), toUnit(30)),
+    ];
+
+    return SingleChildScrollView(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 840),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+            child: Form(
+              key: widget.formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // ========== قسم اختيار اللون أولاً ==========
+                  StreamBuilder<Map<String, dynamic>?>(
+                    stream: Stream.fromFuture(
+                        FabricService.getFabricById(widget.fabricId)),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: cs.errorContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline_rounded),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'حدث خطأ في تحميل الألوان',
+                                  style: TextStyle(color: cs.onErrorContainer),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final fabric = snapshot.data;
+                      if (fabric == null) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'لم يتم العثور على بيانات القماش',
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
+
+                      final availableColors =
+                          fabric['availableColors'] as List<dynamic>? ?? [];
+
+                      if (availableColors.isEmpty) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline_rounded),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'لا توجد ألوان متاحة لهذا القماش',
+                                  style: TextStyle(color: cs.onSurfaceVariant),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final isTablet = screenWidth >= 600;
+
+                      return Container(
+                        padding: EdgeInsets.all(isTablet ? 20 : 16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              cs.surface,
+                              cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(isTablet ? 16 : 14),
+                          border: Border.all(color: cs.outlineVariant),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.palette_rounded,
+                                    color: cs.primary,
+                                    size: isTablet ? 22 : 20),
+                                SizedBox(width: isTablet ? 10 : 8),
+                                Expanded(
+                                  child: Text(
+                                    '🎨 اختر لون القماش',
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isTablet ? 17 : 15,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: isTablet ? 16 : 14),
+                            Wrap(
+                              spacing: isTablet ? 14 : 12,
+                              runSpacing: isTablet ? 14 : 12,
+                              children: availableColors.map((colorData) {
+                                final colorHex =
+                                    colorData['colorHex'] as String? ?? '#FFFFFF';
+                                final colorName =
+                                    colorData['colorName'] as String? ?? '';
+
+                                // تحويل hex إلى Color
+                                Color color;
+                                try {
+                                  color = Color(
+                                      int.parse(colorHex.replaceFirst('#', '0xFF')));
+                                } catch (e) {
+                                  color = Colors.white;
+                                }
+
+                                final sel = widget.selectedColor != null &&
+                                    widget.selectedColor!.value == color.value;
+
+                                return _ColorSwatch(
+                                  color: color,
+                                  colorName: colorName,
+                                  isSelected: sel,
+                                  onTap: () => widget.onColorChanged(color),
+                                  isTablet: isTablet,
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  Divider(color: cs.outlineVariant, thickness: 1),
+                  const SizedBox(height: 20),
+
+                  // ========== قسم المقاسات ==========
+                  // قوالب المقاسات الجاهزة
+                  _MeasurementTemplatesSection(
+                    onTemplateSelected: (template) {
+                      widget.lengthCtrl.text =
+                          template['الطول الكلي']!.toStringAsFixed(1);
+                      widget.shoulderCtrl.text =
+                          template['الكتف']!.toStringAsFixed(1);
+                      widget.sleeveCtrl.text =
+                          template['طول الكم']!.toStringAsFixed(1);
+                      widget.upperSleeveCtrl.text =
+                          template['محيط الكم العلوي']!.toStringAsFixed(1);
+                      widget.lowerSleeveCtrl.text =
+                          template['محيط الكم السفلي']!.toStringAsFixed(1);
+                      widget.chestCtrl.text =
+                          template['الصدر']!.toStringAsFixed(1);
+                      widget.waistCtrl.text =
+                          template['الخصر']!.toStringAsFixed(1);
+                      widget.neckCtrl.text =
+                          template['محيط الرقبة']!.toStringAsFixed(1);
+                      widget.embroideryCtrl.text =
+                          template['التطريز الامامي']!.toStringAsFixed(1);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                              '✅ تم تطبيق القالب بنجاح - يمكنك التعديل حسب الحاجة'),
+                          backgroundColor: Colors.green,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // زر حفظ/استعادة المقاسات
+                  _SavedMeasurementsSection(
+                    onLoadProfile: (profile) {
+                      widget.lengthCtrl.text =
+                          profile.measurements['الطول الكلي']?.toString() ?? '';
+                      widget.shoulderCtrl.text =
+                          profile.measurements['الكتف']?.toString() ?? '';
+                      widget.sleeveCtrl.text =
+                          profile.measurements['طول الكم']?.toString() ?? '';
+                      widget.upperSleeveCtrl.text =
+                          profile.measurements['محيط الكم العلوي']?.toString() ??
+                              '';
+                      widget.lowerSleeveCtrl.text =
+                          profile.measurements['محيط الكم السفلي']?.toString() ??
+                              '';
+                      widget.chestCtrl.text =
+                          profile.measurements['الصدر']?.toString() ?? '';
+                      widget.waistCtrl.text =
+                          profile.measurements['الخصر']?.toString() ?? '';
+                      widget.neckCtrl.text =
+                          profile.measurements['محيط الرقبة']?.toString() ?? '';
+                      widget.embroideryCtrl.text =
+                          profile.measurements['التطريز الامامي']?.toString() ??
+                              '';
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                              '✅ تم تحميل مقاسات "${profile.name}" بنجاح'),
+                          backgroundColor: Colors.green,
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // التبديل بين الوحدات
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SegmentedButton<MeasurementUnit>(
+                        segments: const [
+                          ButtonSegment(
+                            value: MeasurementUnit.cm,
+                            label: Text('سنتيمتر (cm)'),
+                            icon: Icon(Icons.straighten_rounded, size: 18),
+                          ),
+                          ButtonSegment(
+                            value: MeasurementUnit.inch,
+                            label: Text('إنش (in)'),
+                            icon: Icon(Icons.straighten_rounded, size: 18),
+                          ),
+                        ],
+                        selected: {widget.unit},
+                        onSelectionChanged: (Set<MeasurementUnit> newSelection) {
+                          widget.onUnitChanged(newSelection.first);
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // الحقول
+                  ...rows.map((r) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _PrettyLineField(
+                        label: r.label,
+                        controller: r.ctrl,
+                        min: r.min,
+                        max: r.max,
+                        step: step(),
+                        unitLabel: widget.unit == MeasurementUnit.cm ? 'سم' : 'إنش',
+                        decimals: decimals,
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 12),
+
+                  // ملاحظات إضافية
+                  TextFormField(
+                    controller: widget.notesCtrl,
+                    maxLines: 3,
+                    style: theme.textTheme.bodyLarge,
+                    decoration: InputDecoration(
+                      labelText: 'ملاحظات إضافية (اختياري)',
+                      hintText: 'مثال: تفصيلات خاصة، أو ملاحظات للخياط',
+                      filled: true,
+                      fillColor: cs.surfaceContainerHighest,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: cs.primary, width: 2),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // زر حفظ المقاسات الحالية
+                  _SaveMeasurementsButton(
+                    measurements: {
+                      'الطول الكلي':
+                          double.tryParse(widget.lengthCtrl.text) ?? 0,
+                      'الكتف': double.tryParse(widget.shoulderCtrl.text) ?? 0,
+                      'طول الكم':
+                          double.tryParse(widget.sleeveCtrl.text) ?? 0,
+                      'محيط الكم العلوي':
+                          double.tryParse(widget.upperSleeveCtrl.text) ?? 0,
+                      'محيط الكم السفلي':
+                          double.tryParse(widget.lowerSleeveCtrl.text) ?? 0,
+                      'الصدر': double.tryParse(widget.chestCtrl.text) ?? 0,
+                      'الخصر': double.tryParse(widget.waistCtrl.text) ?? 0,
+                      'محيط الرقبة':
+                          double.tryParse(widget.neckCtrl.text) ?? 0,
+                      'التطريز الامامي':
+                          double.tryParse(widget.embroideryCtrl.text) ?? 0,
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1698,6 +2276,52 @@ class _MenMeasurementsStepState extends State<_MenMeasurementsStep>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // قوالب المقاسات الجاهزة
+                  _MeasurementTemplatesSection(
+                    onTemplateSelected: (template) {
+                      widget.lengthCtrl.text = template['الطول الكلي']!.toStringAsFixed(1);
+                      widget.shoulderCtrl.text = template['الكتف']!.toStringAsFixed(1);
+                      widget.sleeveCtrl.text = template['طول الكم']!.toStringAsFixed(1);
+                      widget.upperSleeveCtrl.text = template['محيط الكم العلوي']!.toStringAsFixed(1);
+                      widget.lowerSleeveCtrl.text = template['محيط الكم السفلي']!.toStringAsFixed(1);
+                      widget.chestCtrl.text = template['الصدر']!.toStringAsFixed(1);
+                      widget.waistCtrl.text = template['الخصر']!.toStringAsFixed(1);
+                      widget.neckCtrl.text = template['محيط الرقبة']!.toStringAsFixed(1);
+                      widget.embroideryCtrl.text = template['التطريز الامامي']!.toStringAsFixed(1);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ تم تطبيق القالب بنجاح - يمكنك التعديل حسب الحاجة'),
+                          backgroundColor: Colors.green,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // زر حفظ/استعادة المقاسات
+                  _SavedMeasurementsSection(
+                    onLoadProfile: (profile) {
+                      final m = profile.measurements;
+                      widget.lengthCtrl.text = (m['الطول الكلي'] ?? 0).toStringAsFixed(1);
+                      widget.shoulderCtrl.text = (m['الكتف'] ?? 0).toStringAsFixed(1);
+                      widget.sleeveCtrl.text = (m['طول الكم'] ?? 0).toStringAsFixed(1);
+                      widget.upperSleeveCtrl.text = (m['محيط الكم العلوي'] ?? 0).toStringAsFixed(1);
+                      widget.lowerSleeveCtrl.text = (m['محيط الكم السفلي'] ?? 0).toStringAsFixed(1);
+                      widget.chestCtrl.text = (m['الصدر'] ?? 0).toStringAsFixed(1);
+                      widget.waistCtrl.text = (m['الخصر'] ?? 0).toStringAsFixed(1);
+                      widget.neckCtrl.text = (m['محيط الرقبة'] ?? 0).toStringAsFixed(1);
+                      widget.embroideryCtrl.text = (m['التطريز الامامي'] ?? 0).toStringAsFixed(1);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('✅ تم تحميل مقاسات "${profile.name}"'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
                   // شريط تبديل الوحدة
                   _ElegantFrame(
                     padding: const EdgeInsets.symmetric(
@@ -1780,6 +2404,24 @@ class _MenMeasurementsStepState extends State<_MenMeasurementsStep>
                       ],
                     ),
                   ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // زر حفظ المقاسات
+                  _SaveMeasurementsButton(
+                    measurements: {
+                      'الطول الكلي': _parseDouble(widget.lengthCtrl.text),
+                      'الكتف': _parseDouble(widget.shoulderCtrl.text),
+                      'طول الكم': _parseDouble(widget.sleeveCtrl.text),
+                      'محيط الكم العلوي': _parseDouble(widget.upperSleeveCtrl.text),
+                      'محيط الكم السفلي': _parseDouble(widget.lowerSleeveCtrl.text),
+                      'الصدر': _parseDouble(widget.chestCtrl.text),
+                      'الخصر': _parseDouble(widget.waistCtrl.text),
+                      'محيط الرقبة': _parseDouble(widget.neckCtrl.text),
+                      'التطريز الامامي': _parseDouble(widget.embroideryCtrl.text),
+                    },
+                    notes: widget.notesCtrl.text.trim(),
+                  ),
                 ],
               ),
             ),
@@ -1787,6 +2429,10 @@ class _MenMeasurementsStepState extends State<_MenMeasurementsStep>
         ),
       ),
     );
+  }
+  
+  double _parseDouble(String value) {
+    return double.tryParse(value.trim()) ?? 0.0;
   }
 }
 
@@ -1861,28 +2507,60 @@ class _PrettyLineFieldState extends State<_PrettyLineField> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 600;
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cs.surface,
+            cs.surfaceContainerHighest.withOpacity(0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(isTablet ? 18 : 16),
+        border: Border.all(
+          color: cs.outlineVariant,
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.04),
-            blurRadius: 12,
+            color: cs.primary.withOpacity(.06),
+            blurRadius: 16,
             offset: const Offset(0, 6),
-          )
+          ),
+          BoxShadow(
+            color: Colors.black.withOpacity(.03),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 16 : 12, 
+          vertical: isTablet ? 12 : 10),
       child: Row(
         children: [
           Expanded(
-            child: Text(widget.label,
-                style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: tt.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: isTablet ? 16 : 14,
+                    ),
+                  ),
+                ),
+                MeasurementGuideButton(measurementName: widget.label),
+              ],
+            ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: isTablet ? 16 : 12),
 
           // مجموعة التحكم — تم تمديد الحاوية لتستوعب الأرقام الطويلة
           Directionality(
@@ -2226,62 +2904,795 @@ class _ElegantFrame extends StatelessWidget {
   }
 }
 
-/// صف تفصيلي للمعلومات
-class _DetailRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final ColorScheme cs;
-  final TextTheme tt;
+/// قسم قوالب المقاسات الجاهزة
+class _MeasurementTemplatesSection extends StatelessWidget {
+  final Function(Map<String, double>) onTemplateSelected;
 
-  const _DetailRow({
-    required this.icon,
+  const _MeasurementTemplatesSection({required this.onTemplateSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 600;
+
+    return Container(
+      padding: EdgeInsets.all(isTablet ? 18 : 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            cs.primary.withOpacity(0.12),
+            cs.secondary.withOpacity(0.08),
+            cs.tertiary.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(isTablet ? 20 : 18),
+        border: Border.all(
+          color: cs.primary.withOpacity(0.3),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(isTablet ? 10 : 8),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [cs.primary, cs.secondary],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.grid_view_rounded,
+                  color: Colors.white,
+                  size: isTablet ? 22 : 20,
+                ),
+              ),
+              SizedBox(width: isTablet ? 12 : 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'قوالب مقاسات جاهزة',
+                      style: tt.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isTablet ? 18 : 16,
+                        color: cs.primary,
+                      ),
+                    ),
+                    Text(
+                      'ملء سريع ودقيق',
+                      style: tt.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                        fontSize: isTablet ? 12 : 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isTablet ? 14 : 12),
+          Text(
+            'اختر قالباً كنقطة بداية، ثم عدّل حسب مقاساتك',
+            style: tt.bodySmall?.copyWith(
+              color: cs.onSurfaceVariant,
+              fontSize: isTablet ? 14 : 12,
+            ),
+          ),
+          SizedBox(height: isTablet ? 14 : 12),
+          Wrap(
+            spacing: isTablet ? 12 : 10,
+            runSpacing: isTablet ? 12 : 10,
+            children: [
+              _TemplateChip(
+                label: 'S',
+                subtitle: 'صغير',
+                onTap: () => onTemplateSelected(MeasurementProfile.getTemplate('S')),
+                isTablet: isTablet,
+              ),
+              _TemplateChip(
+                label: 'M',
+                subtitle: 'متوسط',
+                onTap: () => onTemplateSelected(MeasurementProfile.getTemplate('M')),
+                isTablet: isTablet,
+              ),
+              _TemplateChip(
+                label: 'L',
+                subtitle: 'كبير',
+                onTap: () => onTemplateSelected(MeasurementProfile.getTemplate('L')),
+                isTablet: isTablet,
+              ),
+              _TemplateChip(
+                label: 'XL',
+                subtitle: 'كبير جداً',
+                onTap: () => onTemplateSelected(MeasurementProfile.getTemplate('XL')),
+                isTablet: isTablet,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TemplateChip extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool isTablet;
+
+  const _TemplateChip({
     required this.label,
-    required this.value,
-    required this.cs,
-    required this.tt,
+    required this.subtitle,
+    required this.onTap,
+    required this.isTablet,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: cs.primaryContainer,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, size: 20, color: cs.onPrimaryContainer),
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: isTablet ? 110 : 80,
+        padding: EdgeInsets.symmetric(
+          vertical: isTablet ? 16 : 14,
+          horizontal: isTablet ? 14 : 10,
+        ),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              cs.surface,
+              cs.surfaceContainerHighest.withOpacity(0.5),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: tt.labelSmall?.copyWith(
-                    color: cs.onSurfaceVariant,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: cs.primary.withOpacity(0.3),
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: cs.primary.withOpacity(0.15),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(isTablet ? 10 : 8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [cs.primary, cs.secondary],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: cs.primary.withOpacity(0.4),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Text(
+                label,
+                style: tt.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  fontSize: isTablet ? 26 : 22,
+                ),
+              ),
+            ),
+            SizedBox(height: isTablet ? 8 : 6),
+            Text(
+              subtitle,
+              style: tt.bodySmall?.copyWith(
+                color: cs.onSurfaceVariant,
+                fontSize: isTablet ? 13 : 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// قسم المقاسات المحفوظة
+class _SavedMeasurementsSection extends StatelessWidget {
+  final Function(MeasurementProfile) onLoadProfile;
+
+  const _SavedMeasurementsSection({required this.onLoadProfile});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 600;
+
+    return StreamBuilder<List<MeasurementProfile>>(
+      stream: MeasurementService().streamProfiles(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final profiles = snapshot.data!;
+        final defaultProfile = profiles.firstWhere(
+          (p) => p.isDefault,
+          orElse: () => profiles.first,
+        );
+
+        return Container(
+          padding: EdgeInsets.all(isTablet ? 18 : 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cs.secondary.withOpacity(0.12),
+                cs.tertiary.withOpacity(0.08),
+                cs.primary.withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(isTablet ? 20 : 18),
+            border: Border.all(
+              color: cs.secondary.withOpacity(0.35),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: cs.secondary.withOpacity(0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(isTablet ? 12 : 10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [cs.secondary, cs.tertiary],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.secondary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.person_pin_circle_rounded,
+                  color: Colors.white,
+                  size: isTablet ? 26 : 22,
+                ),
+              ),
+              SizedBox(width: isTablet ? 14 : 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.check_circle,
+                                  color: Colors.green, size: 14),
+                              const SizedBox(width: 4),
+                              Text(
+                                'محفوظ',
+                                style: tt.labelSmall?.copyWith(
+                                  color: Colors.green.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            defaultProfile.name,
+                            style: tt.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: isTablet ? 16 : 14,
+                              color: cs.secondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: isTablet ? 4 : 3),
+                    Row(
+                      children: [
+                        Icon(Icons.access_time_rounded,
+                            size: isTablet ? 14 : 12,
+                            color: cs.onSurfaceVariant),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDate(defaultProfile.updatedAt ??
+                              defaultProfile.createdAt),
+                          style: tt.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                            fontSize: isTablet ? 12 : 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: isTablet ? 10 : 8),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [cs.primary, cs.secondary],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onLoadProfile(defaultProfile),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 16 : 14,
+                        vertical: isTablet ? 12 : 10,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.download_rounded,
+                              color: Colors.white,
+                              size: isTablet ? 20 : 18),
+                          SizedBox(width: isTablet ? 8 : 6),
+                          Text(
+                            'تحميل',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: isTablet ? 15 : 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inDays == 0) {
+      return 'اليوم';
+    } else if (diff.inDays == 1) {
+      return 'أمس';
+    } else if (diff.inDays < 7) {
+      return 'قبل ${diff.inDays} أيام';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+}
+
+/// زر حفظ المقاسات
+class _SaveMeasurementsButton extends StatelessWidget {
+  final Map<String, double> measurements;
+  final String? notes;
+
+  const _SaveMeasurementsButton({
+    required this.measurements,
+    this.notes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 600;
+
+    // التحقق من صحة المقاسات
+    final validationError = MeasurementProfile.validateMeasurements(measurements);
+    final hasData = measurements.values.any((v) => v > 0);
+
+    if (!hasData) return const SizedBox.shrink();
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: validationError == null
+              ? [cs.primary.withOpacity(0.1), cs.secondary.withOpacity(0.05)]
+              : [Colors.orange.withOpacity(0.1), Colors.orange.withOpacity(0.05)],
+        ),
+        borderRadius: BorderRadius.circular(isTablet ? 16 : 14),
+        border: Border.all(
+          color: validationError == null ? cs.primary : Colors.orange,
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (validationError == null ? cs.primary : Colors.orange)
+                .withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showSaveDialog(context),
+          borderRadius: BorderRadius.circular(isTablet ? 16 : 14),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: isTablet ? 16 : 14,
+              horizontal: isTablet ? 20 : 16,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  validationError == null
+                      ? Icons.save_outlined
+                      : Icons.warning_amber_rounded,
+                  size: isTablet ? 24 : 22,
+                  color: validationError == null ? cs.primary : Colors.orange,
+                ),
+                SizedBox(width: isTablet ? 12 : 10),
                 Text(
-                  value,
-                  style: tt.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  validationError == null
+                      ? 'حفظ مقاساتي للمستقبل'
+                      : 'حفظ (مع تحذيرات)',
+                  style: TextStyle(
+                    fontSize: isTablet ? 17 : 15,
+                    fontWeight: FontWeight.bold,
+                    color: validationError == null ? cs.primary : Colors.orange,
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showSaveDialog(BuildContext context) async {
+    // التحقق من المقاسات
+    final validationError = MeasurementProfile.validateMeasurements(measurements);
+    if (validationError != null) {
+      await showDialog(
+        context: context,
+        builder: (context) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            icon: Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 48),
+            title: const Text('تحذير في المقاسات'),
+            content: Text(validationError),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('تعديل'),
+              ),
+              FilledButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _proceedToSave(context);
+                },
+                style: FilledButton.styleFrom(backgroundColor: Colors.orange),
+                child: const Text('متابعة الحفظ'),
+              ),
+            ],
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _proceedToSave(context);
+  }
+
+  Future<void> _proceedToSave(BuildContext context) async {
+    final nameController = TextEditingController(text: 'مقاساتي الرسمية');
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('حفظ المقاسات'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'اسم ملف المقاسات',
+                  hintText: 'مثال: رسمي، يومي، رياضي',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text('سيتم حفظ هذه المقاسات لاستخدامها في الطلبات القادمة'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(context, nameController.text.trim()),
+              icon: const Icon(Icons.save_rounded),
+              label: const Text('حفظ'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && context.mounted) {
+      final profile = MeasurementProfile(
+        id: '',
+        userId: '',
+        name: result,
+        measurements: measurements,
+        createdAt: DateTime.now(),
+        isDefault: true,
+        notes: notes,
+      );
+
+      try {
+        await MeasurementService().saveProfile(profile);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ تم حفظ المقاسات باسم "$result"'),
+              backgroundColor: Colors.green,
+              action: SnackBarAction(
+                label: 'عرض',
+                textColor: Colors.white,
+                onPressed: () {
+                  // يمكن فتح صفحة إدارة المقاسات
+                },
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ فشل حفظ المقاسات: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+}
+
+/// دائرة اختيار اللون (مثل تصميم العبايات)
+class _ColorSwatch extends StatefulWidget {
+  final Color color;
+  final String colorName;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool isTablet;
+
+  const _ColorSwatch({
+    required this.color,
+    required this.colorName,
+    required this.isSelected,
+    required this.onTap,
+    required this.isTablet,
+  });
+
+  @override
+  State<_ColorSwatch> createState() => _ColorSwatchState();
+}
+
+class _ColorSwatchState extends State<_ColorSwatch>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final size = widget.isTablet ? 56.0 : 48.0;
+    
+    // تحديد لون الحلقة حسب سطوع اللون
+    final brightness = widget.color.computeLuminance();
+    final ringColor = widget.isSelected
+        ? cs.primary
+        : (brightness > 0.5
+            ? Colors.grey.shade400
+            : Colors.grey.shade300);
+
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: widget.onTap,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.isSelected
+                        ? cs.primary.withOpacity(0.25)
+                        : Colors.black.withOpacity(0.08),
+                    blurRadius: widget.isSelected ? 12 : 6,
+                    offset: Offset(0, widget.isSelected ? 4 : 2),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // الدائرة الخارجية (الحلقة)
+                  Container(
+                    width: size,
+                    height: size,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: ringColor,
+                        width: widget.isSelected ? 3.0 : 2.0,
+                      ),
+                    ),
+                  ),
+                  // الدائرة الداخلية (اللون)
+                  Container(
+                    width: size - (widget.isSelected ? 10 : 8),
+                    height: size - (widget.isSelected ? 10 : 8),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: widget.color,
+                      boxShadow: [
+                        BoxShadow(
+                          color: widget.color.withOpacity(0.4),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // علامة التحديد
+                  if (widget.isSelected)
+                    Container(
+                      width: size - 10,
+                      height: size - 10,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.9),
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.check_rounded,
+                        color: brightness > 0.5
+                            ? Colors.black87
+                            : Colors.white,
+                        size: widget.isTablet ? 24 : 20,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (widget.colorName.isNotEmpty) ...[
+              SizedBox(height: widget.isTablet ? 6 : 4),
+              Text(
+                widget.colorName,
+                style: tt.bodySmall?.copyWith(
+                  fontSize: widget.isTablet ? 12 : 10,
+                  color: widget.isSelected
+                      ? cs.primary
+                      : cs.onSurfaceVariant,
+                  fontWeight:
+                      widget.isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
