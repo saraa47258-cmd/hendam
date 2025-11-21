@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hindam/core/services/firebase_service.dart';
 import '../../tailors/widgets/tailor_row_card.dart';
 import '../../tailors/models/tailor.dart';
 import '../../tailors/presentation/tailor_store_screen.dart'; // صفحة الخدمات/التفصيل
 import '../../tailors/presentation/tailor_shop_screen.dart'; // صفحة المتجر الجديدة
+import 'package:hindam/shared/widgets/skeletons.dart';
 
 class MenServicesScreen extends StatefulWidget {
   const MenServicesScreen({super.key});
@@ -17,8 +20,6 @@ class MenServicesScreen extends StatefulWidget {
 }
 
 class _MenServicesScreenState extends State<MenServicesScreen> {
-  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
-      GlobalKey<RefreshIndicatorState>();
   bool _isRefreshing = false;
 
   // دالة التحديث اليدوي
@@ -105,103 +106,111 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
         appBar: AppBar(
           title: const Text('الخياطة الرجالية'),
           centerTitle: true,
+          elevation: 0,
+          backgroundColor: cs.surface,
+          systemOverlayStyle: const SystemUiOverlayStyle(
+            statusBarBrightness: Brightness.light,
+            statusBarIconBrightness: Brightness.dark,
+          ),
         ),
         body: SafeArea(
-          child: RefreshIndicator(
-            key: _refreshIndicatorKey,
-            onRefresh: _refreshTailors,
-            child: ListView(
-              primary:
-                  true, // للتمرير لأعلى عند إعادة الضغط على تبويب "الرئيسية"
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                const _DealBannerMen(),
-                const SizedBox(height: 12),
-                _FiltersBarMen(
-                  onRefresh: _refreshTailors,
-                  isRefreshing: _isRefreshing,
-                ),
-                const SizedBox(height: 12),
-
-                // القائمة من فايرستور مع تحديث تلقائي محسّن
-                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseService.getTailorsQuery()
-                      .snapshots(includeMetadataChanges: true),
-                  builder: (context, snapshot) {
-                    // معالجة محسّنة للحالات المختلفة
-                    if (snapshot.connectionState == ConnectionState.waiting &&
-                        !snapshot.hasData) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      return _ErrorBox(
-                        message: 'تعذر تحميل محلات الخياطة',
-                        onRetry: _refreshTailors,
-                      );
-                    }
-
-                    final docs = snapshot.data?.docs ?? const [];
-                    if (docs.isEmpty) {
-                      return _EmptyBox(
-                        message: 'لا توجد محلات مسجلة حالياً',
-                        onRefresh: _refreshTailors,
-                      );
-                    }
-
-                    final items = docs.map(_fromDoc).toList();
-                    return Column(
-                      children: items
-                          .map(
-                            (e) => Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: TailorRowCard(
-                                tailor: e.tailor,
-                                reviewsCount: e.reviewsCount,
-                                serviceFeeOMR: e.serviceFeeOMR,
-                                etaMinutes: e.etaMinutes,
-                                badge: e.badge,
-                                imageUrl: e.imageUrl,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => TailorStoreScreen(
-                                        tailorId: e.tailor.id,
-                                        tailorName: e.tailor.name,
-                                        imageUrl: e.imageUrl,
-                                        reviewsCount: e.reviewsCount,
-                                        serviceFeeOMR: e.serviceFeeOMR,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                onStoreTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => TailorShopScreen(
-                                        tailor: e.tailor,
-                                        imageUrl: e.imageUrl,
-                                        reviewsCount: e.reviewsCount,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    );
-                  },
-                ),
-              ],
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
             ),
+            slivers: [
+              CupertinoSliverRefreshControl(
+                onRefresh: _refreshTailors,
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                sliver: SliverList(
+                  delegate: SliverChildListDelegate([
+                    const _DealBannerMen(),
+                    const SizedBox(height: 12),
+                    _FiltersBarMen(
+                      onRefresh: _refreshTailors,
+                      isRefreshing: _isRefreshing,
+                    ),
+                    const SizedBox(height: 12),
+
+                    // القائمة من فايرستور مع تحديث تلقائي محسّن
+                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                      stream: FirebaseService.getTailorsQuery()
+                          .snapshots(includeMetadataChanges: true),
+                      builder: (context, snapshot) {
+                        // معالجة محسّنة للحالات المختلفة
+                        if (snapshot.connectionState ==
+                                ConnectionState.waiting &&
+                            !snapshot.hasData) {
+                          return const _TailorSkeletonList();
+                        }
+
+                        if (snapshot.hasError) {
+                          return _ErrorBox(
+                            message: 'تعذر تحميل محلات الخياطة',
+                            onRetry: _refreshTailors,
+                          );
+                        }
+
+                        final docs = snapshot.data?.docs ?? const [];
+                        if (docs.isEmpty) {
+                          return _EmptyBox(
+                            message: 'لا توجد محلات مسجلة حالياً',
+                            onRefresh: _refreshTailors,
+                          );
+                        }
+
+                        final items = docs.map(_fromDoc).toList();
+                        return Column(
+                          children: items
+                              .map(
+                                (e) => Padding(
+                                  padding: const EdgeInsets.only(bottom: 14),
+                                  child: TailorRowCard(
+                                    tailor: e.tailor,
+                                    reviewsCount: e.reviewsCount,
+                                    serviceFeeOMR: e.serviceFeeOMR,
+                                    etaMinutes: e.etaMinutes,
+                                    badge: e.badge,
+                                    imageUrl: e.imageUrl,
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        CupertinoPageRoute(
+                                          builder: (_) => TailorStoreScreen(
+                                            tailorId: e.tailor.id,
+                                            tailorName: e.tailor.name,
+                                            imageUrl: e.imageUrl,
+                                            reviewsCount: e.reviewsCount,
+                                            serviceFeeOMR: e.serviceFeeOMR,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    onStoreTap: () {
+                                      Navigator.push(
+                                        context,
+                                        CupertinoPageRoute(
+                                          builder: (_) => TailorShopScreen(
+                                            tailor: e.tailor,
+                                            imageUrl: e.imageUrl,
+                                            reviewsCount: e.reviewsCount,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        );
+                      },
+                    ),
+                  ]),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -218,45 +227,59 @@ class _DealBannerMen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          RichText(
-            text: TextSpan(
-              style: tt.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: cs.onSurface,
+    return RepaintBoundary(
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: cs.outlineVariant.withOpacity(0.3),
+            width: 0.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              text: TextSpan(
+                style: tt.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: cs.onSurface,
+                ),
+                children: const [
+                  TextSpan(text: 'وفّر حتى '),
+                  TextSpan(
+                      text: '٣ ر.ع',
+                      style: TextStyle(color: Color(0xFFE65100))),
+                  TextSpan(text: ' على خياطة الدشداشة'),
+                ],
               ),
-              children: const [
-                TextSpan(text: 'وفّر حتى '),
-                TextSpan(
-                    text: '٣ ر.ع', style: TextStyle(color: Color(0xFFE65100))),
-                TextSpan(text: ' على خياطة الدشداشة'),
-              ],
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'اكتشف محلات جديدة أو جرّب خياطين ما طلبت منهم من فترة',
-            style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: cs.outlineVariant),
+            const SizedBox(height: 6),
+            Text(
+              'اكتشف محلات جديدة أو جرّب خياطين ما طلبت منهم من فترة',
+              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
-            child: Text('14:43', style: tt.labelLarge),
-          ),
-        ],
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: cs.surface,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: cs.outlineVariant),
+              ),
+              child: Text('14:43', style: tt.labelLarge),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -278,17 +301,33 @@ class _FiltersBarMen extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     Widget chip(String label, {IconData? icon}) {
-      return OutlinedButton.icon(
-        onPressed: () {},
-        icon: Icon(icon ?? Icons.expand_more,
-            size: 18, color: cs.onSurfaceVariant),
-        label: Text(label, style: tt.labelLarge?.copyWith(color: cs.onSurface)),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          side: BorderSide(color: cs.outlineVariant),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          backgroundColor: cs.surface,
+      return RepaintBoundary(
+        child: CupertinoButton(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          minSize: 0,
+          onPressed: () {},
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(20),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 16, color: cs.onSurfaceVariant),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: tt.labelLarge?.copyWith(
+                  color: cs.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              if (icon == null) ...[
+                const SizedBox(width: 4),
+                Icon(Icons.expand_more, size: 18, color: cs.onSurfaceVariant),
+              ],
+            ],
+          ),
         ),
       );
     }
@@ -305,26 +344,35 @@ class _FiltersBarMen extends StatelessWidget {
           const SizedBox(width: 8),
           // زر التحديث اليدوي
           if (onRefresh != null)
-            OutlinedButton.icon(
-              onPressed: isRefreshing ? null : onRefresh,
-              icon: isRefreshing
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh, size: 18),
-              label: Text(
-                isRefreshing ? 'جاري التحديث...' : 'تحديث',
-                style: tt.labelLarge?.copyWith(color: cs.onSurface),
-              ),
-              style: OutlinedButton.styleFrom(
+            RepaintBoundary(
+              child: CupertinoButton(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                side: BorderSide(color: cs.outlineVariant),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                backgroundColor: cs.surface,
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                minSize: 0,
+                onPressed: isRefreshing ? null : onRefresh,
+                color: cs.surface,
+                borderRadius: BorderRadius.circular(20),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isRefreshing)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CupertinoActivityIndicator(radius: 8),
+                      )
+                    else
+                      const Icon(Icons.refresh, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      isRefreshing ? 'جاري التحديث...' : 'تحديث',
+                      style: tt.labelLarge?.copyWith(
+                        color: cs.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
         ],
@@ -419,6 +467,102 @@ class _EmptyBox extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// هياكل تحميل (Skeleton) تعرض بطاقة متجر بشكل وهمي أثناء انتظار البيانات
+class _TailorSkeletonList extends StatelessWidget {
+  const _TailorSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(
+        3,
+        (index) => const _TailorSkeletonCard(),
+      ),
+    );
+  }
+}
+
+class _TailorSkeletonCard extends StatelessWidget {
+  const _TailorSkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const double imageSize = 76.0;
+        const double horizontalPadding = 16.0;
+        const double spacing = 12.0;
+        final double textWidth =
+            (constraints.maxWidth - imageSize - horizontalPadding * 2 - spacing)
+                .clamp(0.0, constraints.maxWidth);
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(horizontalPadding),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  width: imageSize,
+                  height: imageSize,
+                  child: const SkeletonContainer(
+                    borderRadius: BorderRadius.all(Radius.circular(16)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: spacing),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLine(width: textWidth * 0.6, height: 18),
+                    const SizedBox(height: 12),
+                    SkeletonLine(width: textWidth * 0.35, height: 14),
+                    const SizedBox(height: 10),
+                    SkeletonLine(width: textWidth * 0.7, height: 14),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        SkeletonLine(
+                          width: textWidth * 0.25,
+                          height: 24,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        const SizedBox(width: 8),
+                        SkeletonLine(
+                          width: textWidth * 0.18,
+                          height: 24,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

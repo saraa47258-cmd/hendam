@@ -918,6 +918,7 @@ class _SectionCircles extends StatelessWidget {
                 isSelected: selected == section,
                 size: circle,
                 onTap: () => onSelect(section),
+                section: section, // إضافة معرف القسم
               ),
             );
           }),
@@ -933,6 +934,7 @@ class _CircleSectionButton extends StatelessWidget {
   final bool isSelected;
   final double size;
   final VoidCallback onTap;
+  final _Section? section; // إضافة معرف القسم
 
   const _CircleSectionButton({
     required this.icon,
@@ -940,6 +942,7 @@ class _CircleSectionButton extends StatelessWidget {
     required this.isSelected,
     required this.size,
     required this.onTap,
+    this.section,
   });
 
   @override
@@ -947,38 +950,51 @@ class _CircleSectionButton extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
+    // Hero tag خاص بكل قسم
+    final heroTag = section == _Section.tailoring
+        ? 'tailoring_button'
+        : section == _Section.alter
+            ? 'alter_button'
+            : 'store_button';
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isSelected ? cs.primaryContainer : cs.surface,
-            border: Border.all(
-                color: isSelected ? cs.primary : cs.outlineVariant,
-                width: isSelected ? 2 : 1),
-            boxShadow: [
-              if (isSelected)
-                BoxShadow(
-                    color: cs.primary.withOpacity(.18),
-                    blurRadius: 16,
-                    offset: const Offset(0, 6))
-            ],
-          ),
-          child: Material(
-            type: MaterialType.transparency,
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onTap,
-              child: Icon(
-                icon,
-                size: isSelected ? 30 : 26,
-                color: isSelected ? cs.onPrimaryContainer : cs.primary,
+        Hero(
+          tag: heroTag,
+          flightShuttleBuilder: (
+            BuildContext flightContext,
+            Animation<double> animation,
+            HeroFlightDirection flightDirection,
+            BuildContext fromHeroContext,
+            BuildContext toHeroContext,
+          ) {
+            final Hero toHero = toHeroContext.widget as Hero;
+            return ScaleTransition(
+              scale: animation.drive(
+                Tween<double>(begin: 0.8, end: 1.0).chain(
+                  CurveTween(curve: Curves.easeOutCubic),
+                ),
               ),
-            ),
+              child: FadeTransition(
+                opacity: animation,
+                child: RotationTransition(
+                  turns: animation.drive(
+                    Tween<double>(begin: 0.0, end: 0.25).chain(
+                      CurveTween(curve: Curves.easeOutCubic),
+                    ),
+                  ),
+                  child: toHero.child,
+                ),
+              ),
+            );
+          },
+          child: _AnimatedCircleButton(
+            icon: icon,
+            isSelected: isSelected,
+            size: size,
+            onTap: onTap,
+            cs: cs,
           ),
         ),
         const SizedBox(height: 8),
@@ -995,6 +1011,115 @@ class _CircleSectionButton extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// Widget متحرك للزر الدائري
+class _AnimatedCircleButton extends StatefulWidget {
+  final IconData icon;
+  final bool isSelected;
+  final double size;
+  final VoidCallback onTap;
+  final ColorScheme cs;
+
+  const _AnimatedCircleButton({
+    required this.icon,
+    required this.isSelected,
+    required this.size,
+    required this.onTap,
+    required this.cs,
+  });
+
+  @override
+  State<_AnimatedCircleButton> createState() => _AnimatedCircleButtonState();
+}
+
+class _AnimatedCircleButtonState extends State<_AnimatedCircleButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    _controller.forward();
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    _controller.reverse();
+    widget.onTap();
+  }
+
+  void _handleTapCancel() {
+    _controller.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final scale = 1.0 - (_controller.value * 0.1);
+          return Transform.scale(
+            scale: scale,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: widget.size,
+              height: widget.size,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: widget.isSelected
+                    ? widget.cs.primaryContainer
+                    : widget.cs.surface,
+                border: Border.all(
+                    color: widget.isSelected
+                        ? widget.cs.primary
+                        : widget.cs.outlineVariant,
+                    width: widget.isSelected ? 2 : 1),
+                boxShadow: [
+                  if (widget.isSelected)
+                    BoxShadow(
+                        color: widget.cs.primary
+                            .withOpacity(.18 + _controller.value * 0.1),
+                        blurRadius: 16 + _controller.value * 8,
+                        offset: Offset(0, 6 + _controller.value * 3))
+                ],
+              ),
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: widget.onTap,
+                  child: Icon(
+                    widget.icon,
+                    size: widget.isSelected ? 30 : 26,
+                    color: widget.isSelected
+                        ? widget.cs.onPrimaryContainer
+                        : widget.cs.primary,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }

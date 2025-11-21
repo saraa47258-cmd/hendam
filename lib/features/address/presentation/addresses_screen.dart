@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../models/address_model.dart';
 import '../services/address_service.dart';
+import '../../../shared/widgets/skeletons.dart';
 
 class AddressesScreen extends StatefulWidget {
   const AddressesScreen({super.key});
@@ -33,8 +34,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                 Icon(Icons.location_on_outlined,
                     size: 64, color: cs.onSurfaceVariant),
                 const SizedBox(height: 16),
-                Text('يرجى تسجيل الدخول لإدارة عناوينك',
-                    style: tt.titleMedium),
+                Text('يرجى تسجيل الدخول لإدارة عناوينك', style: tt.titleMedium),
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   onPressed: () => context.push('/login'),
@@ -75,7 +75,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   children: [
                     Container(
@@ -132,7 +133,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
           stream: _service.streamAddresses(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const _AddressSkeletonList();
             }
 
             if (snapshot.hasError) {
@@ -233,6 +234,64 @@ class _AddressesScreenState extends State<AddressesScreen> {
   }
 }
 
+class _AddressSkeletonList extends StatelessWidget {
+  const _AddressSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 100),
+      itemCount: 3,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, __) => const _AddressSkeletonCard(),
+    );
+  }
+}
+
+class _AddressSkeletonCard extends StatelessWidget {
+  const _AddressSkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Row(
+            children: [
+              Expanded(child: SkeletonLine(width: double.infinity, height: 18)),
+              SizedBox(width: 12),
+              SkeletonLine(width: 60, height: 18),
+            ],
+          ),
+          SizedBox(height: 10),
+          SkeletonLine(width: 180, height: 14),
+          SizedBox(height: 8),
+          SkeletonLine(width: 220, height: 14),
+          SizedBox(height: 12),
+          SkeletonLine(width: double.infinity, height: 12),
+          SizedBox(height: 6),
+          SkeletonLine(width: double.infinity, height: 12),
+        ],
+      ),
+    );
+  }
+}
+
 class _AddressTile extends StatelessWidget {
   final AddressModel address;
   final VoidCallback onEdit;
@@ -309,8 +368,7 @@ class _AddressTile extends StatelessWidget {
                         value: 'default', child: Text('تعيين كافتراضي')),
                   const PopupMenuItem(value: 'delete', child: Text('حذف')),
                 ],
-                icon: Icon(Icons.more_vert_rounded,
-                    color: cs.onSurfaceVariant),
+                icon: Icon(Icons.more_vert_rounded, color: cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -617,7 +675,9 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                           ),
                         )
                       : const Icon(Icons.check_circle_rounded),
-                  label: Text(widget.existing == null ? 'حفظ العنوان' : 'تحديث العنوان'),
+                  label: Text(widget.existing == null
+                      ? 'حفظ العنوان'
+                      : 'تحديث العنوان'),
                 ),
               ),
             ],
@@ -694,5 +754,3 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
     }
   }
 }
-
-

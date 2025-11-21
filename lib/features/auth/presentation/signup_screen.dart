@@ -198,43 +198,52 @@ class _SignUpScreenState extends State<SignUpScreen>
   }
 
   Widget _buildLogo(ThemeData theme) {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.secondary,
-            theme.colorScheme.primary,
+    return Hero(
+      tag: 'login_logo',
+      child: Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.secondary,
+              theme.colorScheme.primary,
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.secondary.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.secondary.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: const Icon(
-        Icons.person_add,
-        size: 50,
-        color: Colors.white,
+        child: const Icon(
+          Icons.person_add,
+          size: 50,
+          color: Colors.white,
+        ),
       ),
     );
   }
 
   Widget _buildTitle(ThemeData theme) {
-    return Text(
-      'انضم إلى هندام!',
-      style: theme.textTheme.headlineMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: theme.colorScheme.onSurface,
+    return Hero(
+      tag: 'login_title',
+      child: Material(
+        color: Colors.transparent,
+        child: Text(
+          'انضم إلى هندام!',
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+          textAlign: TextAlign.center,
+        ),
       ),
-      textAlign: TextAlign.center,
     );
   }
 
@@ -563,90 +572,99 @@ class _SignUpScreenState extends State<SignUpScreen>
   }
 
   Widget _buildSignUpButton(ThemeData theme) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.secondary,
-            theme.colorScheme.primary,
+    return Hero(
+      tag: 'login_button',
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.secondary,
+              theme.colorScheme.primary,
+            ],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.colorScheme.secondary.withOpacity(0.3),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.secondary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _handleSignUp,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.transparent,
+            shadowColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
           ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleSignUp,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : const Text(
+                  'إنشاء حساب',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
         ),
-        child: _isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Text(
-                'إنشاء حساب',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
       ),
     );
   }
 
   Widget _buildLoginLink(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'لديك حساب بالفعل؟ ',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-          ),
-          TextButton(
-            onPressed: () => context.push('/login'),
-            child: Text(
-              'تسجيل الدخول',
-              style: TextStyle(
-                color: theme.colorScheme.secondary,
-                fontWeight: FontWeight.bold,
+    return Hero(
+      tag: 'login_signup_link',
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
               ),
-            ),
+            ],
           ),
-        ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'لديك حساب بالفعل؟ ',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.push('/login'),
+                child: Text(
+                  'تسجيل الدخول',
+                  style: TextStyle(
+                    color: theme.colorScheme.secondary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

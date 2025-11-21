@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/order_service.dart';
 import '../models/order_model.dart';
+import '../../../shared/widgets/skeletons.dart';
 
 /// شاشة عرض طلبات العميل
 class CustomerOrdersScreen extends StatelessWidget {
@@ -31,7 +32,7 @@ class CustomerOrdersScreen extends StatelessWidget {
             stream: OrderService.getCustomerOrders(customerId),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const OrderSkeletonList();
               }
               if (snapshot.hasError) {
                 return Center(child: Text('حدث خطأ: ${snapshot.error}'));

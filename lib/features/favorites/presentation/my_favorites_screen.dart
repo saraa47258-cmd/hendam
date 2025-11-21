@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/any_image.dart';
+import '../../../shared/widgets/skeletons.dart';
 import '../../../core/services/firebase_service.dart';
 
 class MyFavoritesScreen extends StatelessWidget {
@@ -75,7 +76,8 @@ class MyFavoritesScreen extends StatelessWidget {
             child: SafeArea(
               bottom: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Row(
                   children: [
                     Container(
@@ -84,12 +86,15 @@ class MyFavoritesScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
+                        icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                            size: 20, color: Colors.white),
                         onPressed: () async {
                           final localNavigator = Navigator.of(context);
                           if (await localNavigator.maybePop()) return;
-                          final rootNavigator = Navigator.of(context, rootNavigator: true);
-                          if (rootNavigator != localNavigator && await rootNavigator.maybePop()) return;
+                          final rootNavigator =
+                              Navigator.of(context, rootNavigator: true);
+                          if (rootNavigator != localNavigator &&
+                              await rootNavigator.maybePop()) return;
                           if (!context.mounted) return;
                           context.go('/app');
                         },
@@ -122,10 +127,12 @@ class MyFavoritesScreen extends StatelessWidget {
                     StreamBuilder<List<Map<String, dynamic>>>(
                       stream: FavoriteService().getUserFavorites(),
                       builder: (context, snapshot) {
-                        final count = snapshot.hasData ? snapshot.data!.length : 0;
+                        final count =
+                            snapshot.hasData ? snapshot.data!.length : 0;
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 250),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.18),
                             borderRadius: BorderRadius.circular(16),
@@ -133,7 +140,8 @@ class MyFavoritesScreen extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.favorite_rounded, size: 18, color: Colors.white),
+                              const Icon(Icons.favorite_rounded,
+                                  size: 18, color: Colors.white),
                               const SizedBox(width: 6),
                               Text(
                                 '$count',
@@ -157,7 +165,7 @@ class MyFavoritesScreen extends StatelessWidget {
           stream: FavoriteService().getUserFavorites(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const _FavoriteSkeletonList();
             }
 
             if (snapshot.hasError) {
@@ -232,6 +240,74 @@ class MyFavoritesScreen extends StatelessWidget {
   }
 }
 
+class _FavoriteSkeletonList extends StatelessWidget {
+  const _FavoriteSkeletonList();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 4,
+      itemBuilder: (_, __) => const _FavoriteSkeletonCard(),
+    );
+  }
+}
+
+class _FavoriteSkeletonCard extends StatelessWidget {
+  const _FavoriteSkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        color: cs.surface,
+        border: Border.all(color: cs.outlineVariant.withOpacity(0.4)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: const SkeletonContainer(
+                width: 88,
+                height: 88,
+                borderRadius: BorderRadius.all(Radius.circular(18)),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonLine(width: 160, height: 18),
+                  SizedBox(height: 10),
+                  SkeletonLine(width: 120, height: 14),
+                  SizedBox(height: 10),
+                  SkeletonLine(width: 200, height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            const SkeletonCircle(size: 32),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _FavoriteItemCard extends StatelessWidget {
   final Map<String, dynamic> favorite;
   final VoidCallback onRemove;
@@ -296,53 +372,54 @@ class _FavoriteItemCard extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                SizedBox(
-                  width: 88,
-                  height: 88,
-                  child: Stack(
-                    children: [
-                      _FavoriteImageBox(
-                        initialUrl: imageUrl,
-                        isTailor: _isTailor,
-                        tailorId: _isTailor ? favorite['productId'] as String? : null,
-                      ),
-                      Positioned(
-                        bottom: 6,
-                        left: 6,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.35),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.favorite,
-                                size: 14,
-                                color: Colors.redAccent.shade100,
+              SizedBox(
+                width: 88,
+                height: 88,
+                child: Stack(
+                  children: [
+                    _FavoriteImageBox(
+                      initialUrl: imageUrl,
+                      isTailor: _isTailor,
+                      tailorId:
+                          _isTailor ? favorite['productId'] as String? : null,
+                    ),
+                    Positioned(
+                      bottom: 6,
+                      left: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.35),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.favorite,
+                              size: 14,
+                              color: Colors.redAccent.shade100,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              favorite['productType'] == 'tailor'
+                                  ? 'خياط'
+                                  : 'مفضل',
+                              style: tt.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                favorite['productType'] == 'tailor'
-                                    ? 'خياط'
-                                    : 'مفضل',
-                                style: tt.labelSmall?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -506,29 +583,18 @@ class _FavoriteImageBox extends StatelessWidget {
     }
 
     return FutureBuilder<String?>(
-      future: isTailor
-          ? _loadTailorImage(initial, tailorId)
-          : _resolveUrl(initial),
+      future:
+          isTailor ? _loadTailorImage(initial, tailorId) : _resolveUrl(initial),
       builder: (context, snapshot) {
         final resolved = snapshot.data?.trim() ?? initial;
 
         if ((snapshot.connectionState == ConnectionState.waiting ||
                 snapshot.connectionState == ConnectionState.active) &&
             resolved.isEmpty) {
-          return Container(
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHighest,
-              borderRadius: borderRadius,
-            ),
-            alignment: Alignment.center,
-            child: SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation(cs.primary),
-              ),
-            ),
+          return SkeletonContainer(
+            width: 88,
+            height: 88,
+            borderRadius: borderRadius,
           );
         }
 

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/styles/responsive.dart';
+import 'skeletons.dart';
 
-bool _isNetwork(String p) => p.startsWith('http://') || p.startsWith('https://');
+bool _isNetwork(String p) =>
+    p.startsWith('http://') || p.startsWith('https://');
 
 String _normalizeLocal(String raw) {
   var x = raw.trim().replaceAll('\\', '/');
@@ -72,16 +74,24 @@ class AnyImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final raw = (src ?? '').trim();
     final cs = Theme.of(context).colorScheme;
-    
+
     // أبعاد متجاوبة - تحسين للأداء
-    final effectiveWidth = width ?? (context.isPhone ? 120.0 : context.isTablet ? 150.0 : 180.0);
+    final effectiveWidth = width ??
+        (context.isPhone
+            ? 120.0
+            : context.isTablet
+                ? 150.0
+                : 180.0);
     final effectiveHeight = height ?? effectiveWidth;
-    final effectiveBorderRadius = borderRadius ?? BorderRadius.circular(context.responsiveRadius());
-    
-    if (raw.isEmpty) return _fallback(cs, effectiveWidth, effectiveHeight, effectiveBorderRadius);
+    final effectiveBorderRadius =
+        borderRadius ?? BorderRadius.circular(context.responsiveRadius());
+
+    if (raw.isEmpty)
+      return _fallback(
+          cs, effectiveWidth, effectiveHeight, effectiveBorderRadius);
 
     Widget imageWidget;
-    
+
     if (_isNetwork(raw)) {
       imageWidget = CachedNetworkImage(
         imageUrl: raw,
@@ -90,10 +100,14 @@ class AnyImage extends StatelessWidget {
         width: effectiveWidth,
         height: effectiveHeight,
         filterQuality: FilterQuality.low, // تحسين الأداء
-        memCacheWidth: (effectiveWidth * MediaQuery.of(context).devicePixelRatio).round(),
-        memCacheHeight: (effectiveHeight * MediaQuery.of(context).devicePixelRatio).round(),
-        placeholder: (context, url) => _buildLoadingWidget(context, effectiveWidth, effectiveHeight),
-        errorWidget: (context, url, error) => _fallback(cs, effectiveWidth, effectiveHeight, effectiveBorderRadius),
+        memCacheWidth:
+            (effectiveWidth * MediaQuery.of(context).devicePixelRatio).round(),
+        memCacheHeight:
+            (effectiveHeight * MediaQuery.of(context).devicePixelRatio).round(),
+        placeholder: (context, url) => _buildLoadingWidget(
+            context, effectiveWidth, effectiveHeight, effectiveBorderRadius),
+        errorWidget: (context, url, error) => _fallback(
+            cs, effectiveWidth, effectiveHeight, effectiveBorderRadius),
       );
     } else if (raw.endsWith('.svg')) {
       imageWidget = SvgPicture.asset(
@@ -102,11 +116,13 @@ class AnyImage extends StatelessWidget {
         alignment: alignment,
         width: effectiveWidth,
         height: effectiveHeight,
-        placeholderBuilder: (context) => _buildLoadingWidget(context, effectiveWidth, effectiveHeight),
+        placeholderBuilder: (context) => _buildLoadingWidget(
+            context, effectiveWidth, effectiveHeight, effectiveBorderRadius),
       );
     } else {
       final candidates = _assetCandidates(raw);
-      imageWidget = _assetWithFallback(context, candidates, 0, cs, effectiveWidth, effectiveHeight);
+      imageWidget = _assetWithFallback(
+          context, candidates, 0, cs, effectiveWidth, effectiveHeight);
     }
 
     // تطبيق BorderRadius إذا كان محدد
@@ -130,8 +146,10 @@ class AnyImage extends StatelessWidget {
     );
   }
 
-  Widget _assetWithFallback(BuildContext context, List<String> candidates, int i, ColorScheme cs, double width, double height) {
-    if (i >= candidates.length) return _fallback(cs, width, height, BorderRadius.zero);
+  Widget _assetWithFallback(BuildContext context, List<String> candidates,
+      int i, ColorScheme cs, double width, double height) {
+    if (i >= candidates.length)
+      return _fallback(cs, width, height, BorderRadius.zero);
     final path = candidates[i];
     return Image.asset(
       path,
@@ -141,30 +159,22 @@ class AnyImage extends StatelessWidget {
       height: height,
       filterQuality: filterQuality,
       gaplessPlayback: gaplessPlayback,
-      errorBuilder: (_, __, ___) => _assetWithFallback(context, candidates, i + 1, cs, width, height),
+      errorBuilder: (_, __, ___) =>
+          _assetWithFallback(context, candidates, i + 1, cs, width, height),
     );
   }
 
-  Widget _buildLoadingWidget(BuildContext context, double width, double height) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
+  Widget _buildLoadingWidget(BuildContext context, double width, double height,
+      BorderRadius borderRadius) {
+    return SkeletonContainer(
       width: width,
       height: height,
-      color: cs.surfaceContainerHighest,
-      child: Center(
-        child: SizedBox(
-          width: context.iconSize() * 0.8,
-          height: context.iconSize() * 0.8,
-          child: CircularProgressIndicator(
-            strokeWidth: 2.0,
-            valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
-          ),
-        ),
-      ),
+      borderRadius: borderRadius,
     );
   }
 
-  Widget _fallback(ColorScheme cs, double width, double height, BorderRadius borderRadius) {
+  Widget _fallback(
+      ColorScheme cs, double width, double height, BorderRadius borderRadius) {
     return fallback ??
         Container(
           width: width,
@@ -175,7 +185,7 @@ class AnyImage extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Icon(
-            Icons.image_not_supported_outlined, 
+            Icons.image_not_supported_outlined,
             color: cs.onSurfaceVariant,
             size: 24.0,
           ),

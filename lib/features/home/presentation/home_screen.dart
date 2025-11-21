@@ -1,5 +1,6 @@
 // lib/features/home/presentation/home_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 // صفحات الأقسام
@@ -69,109 +70,119 @@ class _HomeScreenState extends State<HomeScreen> {
               horizontal: context.responsivePadding(),
               vertical: context.responsiveSpacing(),
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const _HeaderGreeting(),
-                  SizedBox(height: context.responsiveSpacing()),
-                  const _SearchAndFilter(),
-                  SizedBox(height: context.responsiveSpacing()),
-                  const _PromoBanner(),
-                  SizedBox(height: context.responsiveSpacing() * 1.5),
-
-                  // ===== الأقسام =====
-                  const _SectionHeader(title: 'الأقسام'),
-                  SizedBox(height: context.responsiveSpacing()),
-                  _CategoriesBar(
-                    selected: _selected,
-                    onTapMain: (id) {
-                      setState(() => _selected = id);
-
-                      late final Widget screen;
-                      switch (id) {
-                        case 'men':
-                          screen = const MenServicesScreen();
-                          break;
-                        case 'abaya':
-                          screen =
-                              const AbayaShopsScreen(); // افتح شاشة المحلات أولاً
-                          break;
-                        case 'merchants':
-                        default:
-                          screen = const SmallMerchantScreen();
-                      }
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => screen),
-                      );
-                    },
-                    onTapOptional: (label) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('خيار قادم لاحقًا: $label'),
-                          duration: const Duration(milliseconds: 900),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // ===== آخر طلب =====
-                  LastOrderCard(
-                    orderCode: '#A-1024',
-                    statusText: 'جارٍ التفصيل',
-                    onTrack: () {
-                      // افتح شاشة تتبّع الطلب
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const OrderDetailsScreen(orderId: 'A-1024'),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  // ===== خياطون بالقرب منك =====
-                  const _SectionHeader(title: 'خياطون بالقرب منك'),
-                  const SizedBox(height: 10),
-                  // تحسين الأداء - تقليل عدد العناصر المعروضة
-                  NearbyTailorsPretty(
-                    items: _demoTailorsPretty
-                        .take(3)
-                        .toList(), // عرض 3 فقط بدلاً من كل العناصر
-                    onTapCard: (t) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('فتح تفاصيل: ${t.name}'),
-                          duration: const Duration(
-                              milliseconds: 800), // تقليل مدة العرض
-                        ),
-                      );
-                    },
-                    onCall: (t) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('الاتصال بـ ${t.name}'),
-                          duration: const Duration(milliseconds: 800),
-                        ),
-                      );
-                    },
-                    onMap: (t) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('فتح الخرائط إلى ${t.name}'),
-                          duration: const Duration(milliseconds: 800),
-                        ),
-                      );
-                    },
-                  ),
-
-                  const SizedBox(height: 18),
-                ],
+            child: CustomScrollView(
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
               ),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _HeaderGreeting(),
+                      SizedBox(height: context.responsiveSpacing()),
+                      const _SearchAndFilter(),
+                      SizedBox(height: context.responsiveSpacing()),
+                      const _PromoBanner(),
+                      SizedBox(height: context.responsiveSpacing() * 1.5),
+
+                      // ===== الأقسام =====
+                      const _SectionHeader(title: 'الأقسام'),
+                      SizedBox(height: context.responsiveSpacing()),
+                      _CategoriesBar(
+                        selected: _selected,
+                        onTapMain: (id) {
+                          setState(() => _selected = id);
+
+                          late final Widget screen;
+                          switch (id) {
+                            case 'men':
+                              screen = const MenServicesScreen();
+                              break;
+                            case 'abaya':
+                              screen =
+                                  const AbayaShopsScreen(); // افتح شاشة المحلات أولاً
+                              break;
+                            case 'merchants':
+                            default:
+                              screen = const SmallMerchantScreen();
+                          }
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (_) => screen,
+                              fullscreenDialog: false,
+                            ),
+                          );
+                        },
+                        onTapOptional: (label) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('خيار قادم لاحقًا: $label'),
+                              duration: const Duration(milliseconds: 900),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // ===== آخر طلب =====
+                      LastOrderCard(
+                        orderCode: '#A-1024',
+                        statusText: 'جارٍ التفصيل',
+                        onTrack: () {
+                          // افتح شاشة تتبّع الطلب
+                          Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (context) =>
+                                  const OrderDetailsScreen(orderId: 'A-1024'),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 18),
+
+                      // ===== خياطون بالقرب منك =====
+                      const _SectionHeader(title: 'خياطون بالقرب منك'),
+                      const SizedBox(height: 10),
+                      // تحسين الأداء - تقليل عدد العناصر المعروضة
+                      NearbyTailorsPretty(
+                        items: _demoTailorsPretty
+                            .take(3)
+                            .toList(), // عرض 3 فقط بدلاً من كل العناصر
+                        onTapCard: (t) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('فتح تفاصيل: ${t.name}'),
+                              duration: const Duration(
+                                  milliseconds: 800), // تقليل مدة العرض
+                            ),
+                          );
+                        },
+                        onCall: (t) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('الاتصال بـ ${t.name}'),
+                              duration: const Duration(milliseconds: 800),
+                            ),
+                          );
+                        },
+                        onMap: (t) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('فتح الخرائط إلى ${t.name}'),
+                              duration: const Duration(milliseconds: 800),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(height: 18),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -183,6 +194,17 @@ class _HomeScreenState extends State<HomeScreen> {
 /* ========================= Header ========================= */
 class _HeaderGreeting extends StatelessWidget {
   const _HeaderGreeting();
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: _HeaderGreetingContent(),
+    );
+  }
+}
+
+class _HeaderGreetingContent extends StatelessWidget {
+  const _HeaderGreetingContent();
 
   @override
   Widget build(BuildContext context) {
@@ -237,6 +259,17 @@ class _HeaderGreeting extends StatelessWidget {
 /* ====================== Search & Filter ==================== */
 class _SearchAndFilter extends StatelessWidget {
   const _SearchAndFilter();
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: _SearchAndFilterContent(),
+    );
+  }
+}
+
+class _SearchAndFilterContent extends StatelessWidget {
+  const _SearchAndFilterContent();
 
   @override
   Widget build(BuildContext context) {
@@ -305,6 +338,17 @@ class _SearchAndFilter extends StatelessWidget {
 /* ======================= Promo Banner ====================== */
 class _PromoBanner extends StatelessWidget {
   const _PromoBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: _PromoBannerContent(),
+    );
+  }
+}
+
+class _PromoBannerContent extends StatelessWidget {
+  const _PromoBannerContent();
 
   @override
   Widget build(BuildContext context) {
@@ -465,100 +509,58 @@ class _CategoriesBar extends StatelessWidget {
     // ✅ عرض جميع الأيقونات في صف واحد مع إمكانية التمرير
     final spacing = context.responsiveSpacing();
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: context.responsiveMargin()),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
+    // بناء قائمة الأزرار
+    final buttons = cats.asMap().entries.map((entry) {
+      final index = entry.key;
+      final c = entry.value;
+      final isSelected = selected == c.id;
+
+      final iconColor = c.optional
+          ? cs.onSurfaceVariant
+          : (isSelected ? c.baseColor : cs.onSurfaceVariant);
+
+      final labelColor = c.optional
+          ? cs.onSurfaceVariant
+          : (isSelected ? c.baseColor : cs.onSurface);
+
+      return RepaintBoundary(
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: cats.asMap().entries.map((entry) {
-            final index = entry.key;
-            final c = entry.value;
-            final isSelected = selected == c.id;
-
-            final iconColor = c.optional
-                ? cs.onSurfaceVariant
-                : (isSelected ? c.baseColor : cs.onSurfaceVariant);
-
-            final labelColor = c.optional
-                ? cs.onSurfaceVariant
-                : (isSelected ? c.baseColor : cs.onSurface);
-
-            return Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                GestureDetector(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Hero(
+              tag: 'category_${c.id}',
+              child: Material(
+                color: Colors.transparent,
+                child: _AnimatedCategoryButton(
+                  isSelected: isSelected,
+                  baseColor: c.baseColor,
+                  iconColor: iconColor,
+                  labelColor: labelColor,
+                  label: c.label,
+                  svg: c.svg,
+                  fallback: c.fallback,
+                  tint: c.tint,
+                  cs: cs,
                   onTap: () =>
                       c.optional ? onTapOptional(c.label) : onTapMain(c.id),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: context.pick(58.0, tablet: 64.0, desktop: 70.0),
-                        height: context.pick(58.0, tablet: 64.0, desktop: 70.0),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: isSelected
-                              ? LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    c.baseColor.withOpacity(.14),
-                                    c.baseColor.withOpacity(.04),
-                                  ],
-                                )
-                              : LinearGradient(
-                                  colors: [
-                                    cs.surfaceContainerHighest,
-                                    cs.secondaryContainer,
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(.06),
-                              blurRadius: 10,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                          border: isSelected
-                              ? Border.all(color: c.baseColor, width: 2)
-                              : null,
-                        ),
-                        child: _CategoryIcon(
-                          svg: c.svg,
-                          color: iconColor,
-                          fallback: c.fallback,
-                          tint: c.tint,
-                        ),
-                      ),
-                      SizedBox(height: context.responsiveMargin()),
-                      SizedBox(
-                        width: context.pick(72.0, tablet: 80.0, desktop: 88.0),
-                        height: context.pick(32.0, tablet: 36.0, desktop: 40.0),
-                        child: Text(
-                          c.label,
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.labelSmall?.copyWith(
-                                    fontWeight: isSelected
-                                        ? FontWeight.w800
-                                        : FontWeight.w600,
-                                    color: labelColor,
-                                    fontSize: context.responsiveFontSize(12.0),
-                                  ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-                if (index < cats.length - 1) SizedBox(width: spacing),
-              ],
-            );
-          }).toList(),
+              ),
+            ),
+            if (index < cats.length - 1) SizedBox(width: spacing),
+          ],
+        ),
+      );
+    }).toList();
+
+    return Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: context.responsiveMargin()),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: buttons,
+          ),
         ),
       ),
     );
@@ -623,12 +625,213 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            fontSize: context.responsiveFontSize(20.0),
-          ),
+    return RepaintBoundary(
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: context.responsiveFontSize(20.0),
+            ),
+      ),
+    );
+  }
+}
+
+// Widget متحرك لزر القسم مع تصميم iOS
+class _AnimatedCategoryButton extends StatefulWidget {
+  final bool isSelected;
+  final Color baseColor;
+  final Color iconColor;
+  final Color labelColor;
+  final String label;
+  final String svg;
+  final IconData fallback;
+  final bool tint;
+  final ColorScheme cs;
+  final VoidCallback onTap;
+
+  const _AnimatedCategoryButton({
+    required this.isSelected,
+    required this.baseColor,
+    required this.iconColor,
+    required this.labelColor,
+    required this.label,
+    required this.svg,
+    required this.fallback,
+    required this.tint,
+    required this.cs,
+    required this.onTap,
+  });
+
+  @override
+  State<_AnimatedCategoryButton> createState() =>
+      _AnimatedCategoryButtonState();
+}
+
+class _AnimatedCategoryButtonState extends State<_AnimatedCategoryButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _borderAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _borderAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
+    if (widget.isSelected) {
+      _controller.value = 1.0;
+    }
+  }
+
+  @override
+  void didUpdateWidget(_AnimatedCategoryButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isSelected != oldWidget.isSelected) {
+      if (widget.isSelected) {
+        _controller.forward();
+      } else {
+        _controller.reverse();
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    _controller.forward();
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    _controller.reverse();
+    widget.onTap();
+  }
+
+  void _handleTapCancel() {
+    _controller.reverse();
+  }
+
+  void _handleTap() {
+    widget.onTap();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = context.pick(58.0, tablet: 64.0, desktop: 70.0);
+    final labelWidth = context.pick(72.0, tablet: 80.0, desktop: 88.0);
+    final labelHeight = context.pick(32.0, tablet: 36.0, desktop: 40.0);
+
+    return GestureDetector(
+      onTap: _handleTap,
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: size,
+                  height: size,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: widget.isSelected
+                        ? LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              widget.baseColor.withOpacity(.14),
+                              widget.baseColor.withOpacity(.04),
+                            ],
+                          )
+                        : LinearGradient(
+                            colors: [
+                              widget.cs.surfaceContainerHighest,
+                              widget.cs.secondaryContainer,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 6),
+                      ),
+                      if (widget.isSelected)
+                        BoxShadow(
+                          color: widget.baseColor
+                              .withOpacity(.3 * _borderAnimation.value),
+                          blurRadius: 12 * _borderAnimation.value,
+                          spreadRadius: 2 * _borderAnimation.value,
+                        ),
+                    ],
+                    border: widget.isSelected
+                        ? Border.all(
+                            color: widget.baseColor,
+                            width: 2 * _borderAnimation.value,
+                          )
+                        : null,
+                  ),
+                  child: _CategoryIcon(
+                    svg: widget.svg,
+                    color: widget.iconColor,
+                    fallback: widget.fallback,
+                    tint: widget.tint,
+                  ),
+                ),
+                SizedBox(height: context.responsiveMargin()),
+                SizedBox(
+                  width: labelWidth,
+                  height: labelHeight,
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 200),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              fontWeight: widget.isSelected
+                                  ? FontWeight.w800
+                                  : FontWeight.w600,
+                              color: widget.labelColor,
+                              fontSize: context.responsiveFontSize(12.0),
+                            ) ??
+                        const TextStyle(),
+                    child: Text(
+                      widget.label,
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

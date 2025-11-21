@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../services/order_service.dart';
 import '../models/order_model.dart';
+import '../../../shared/widgets/skeletons.dart';
 
 /// شاشة عرض طلبات العميل الحقيقية
 class MyOrdersScreen extends StatefulWidget {
@@ -83,10 +84,11 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
         }
 
         final userId = authProvider.currentUser!.uid;
-        
+
         // Debug: طباعة معلومات المستخدم
         print('📱 MyOrdersScreen: User ID = $userId');
-        print('📱 MyOrdersScreen: User Name = ${authProvider.currentUser!.name}');
+        print(
+            '📱 MyOrdersScreen: User Name = ${authProvider.currentUser!.name}');
 
         return Directionality(
           textDirection: TextDirection.rtl,
@@ -101,8 +103,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     return;
                   }
 
-                  final rootNavigator = Navigator.of(context, rootNavigator: true);
-                  if (rootNavigator != localNavigator && await rootNavigator.maybePop()) {
+                  final rootNavigator =
+                      Navigator.of(context, rootNavigator: true);
+                  if (rootNavigator != localNavigator &&
+                      await rootNavigator.maybePop()) {
                     return;
                   }
 
@@ -149,7 +153,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     stream: OrderService.getCustomerOrders(userId),
                     builder: (context, snapshot) {
                       // Debug logging
-                      print('📦 StreamBuilder State: ${snapshot.connectionState}');
+                      print(
+                          '📦 StreamBuilder State: ${snapshot.connectionState}');
                       print('📦 Has Error: ${snapshot.hasError}');
                       print('📦 Has Data: ${snapshot.hasData}');
                       if (snapshot.hasData) {
@@ -161,19 +166,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                       }
 
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              CircularProgressIndicator(color: cs.primary),
-                              const SizedBox(height: 16),
-                              Text(
-                                'جاري تحميل الطلبات...',
-                                style: TextStyle(color: cs.onSurfaceVariant),
-                              ),
-                            ],
-                          ),
-                        );
+                        return const OrderSkeletonList(count: 4);
                       }
 
                       if (snapshot.hasError) {
@@ -193,7 +186,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                               ),
                               const SizedBox(height: 8),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 32),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 32),
                                 child: Text(
                                   '${snapshot.error}',
                                   textAlign: TextAlign.center,
@@ -241,7 +235,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                             }).toList();
 
                       if (filteredOrders.isEmpty) {
-                        print('ℹ️ No orders to display (Tab: $_selectedTab, Total: ${allOrders.length})');
+                        print(
+                            'ℹ️ No orders to display (Tab: $_selectedTab, Total: ${allOrders.length})');
                         return Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -258,7 +253,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                               ),
                               const SizedBox(height: 12),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 40),
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 40),
                                 child: Text(
                                   _selectedTab == 0
                                       ? 'لم تقم بإرسال أي طلبات حتى الآن.\nابدأ بتصفح الخياطين واطلب قطعتك المفصلة!'
@@ -276,7 +272,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                 FilledButton.icon(
                                   onPressed: () {
                                     // العودة للصفحة الرئيسية
-                                    Navigator.of(context).popUntil((route) => route.isFirst);
+                                    Navigator.of(context)
+                                        .popUntil((route) => route.isFirst);
                                   },
                                   icon: const Icon(Icons.home),
                                   label: const Text('تصفح الخياطين'),
@@ -340,8 +337,10 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                   );
 
                                   if (confirmed == true) {
-                                    final success = await OrderService.cancelOrder(
-                                        filteredOrders[i].id, 'إلغاء من العميل');
+                                    final success =
+                                        await OrderService.cancelOrder(
+                                            filteredOrders[i].id,
+                                            'إلغاء من العميل');
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
@@ -482,8 +481,8 @@ class _OrderCard extends StatelessWidget {
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
                               return const Center(
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2));
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2));
                             },
                           ),
                   ),
@@ -539,7 +538,8 @@ class _OrderCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.store, size: 12, color: cs.onSurfaceVariant),
+                            Icon(Icons.store,
+                                size: 12, color: cs.onSurfaceVariant),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -555,7 +555,8 @@ class _OrderCard extends StatelessWidget {
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Icon(Icons.texture, size: 12, color: cs.onSurfaceVariant),
+                            Icon(Icons.texture,
+                                size: 12, color: cs.onSurfaceVariant),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -929,8 +930,8 @@ class _OrderDetailsScreen extends StatelessWidget {
       {'title': 'مكتملة', 'status': OrderStatus.completed},
     ];
 
-    int currentStep = steps.indexWhere(
-        (step) => step['status'] == order.status);
+    int currentStep =
+        steps.indexWhere((step) => step['status'] == order.status);
     if (currentStep == -1) currentStep = 0;
 
     return Card(
@@ -966,7 +967,9 @@ class _OrderDetailsScreen extends StatelessWidget {
                         height: 32,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: isActive ? cs.primary : cs.surfaceContainerHighest,
+                          color: isActive
+                              ? cs.primary
+                              : cs.surfaceContainerHighest,
                           border: Border.all(
                             color: isActive ? cs.primary : cs.outlineVariant,
                             width: 2,
@@ -1135,8 +1138,7 @@ class _OrderDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             _buildDetailRow(Icons.store, 'اسم المحل', order.tailorName, cs),
-            _buildDetailRow(
-                Icons.person, 'اسم العميل', order.customerName, cs),
+            _buildDetailRow(Icons.person, 'اسم العميل', order.customerName, cs),
             _buildDetailRow(Icons.phone, 'رقم الهاتف', order.customerPhone, cs),
           ],
         ),
@@ -1232,8 +1234,7 @@ class _OrderDetailsScreen extends StatelessWidget {
                   textDirection: TextDirection.rtl,
                   child: AlertDialog(
                     title: const Text('إلغاء الطلب'),
-                    content:
-                        const Text('هل أنت متأكد من إلغاء هذا الطلب؟'),
+                    content: const Text('هل أنت متأكد من إلغاء هذا الطلب؟'),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
@@ -1252,8 +1253,8 @@ class _OrderDetailsScreen extends StatelessWidget {
               );
 
               if (confirmed == true && context.mounted) {
-                final success = await OrderService.cancelOrder(
-                    order.id, 'إلغاء من العميل');
+                final success =
+                    await OrderService.cancelOrder(order.id, 'إلغاء من العميل');
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(

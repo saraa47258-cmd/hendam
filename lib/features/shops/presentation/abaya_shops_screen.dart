@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/shop.dart';
 import '../../catalog/presentation/abaya_services_screen.dart';
+import '../../../shared/widgets/skeletons.dart';
 
 /// شاشة محلات العبايات — صور من assets/abaya/
 class AbayaShopsScreen extends StatefulWidget {
@@ -308,11 +309,7 @@ class _ShopCardModern extends StatelessWidget {
               (132 * MediaQuery.of(context).devicePixelRatio).round(),
           memCacheHeight:
               (140 * MediaQuery.of(context).devicePixelRatio).round(),
-          placeholder: (context, url) => Container(
-            color: cs.surfaceContainerHighest,
-            child:
-                const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-          ),
+          placeholder: (context, url) => const SkeletonContainer(),
           errorWidget: (context, url, error) => Container(
             color: cs.surfaceContainerHighest,
             child: Icon(Icons.image, color: cs.onSurfaceVariant),

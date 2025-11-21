@@ -190,43 +190,50 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildLogo(ThemeData theme) {
-    return Container(
-      width: 120,
-      height: 120,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.secondary,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+    return Hero(
+      tag: 'login_logo',
+      flightShuttleBuilder: (
+        BuildContext flightContext,
+        Animation<double> animation,
+        HeroFlightDirection flightDirection,
+        BuildContext fromHeroContext,
+        BuildContext toHeroContext,
+      ) {
+        final Hero toHero = toHeroContext.widget as Hero;
+        return ScaleTransition(
+          scale: animation.drive(
+            Tween<double>(begin: 0.0, end: 1.0).chain(
+              CurveTween(curve: Curves.elasticOut),
+            ),
           ),
-        ],
-      ),
-      child: const Icon(
-        Icons.person,
-        size: 60,
-        color: Colors.white,
-      ),
+          child: RotationTransition(
+            turns: animation.drive(
+              Tween<double>(begin: 0.0, end: 0.5).chain(
+                CurveTween(curve: Curves.easeOutCubic),
+              ),
+            ),
+            child: toHero.child,
+          ),
+        );
+      },
+      child: _AnimatedLogo(theme: theme),
     );
   }
 
   Widget _buildTitle(ThemeData theme) {
-    return Text(
-      'مرحباً بك مرة أخرى!',
-      style: theme.textTheme.headlineMedium?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: theme.colorScheme.onSurface,
+    return Hero(
+      tag: 'login_title',
+      child: Material(
+        color: Colors.transparent,
+        child: Text(
+          'مرحباً بك مرة أخرى!',
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.onSurface,
+          ),
+          textAlign: TextAlign.center,
+        ),
       ),
-      textAlign: TextAlign.center,
     );
   }
 
@@ -258,170 +265,162 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildEmailField(ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: TextFormField(
-        controller: _emailController,
-        keyboardType: TextInputType.emailAddress,
-        textDirection: TextDirection.ltr,
-        decoration: InputDecoration(
-          labelText: 'البريد الإلكتروني',
-          hintText: 'أدخل بريدك الإلكتروني',
-          prefixIcon: Container(
-            margin: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.email_outlined,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          border: OutlineInputBorder(
+    return Hero(
+      tag: 'login_email_field',
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
+          child: TextFormField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            textDirection: TextDirection.ltr,
+            decoration: InputDecoration(
+              labelText: 'البريد الإلكتروني',
+              hintText: 'أدخل بريدك الإلكتروني',
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.email_outlined,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال البريد الإلكتروني';
+              }
+              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                return 'الرجاء إدخال بريد إلكتروني صحيح';
+              }
+              return null;
+            },
           ),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'الرجاء إدخال البريد الإلكتروني';
-          }
-          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-            return 'الرجاء إدخال بريد إلكتروني صحيح';
-          }
-          return null;
-        },
       ),
     );
   }
 
   Widget _buildPasswordField(ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return Hero(
+      tag: 'login_password_field',
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: TextFormField(
-        controller: _passwordController,
-        obscureText: _obscurePassword,
-        textDirection: TextDirection.ltr,
-        decoration: InputDecoration(
-          labelText: 'كلمة المرور',
-          hintText: 'أدخل كلمة المرور',
-          prefixIcon: Container(
-            margin: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+          child: TextFormField(
+            controller: _passwordController,
+            obscureText: _obscurePassword,
+            textDirection: TextDirection.ltr,
+            decoration: InputDecoration(
+              labelText: 'كلمة المرور',
+              hintText: 'أدخل كلمة المرور',
+              prefixIcon: Container(
+                margin: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.lock_outline,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: theme.colorScheme.primary,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
             ),
-            child: Icon(
-              Icons.lock_outline,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          suffixIcon: IconButton(
-            icon: Icon(
-              _obscurePassword
-                  ? Icons.visibility_off_outlined
-                  : Icons.visibility_outlined,
-              color: theme.colorScheme.primary,
-            ),
-            onPressed: () {
-              setState(() {
-                _obscurePassword = !_obscurePassword;
-              });
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'الرجاء إدخال كلمة المرور';
+              }
+              return null;
             },
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
         ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'الرجاء إدخال كلمة المرور';
-          }
-          return null;
-        },
       ),
     );
   }
 
   Widget _buildLoginButton(ThemeData theme) {
-    return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            theme.colorScheme.primary,
-            theme.colorScheme.secondary,
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+    return Hero(
+      tag: 'login_button',
+      flightShuttleBuilder: (
+        BuildContext flightContext,
+        Animation<double> animation,
+        HeroFlightDirection flightDirection,
+        BuildContext fromHeroContext,
+        BuildContext toHeroContext,
+      ) {
+        final Hero toHero = toHeroContext.widget as Hero;
+        return ScaleTransition(
+          scale: animation.drive(
+            Tween<double>(begin: 0.8, end: 1.0).chain(
+              CurveTween(curve: Curves.easeOutCubic),
+            ),
           ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleLogin,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+          child: FadeTransition(
+            opacity: animation,
+            child: toHero.child,
           ),
-        ),
-        child: _isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Text(
-                'تسجيل الدخول',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+        );
+      },
+      child: _AnimatedLoginButton(
+        theme: theme,
+        isLoading: _isLoading,
+        onPressed: _handleLogin,
       ),
     );
   }
@@ -440,39 +439,250 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildSignUpLink(ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+    return Hero(
+      tag: 'login_signup_link',
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
-        ],
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'ليس لديك حساب؟ ',
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.push('/signup'),
+                child: Text(
+                  'إنشاء حساب جديد',
+                  style: TextStyle(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'ليس لديك حساب؟ ',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface.withOpacity(0.7),
-            ),
-          ),
-          TextButton(
-            onPressed: () => context.push('/signup'),
-            child: Text(
-              'إنشاء حساب جديد',
-              style: TextStyle(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
+    );
+  }
+}
+
+// Widget متحرك للشعار
+class _AnimatedLogo extends StatefulWidget {
+  final ThemeData theme;
+
+  const _AnimatedLogo({required this.theme});
+
+  @override
+  State<_AnimatedLogo> createState() => _AnimatedLogoState();
+}
+
+class _AnimatedLogoState extends State<_AnimatedLogo>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _rotationAnimation = Tween<double>(begin: 0.0, end: 0.05).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Transform.rotate(
+            angle: _rotationAnimation.value,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    widget.theme.colorScheme.primary,
+                    widget.theme.colorScheme.secondary,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.theme.colorScheme.primary
+                        .withOpacity(0.3 + _scaleAnimation.value * 0.2),
+                    blurRadius: 20 + _scaleAnimation.value * 10,
+                    offset: Offset(0, 10 + _scaleAnimation.value * 5),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.person,
+                size: 60,
+                color: Colors.white,
               ),
             ),
           ),
-        ],
+        );
+      },
+    );
+  }
+}
+
+// Widget متحرك لزر تسجيل الدخول
+class _AnimatedLoginButton extends StatefulWidget {
+  final ThemeData theme;
+  final bool isLoading;
+  final VoidCallback onPressed;
+
+  const _AnimatedLoginButton({
+    required this.theme,
+    required this.isLoading,
+    required this.onPressed,
+  });
+
+  @override
+  State<_AnimatedLoginButton> createState() => _AnimatedLoginButtonState();
+}
+
+class _AnimatedLoginButtonState extends State<_AnimatedLoginButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTapDown(TapDownDetails details) {
+    _controller.forward();
+  }
+
+  void _handleTapUp(TapUpDetails details) {
+    _controller.reverse();
+  }
+
+  void _handleTapCancel() {
+    _controller.reverse();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: _handleTapDown,
+      onTapUp: _handleTapUp,
+      onTapCancel: _handleTapCancel,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final scale = 1.0 - (_controller.value * 0.05);
+          return Transform.scale(
+            scale: scale,
+            child: Container(
+              height: 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    widget.theme.colorScheme.primary,
+                    widget.theme.colorScheme.secondary,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.theme.colorScheme.primary
+                        .withOpacity(0.3 - _controller.value * 0.1),
+                    blurRadius: 15 - _controller.value * 5,
+                    offset: Offset(0, 8 - _controller.value * 3),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: widget.isLoading ? null : widget.onPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: widget.isLoading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'تسجيل الدخول',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

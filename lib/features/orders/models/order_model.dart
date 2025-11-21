@@ -17,6 +17,13 @@ class OrderModel {
   final String fabricColorHex;
   final Map<String, double> measurements; // المقاسات
   final String notes;
+  
+  // معلومات التطريز
+  final String? embroideryDesignId;
+  final String? embroideryDesignName;
+  final String? embroideryDesignImageUrl;
+  final double? embroideryDesignPrice;
+  
   final double totalPrice;
   final OrderStatus status;
   final DateTime createdAt;
@@ -39,6 +46,10 @@ class OrderModel {
     required this.fabricColorHex,
     required this.measurements,
     required this.notes,
+    this.embroideryDesignId,
+    this.embroideryDesignName,
+    this.embroideryDesignImageUrl,
+    this.embroideryDesignPrice,
     required this.totalPrice,
     required this.status,
     required this.createdAt,
@@ -65,6 +76,10 @@ class OrderModel {
       fabricColorHex: data['fabricColorHex'] ?? '',
       measurements: Map<String, double>.from(data['measurements'] ?? {}),
       notes: data['notes'] ?? '',
+      embroideryDesignId: data['embroideryDesignId'],
+      embroideryDesignName: data['embroideryDesignName'],
+      embroideryDesignImageUrl: data['embroideryDesignImageUrl'],
+      embroideryDesignPrice: (data['embroideryDesignPrice'] as num?)?.toDouble(),
       totalPrice: (data['totalPrice'] as num?)?.toDouble() ?? 0.0,
       status: OrderStatus.values.firstWhere(
         (e) => e.toString() == 'OrderStatus.${data['status']}',
@@ -105,6 +120,12 @@ class OrderModel {
       // ملاحظات إضافية
       'notes': notes,
 
+      // معلومات التطريز
+      'embroideryDesignId': embroideryDesignId,
+      'embroideryDesignName': embroideryDesignName,
+      'embroideryDesignImageUrl': embroideryDesignImageUrl,
+      'embroideryDesignPrice': embroideryDesignPrice,
+
       // السعر الإجمالي
       'totalPrice': totalPrice,
 
@@ -143,6 +164,10 @@ class OrderModel {
     String? fabricColorHex,
     Map<String, double>? measurements,
     String? notes,
+    String? embroideryDesignId,
+    String? embroideryDesignName,
+    String? embroideryDesignImageUrl,
+    double? embroideryDesignPrice,
     double? totalPrice,
     OrderStatus? status,
     DateTime? createdAt,
@@ -165,6 +190,10 @@ class OrderModel {
       fabricColorHex: fabricColorHex ?? this.fabricColorHex,
       measurements: measurements ?? this.measurements,
       notes: notes ?? this.notes,
+      embroideryDesignId: embroideryDesignId ?? this.embroideryDesignId,
+      embroideryDesignName: embroideryDesignName ?? this.embroideryDesignName,
+      embroideryDesignImageUrl: embroideryDesignImageUrl ?? this.embroideryDesignImageUrl,
+      embroideryDesignPrice: embroideryDesignPrice ?? this.embroideryDesignPrice,
       totalPrice: totalPrice ?? this.totalPrice,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,

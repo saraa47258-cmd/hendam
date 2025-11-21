@@ -7,6 +7,7 @@ import 'package:hindam/features/auth/models/user_model.dart';
 import 'package:hindam/features/favorites/services/favorite_service.dart';
 import 'package:hindam/features/orders/services/order_service.dart';
 import 'package:hindam/features/orders/models/order_model.dart';
+import 'package:hindam/shared/widgets/skeletons.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -212,6 +213,11 @@ class _ProfileScreenState extends State<ProfileScreen>
     return StreamBuilder<List<OrderModel>>(
       stream: OrderService.getCustomerOrders(user.uid),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const _ProfileStatsSkeleton();
+        }
+
         final orders = snapshot.data ?? [];
         final totalOrders = orders.length;
         final activeOrders = orders
@@ -268,15 +274,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ),
                   ),
                   const Spacer(),
-                  if (snapshot.connectionState == ConnectionState.waiting)
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.8,
-                        color: cs.primary,
-                      ),
-                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -972,6 +969,10 @@ class _FavoritesCard extends StatelessWidget {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: FavoriteService().getUserFavorites(),
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const _FavoritesCardSkeleton();
+        }
         final favoritesCount = snapshot.data?.length ?? 0;
 
         return Container(
@@ -1037,6 +1038,117 @@ class _FavoritesCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _FavoritesCardSkeleton extends StatelessWidget {
+  const _FavoritesCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          Row(
+            children: [
+              SkeletonCircle(size: 36),
+              Spacer(),
+              SkeletonLine(width: 40, height: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          SkeletonLine(width: 80, height: 14),
+          SizedBox(height: 6),
+          SkeletonLine(width: 120, height: 12),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfileStatsSkeleton extends StatelessWidget {
+  const _ProfileStatsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SkeletonLine(width: 120, height: 20),
+          const SizedBox(height: 16),
+          Row(
+            children: const [
+              Expanded(
+                child: SkeletonContainer(
+                  height: 110,
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: SkeletonContainer(
+                  height: 110,
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: const [
+              Expanded(
+                child: SkeletonContainer(
+                  height: 110,
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: SkeletonContainer(
+                  height: 110,
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const SkeletonContainer(
+            height: 90,
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+          ),
+        ],
+      ),
     );
   }
 }
