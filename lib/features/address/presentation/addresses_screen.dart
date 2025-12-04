@@ -268,9 +268,9 @@ class _AddressSkeletonCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Row(
             children: [
               Expanded(child: SkeletonLine(width: double.infinity, height: 18)),

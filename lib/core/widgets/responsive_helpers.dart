@@ -92,7 +92,7 @@ class ResponsiveHelpers {
         );
 
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       items: items.map((item) {
         return DropdownMenuItem<T>(
           value: item,
@@ -361,4 +361,3 @@ class ResponsiveHelpers {
     return content;
   }
 }
-

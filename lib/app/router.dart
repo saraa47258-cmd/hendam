@@ -9,6 +9,7 @@ import 'package:hindam/features/orders/presentation/customer_orders_screen.dart'
 import 'package:hindam/features/catalog/presentation/product_preview_screen.dart';
 import 'package:hindam/test_firebase.dart';
 import 'package:hindam/features/auth/presentation/auth_welcome_screen.dart';
+import 'package:hindam/features/auth/presentation/splash_screen.dart';
 import 'package:hindam/features/auth/presentation/login_screen.dart';
 import 'package:hindam/features/auth/presentation/signup_screen.dart';
 import 'package:hindam/features/auth/presentation/forgot_password_screen.dart';
@@ -25,9 +26,13 @@ final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
   routes: <RouteBase>[
-    // صفحة الترحيب (الصفحة الرئيسية)
     GoRoute(
       path: '/',
+      name: 'splash',
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/welcome',
       name: 'welcome',
       builder: (context, state) => const AuthWelcomeScreen(),
     ),
@@ -173,7 +178,7 @@ final GoRouter appRouter = GoRouter(
               style: Theme.of(context).textTheme.bodyMedium),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: () => context.go('/'),
+            onPressed: () => context.go('/welcome'),
             child: const Text('العودة للرئيسية'),
           ),
         ],

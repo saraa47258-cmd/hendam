@@ -66,7 +66,6 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
     final heroTag = 'product-${widget.productId}';
 
     final images = item.gallery.isEmpty

@@ -1,370 +1,154 @@
-// lib/features/auth/presentation/auth_welcome_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class AuthWelcomeScreen extends StatefulWidget {
+class AuthWelcomeScreen extends StatelessWidget {
   const AuthWelcomeScreen({super.key});
-
-  @override
-  State<AuthWelcomeScreen> createState() => _AuthWelcomeScreenState();
-}
-
-class _AuthWelcomeScreenState extends State<AuthWelcomeScreen>
-    with TickerProviderStateMixin {
-  late AnimationController _animationController;
-  late AnimationController _featureAnimationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  late List<Animation<double>> _featureAnimations;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-
-    _featureAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    // رسوم متحركة للميزات
-    _featureAnimations = List.generate(3, (index) {
-      return Tween<double>(
-        begin: 0.0,
-        end: 1.0,
-      ).animate(CurvedAnimation(
-        parent: _featureAnimationController,
-        curve: Interval(
-          index * 0.2,
-          1.0,
-          curve: Curves.easeOutBack,
-        ),
-      ));
-    });
-
-    _animationController.forward();
-    Future.delayed(const Duration(milliseconds: 500), () {
-      _featureAnimationController.forward();
-    });
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    _featureAnimationController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [
-                theme.colorScheme.primary.withOpacity(0.1),
-                theme.colorScheme.secondary.withOpacity(0.05),
-                theme.colorScheme.tertiary.withOpacity(0.1),
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 60),
-
-                  // اسم التطبيق
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _buildAppTitle(theme),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // الوصف
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _buildDescription(theme),
-                    ),
-                  ),
-
-                  const SizedBox(height: 60),
-
-                  // الميزات المحسنة
-                  _buildFeatures(theme),
-
-                  const SizedBox(height: 60),
-
-                  // الأزرار المحسنة
-                  FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: SlideTransition(
-                      position: _slideAnimation,
-                      child: _buildActionButtons(theme),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-                ],
+        backgroundColor: cs.surface,
+        body: Stack(
+          children: [
+            const _BackgroundShapes(),
+            SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _HeaderHero(cs: cs, theme: theme),
+                    const SizedBox(height: 28),
+                    _FeatureList(cs: cs),
+                    const SizedBox(height: 28),
+                    _ActionButtons(cs: cs),
+                  ],
+                ),
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildAppTitle(ThemeData theme) {
+class _HeaderHero extends StatelessWidget {
+  final ColorScheme cs;
+  final ThemeData theme;
+  const _HeaderHero({required this.cs, required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Text(
-          'هندام',
-          style: theme.textTheme.headlineLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-            fontSize: 48,
+        Align(
+          alignment: Alignment.centerRight,
+          child: IconButton(
+            onPressed: () {},
+            icon: Icon(Icons.person, color: cs.primary),
+            style: IconButton.styleFrom(
+              backgroundColor: cs.surface.withOpacity(0.6),
+              shape: const CircleBorder(),
+            ),
           ),
-          textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        Container(
-          width: 60,
-          height: 4,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                theme.colorScheme.primary,
-                theme.colorScheme.secondary,
-              ],
-            ),
-            borderRadius: BorderRadius.circular(2),
+        Text(
+          'هندام',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+            color: cs.onSurface,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildDescription(ThemeData theme) {
-    return Column(
-      children: [
+        const SizedBox(height: 6),
         Text(
           'تطبيق محلات الخياطة الرجالية',
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.8),
+          style: theme.textTheme.titleMedium?.copyWith(
+            color: cs.onSurface.withOpacity(.75),
             fontWeight: FontWeight.w600,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           'أفضل الخياطين والمحلات في مكان واحد',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: cs.onSurfaceVariant,
           ),
           textAlign: TextAlign.center,
         ),
-      ],
-    );
-  }
-
-  Widget _buildFeatures(ThemeData theme) {
-    final features = [
-      {
-        'icon': Icons.store_rounded,
-        'title': 'استعرض محلات الخياطة القريبة منك',
-        'subtitle': 'اكتشف أفضل الخياطين في منطقتك',
-        'color': theme.colorScheme.primary,
-      },
-      {
-        'icon': Icons.design_services_rounded,
-        'title': 'اختر تصاميمك المفضلة',
-        'subtitle': 'تصاميم عصرية وأنيقة تناسب ذوقك',
-        'color': theme.colorScheme.secondary,
-      },
-      {
-        'icon': Icons.shopping_cart_rounded,
-        'title': 'اطلب وتابع طلباتك بسهولة',
-        'subtitle': 'تجربة تسوق سلسة ومتابعة دقيقة',
-        'color': theme.colorScheme.tertiary,
-      },
-    ];
-
-    return Column(
-      children: features.asMap().entries.map((entry) {
-        final index = entry.key;
-        final feature = entry.value;
-
-        return AnimatedBuilder(
-          animation: _featureAnimations[index],
-          builder: (context, child) {
-            return Transform.scale(
-              scale: _featureAnimations[index].value.clamp(0.0, 1.0),
-              child: Opacity(
-                opacity: _featureAnimations[index].value.clamp(0.0, 1.0),
-                child: _ModernFeatureCard(
-                  icon: feature['icon'] as IconData,
-                  title: feature['title'] as String,
-                  subtitle: feature['subtitle'] as String,
-                  color: feature['color'] as Color,
-                ),
-              ),
-            );
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildActionButtons(ThemeData theme) {
-    return Column(
-      children: [
-        // زر تسجيل الدخول
-        Hero(
-          tag: 'login_button',
-          child: Container(
-            width: double.infinity,
-            height: 56,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  theme.colorScheme.primary,
-                  theme.colorScheme.secondary,
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: theme.colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 15,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: () => context.push('/login'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: const Text(
-                'تسجيل الدخول',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        // زر إنشاء حساب
-        Container(
-          width: double.infinity,
-          height: 56,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: theme.colorScheme.primary,
-              width: 2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: OutlinedButton(
-            onPressed: () => context.push('/signup'),
-            style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: Text(
-              'إنشاء حساب جديد',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 20),
-
-        // زر الاستمرار كزائر
+        const SizedBox(height: 32),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(22),
+            gradient: LinearGradient(
+              colors: [
+                cs.primary.withOpacity(0.12),
+                cs.secondary.withOpacity(0.1),
+                cs.surface,
+              ],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+            ),
+            border: Border.all(color: cs.primary.withOpacity(0.15)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
+                color: cs.primary.withOpacity(0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
-          child: TextButton(
-            onPressed: () => context.go('/app'),
-            child: Text(
-              'الاستمرار كزائر',
-              style: TextStyle(
-                fontSize: 14,
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-                fontWeight: FontWeight.w600,
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cs.primary.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(Icons.percent_rounded, color: cs.primary, size: 28),
               ),
-            ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'خصم 40% لعملاء التطبيق',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                    Text(
+                      'ابدأ تجربتك مع أفضل الخياطين الآن',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              FilledButton.tonal(
+                onPressed: () {},
+                style: FilledButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Text('اطلب الآن'),
+              ),
+            ],
           ),
         ),
       ],
@@ -372,96 +156,248 @@ class _AuthWelcomeScreenState extends State<AuthWelcomeScreen>
   }
 }
 
-class _ModernFeatureCard extends StatelessWidget {
+class _FeatureList extends StatelessWidget {
+  final ColorScheme cs;
+  const _FeatureList({required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    final features = [
+      (
+        icon: Icons.store_mall_directory_rounded,
+        title: 'استعرض محلات الخياطة القريبة منك',
+        subtitle: 'اكتشف أفضل الخياطين في منطقتك',
+        color: cs.primaryContainer
+      ),
+      (
+        icon: Icons.design_services_rounded,
+        title: 'اختر تصاميمك المفضلة',
+        subtitle: 'تصاميم عصرية وأنيقة تناسب ذوقك',
+        color: cs.secondaryContainer
+      ),
+      (
+        icon: Icons.shopping_bag_rounded,
+        title: 'اطلب وتابع طلباتك بسهولة',
+        subtitle: 'تجربة سلسة مع تحديثات مباشرة',
+        color: cs.tertiaryContainer
+      ),
+    ];
+
+    return Column(
+      children: [
+        for (final feature in features)
+          _FeatureCard(
+            icon: feature.icon,
+            title: feature.title,
+            subtitle: feature.subtitle,
+            background: feature.color,
+          ),
+      ],
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final Color color;
+  final Color background;
 
-  const _ModernFeatureCard({
+  const _FeatureCard({
     required this.icon,
     required this.title,
     required this.subtitle,
-    required this.color,
+    required this.background,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final cs = theme.colorScheme;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant),
+        color: cs.surface,
       ),
       child: Row(
         children: [
-          // أيقونة الميزة
           Container(
-            width: 60,
-            height: 60,
+            width: 54,
+            height: 54,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  color.withOpacity(0.1),
-                  color.withOpacity(0.2),
-                ],
-              ),
+              color: background,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
-              icon,
-              size: 28,
-              color: color,
-            ),
+            child: Icon(icon, color: cs.onSurface, size: 26),
           ),
-
-          const SizedBox(width: 16),
-
-          // نص الميزة
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
           ),
-
-          // سهم التنقل
-          Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 16,
-            color: theme.colorScheme.onSurface.withOpacity(0.3),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.chevron_left, color: cs.primary),
           ),
         ],
       ),
     );
   }
 }
+
+class _ActionButtons extends StatelessWidget {
+  final ColorScheme cs;
+  const _ActionButtons({required this.cs});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () => context.push('/login'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: Text(
+              'تسجيل الدخول',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: cs.onPrimary,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: () => context.push('/signup'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              side: BorderSide(color: cs.primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            child: Text(
+              'إنشاء حساب جديد',
+              style: textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: cs.primary,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        TextButton(
+          onPressed: () => context.go('/app'),
+          child: Text(
+            'الاستمرار كزائر',
+            style: textTheme.bodyMedium?.copyWith(
+              color: cs.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BackgroundShapes extends StatelessWidget {
+  const _BackgroundShapes();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Positioned.fill(
+      child: IgnorePointer(
+        ignoring: true,
+        child: Stack(
+          children: [
+            Positioned(
+              top: -120,
+              left: -60,
+              child: _BlurCircle(
+                radius: 220,
+                color: cs.primary.withOpacity(0.15),
+              ),
+            ),
+            Positioned(
+              top: 80,
+              right: -80,
+              child: _BlurCircle(
+                radius: 180,
+                color: cs.secondary.withOpacity(0.12),
+              ),
+            ),
+            Positioned(
+              bottom: -100,
+              left: 40,
+              child: _BlurCircle(
+                radius: 200,
+                color: cs.tertiary.withOpacity(0.1),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BlurCircle extends StatelessWidget {
+  final double radius;
+  final Color color;
+  const _BlurCircle({required this.radius, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: radius,
+      height: radius,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: color,
+        boxShadow: [
+          BoxShadow(
+            color: color,
+            blurRadius: 120,
+            spreadRadius: 40,
+          ),
+        ],
+      ),
+    );
+  }
+}
+

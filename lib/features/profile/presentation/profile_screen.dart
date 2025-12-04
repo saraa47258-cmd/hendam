@@ -676,7 +676,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             ),
           ),
         );
-        context.go('/');
+        context.go('/welcome');
       }
     }
   }
@@ -1062,9 +1062,9 @@ class _FavoritesCardSkeleton extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
+        children: [
           Row(
             children: [
               SkeletonCircle(size: 36),
@@ -1102,13 +1102,13 @@ class _ProfileStatsSkeleton extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SkeletonLine(width: 120, height: 20),
-          const SizedBox(height: 16),
+          SkeletonLine(width: 120, height: 20),
+          SizedBox(height: 16),
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: SkeletonContainer(
                   height: 110,
@@ -1124,9 +1124,9 @@ class _ProfileStatsSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Row(
-            children: const [
+            children: [
               Expanded(
                 child: SkeletonContainer(
                   height: 110,
@@ -1142,8 +1142,8 @@ class _ProfileStatsSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          const SkeletonContainer(
+          SizedBox(height: 12),
+          SkeletonContainer(
             height: 90,
             borderRadius: BorderRadius.all(Radius.circular(16)),
           ),
@@ -1262,7 +1262,7 @@ class _ModernSwitchTile extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: cs.primary,
+            activeThumbColor: cs.primary,
           ),
         ],
       ),

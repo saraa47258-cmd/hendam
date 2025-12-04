@@ -86,9 +86,10 @@ class AnyImage extends StatelessWidget {
     final effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(context.responsiveRadius());
 
-    if (raw.isEmpty)
+    if (raw.isEmpty) {
       return _fallback(
           cs, effectiveWidth, effectiveHeight, effectiveBorderRadius);
+    }
 
     Widget imageWidget;
 
@@ -148,8 +149,9 @@ class AnyImage extends StatelessWidget {
 
   Widget _assetWithFallback(BuildContext context, List<String> candidates,
       int i, ColorScheme cs, double width, double height) {
-    if (i >= candidates.length)
+    if (i >= candidates.length) {
       return _fallback(cs, width, height, BorderRadius.zero);
+    }
     final path = candidates[i];
     return Image.asset(
       path,

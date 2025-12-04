@@ -1245,7 +1245,7 @@ class _EmbroideryStep extends StatelessWidget {
                       subtitle: const Text('تطريز الاسم على الثوب'),
                       value: addName,
                       onChanged: onAddNameChanged,
-                      activeColor: _brand,
+                      activeThumbColor: _brand,
                     ),
 
                     const Divider(),

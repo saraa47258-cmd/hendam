@@ -48,9 +48,9 @@ class _SkeletonContainerState extends State<SkeletonContainer>
               begin: Alignment(-1 + _controller.value * 2, 0),
               end: Alignment(_controller.value * 2, 0),
               colors: [
-                cs.surfaceVariant.withOpacity(0.25),
+                cs.surfaceContainerHighest.withOpacity(0.25),
                 cs.surfaceContainerHighest,
-                cs.surfaceVariant.withOpacity(0.25),
+                cs.surfaceContainerHighest.withOpacity(0.25),
               ],
               stops: const [0.2, 0.5, 0.8],
             ),
@@ -202,11 +202,11 @@ class OrderSkeletonCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: const Padding(
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

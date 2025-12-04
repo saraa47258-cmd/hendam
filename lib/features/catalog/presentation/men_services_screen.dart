@@ -98,19 +98,75 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
-          title: const Text('الخياطة الرجالية'),
-          centerTitle: true,
           elevation: 0,
-          backgroundColor: cs.surface,
+          backgroundColor: Colors.transparent,
+          centerTitle: true,
+          toolbarHeight: 80,
           systemOverlayStyle: const SystemUiOverlayStyle(
             statusBarBrightness: Brightness.light,
             statusBarIconBrightness: Brightness.dark,
+          ),
+          title: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.easeOutCubic,
+            builder: (context, value, child) {
+              return Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, (1 - value) * 8),
+                  child: child,
+                ),
+              );
+            },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'الخياطة الرجالية',
+                  style: tt.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'اكتشف أفضل محلات الخياطة القريبة منك',
+                  style: tt.bodySmall?.copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                colors: [
+                  cs.primary,
+                  cs.secondary,
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(24),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: cs.primary.withOpacity(0.25),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
           ),
         ),
         body: SafeArea(
@@ -304,7 +360,6 @@ class _FiltersBarMen extends StatelessWidget {
       return RepaintBoundary(
         child: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          minSize: 0,
           onPressed: () {},
           color: cs.surface,
           borderRadius: BorderRadius.circular(20),
@@ -328,6 +383,7 @@ class _FiltersBarMen extends StatelessWidget {
               ],
             ],
           ),
+          minimumSize: Size(0, 0),
         ),
       );
     }
@@ -348,7 +404,6 @@ class _FiltersBarMen extends StatelessWidget {
               child: CupertinoButton(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                minSize: 0,
                 onPressed: isRefreshing ? null : onRefresh,
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(20),
@@ -373,6 +428,7 @@ class _FiltersBarMen extends StatelessWidget {
                     ),
                   ],
                 ),
+                minimumSize: Size(0, 0),
               ),
             ),
         ],
@@ -522,10 +578,10 @@ class _TailorSkeletonCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: SizedBox(
+                child: const SizedBox(
                   width: imageSize,
                   height: imageSize,
-                  child: const SkeletonContainer(
+                  child: SkeletonContainer(
                     borderRadius: BorderRadius.all(Radius.circular(16)),
                   ),
                 ),

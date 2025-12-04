@@ -94,7 +94,9 @@ class MyFavoritesScreen extends StatelessWidget {
                           final rootNavigator =
                               Navigator.of(context, rootNavigator: true);
                           if (rootNavigator != localNavigator &&
-                              await rootNavigator.maybePop()) return;
+                              await rootNavigator.maybePop()) {
+                            return;
+                          }
                           if (!context.mounted) return;
                           context.go('/app');
                         },
@@ -287,10 +289,10 @@ class _FavoriteSkeletonCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 14),
-            Expanded(
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   SkeletonLine(width: 160, height: 18),
                   SizedBox(height: 10),
                   SkeletonLine(width: 120, height: 14),

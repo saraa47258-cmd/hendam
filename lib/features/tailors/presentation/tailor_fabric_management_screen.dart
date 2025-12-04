@@ -567,7 +567,7 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
 
               // نوع القماش
               DropdownButtonFormField<String>(
-                value: _fabricType,
+                initialValue: _fabricType,
                 decoration: const InputDecoration(
                   labelText: 'نوع القماش',
                   border: OutlineInputBorder(),
@@ -588,7 +588,7 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
 
               // الموسم
               DropdownButtonFormField<String>(
-                value: _season,
+                initialValue: _season,
                 decoration: const InputDecoration(
                   labelText: 'الموسم',
                   border: OutlineInputBorder(),
@@ -756,7 +756,7 @@ class _AddColorDialogState extends State<_AddColorDialog> {
                 builder: (context, snapshot) {
                   if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                     return DropdownButtonFormField<String>(
-                      value: _selectedFabricId,
+                      initialValue: _selectedFabricId,
                       decoration: const InputDecoration(
                         labelText: 'اختر القماش',
                         border: OutlineInputBorder(),
@@ -919,6 +919,3 @@ class _AddColorDialogState extends State<_AddColorDialog> {
     }
   }
 }
-
-
-

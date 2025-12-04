@@ -1,14 +1,10 @@
 // lib/features/tailors/presentation/tailor_store_screen.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
-import '../../auth/providers/auth_provider.dart';
 import 'tailor_design_loader.dart';
-import 'tailor_alter_dishdasha_screen.dart';
 import 'package:hindam/shared/widgets/any_image.dart';
 
-/// الأقسام الثلاثة
-enum _Section { tailoring, alter, store }
+/// الأقسام
+enum _Section { tailoring, store }
 
 class TailorStoreScreen extends StatefulWidget {
   final String tailorId;
@@ -57,24 +53,6 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
           kind: _Section.tailoring,
         ),
 
-        // ===== التعديل =====
-        _Item(
-          title: 'تقصير/إطالة',
-          price: 1.500,
-          rating: 4.6,
-          reviews: 210,
-          image: _fabric('4.jpg'),
-          kind: _Section.alter,
-        ),
-        _Item(
-          title: 'توسيع/تضييق',
-          price: 2.000,
-          rating: 4.5,
-          reviews: 180,
-          image: _fabric('5.jpg'),
-          kind: _Section.alter,
-        ),
-
         // ===== المتجر =====
         _Item(
           title: 'قماش صيفي فاخر',
@@ -100,112 +78,12 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
     final tt = Theme.of(context).textTheme;
     final filtered = _items.where((e) => e.kind == _selected).toList();
 
-    // زر الإجراء حسب القسم
-    String ctaLabel;
-    VoidCallback ctaAction;
+    // زر الإجراء حسب القسم (يمكن أن يكون غير موجود لبعض الأقسام)
+    String? ctaLabel;
+    VoidCallback? ctaAction;
     switch (_selected) {
       case _Section.tailoring:
-        ctaLabel = 'تصميم وطلب الدشداشة';
-        ctaAction = () {
-          // التحقق من تسجيل الدخول
-          final authProvider =
-              Provider.of<AuthProvider>(context, listen: false);
-          if (!authProvider.isAuthenticated) {
-            // إظهار مربع حوار لتسجيل الدخول
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.orange),
-                    SizedBox(width: 8),
-                    Text('تسجيل الدخول مطلوب'),
-                  ],
-                ),
-                content: const Text(
-                  'لطلب الخدمة، يرجى تسجيل الدخول أولاً.\n'
-                  'يمكنك إنشاء حساب جديد في ثوانٍ.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('إلغاء'),
-                  ),
-                  FilledButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.push('/login');
-                    },
-                    child: const Text('تسجيل الدخول'),
-                  ),
-                ],
-              ),
-            );
-            return;
-          }
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => TailorDesignLoaderScreen(
-                  tailorId: widget.tailorId, tailorName: widget.tailorName),
-            ),
-          );
-        };
-        break;
-      case _Section.alter:
-        ctaLabel = 'طلب تعديل دشداشة';
-        ctaAction = () {
-          // التحقق من تسجيل الدخول
-          final authProvider =
-              Provider.of<AuthProvider>(context, listen: false);
-          if (!authProvider.isAuthenticated) {
-            // إظهار مربع حوار لتسجيل الدخول
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.orange),
-                    SizedBox(width: 8),
-                    Text('تسجيل الدخول مطلوب'),
-                  ],
-                ),
-                content: const Text(
-                  'لطلب الخدمة، يرجى تسجيل الدخول أولاً.\n'
-                  'يمكنك إنشاء حساب جديد في ثوانٍ.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('إلغاء'),
-                  ),
-                  FilledButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      context.push('/login');
-                    },
-                    child: const Text('تسجيل الدخول'),
-                  ),
-                ],
-              ),
-            );
-            return;
-          }
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => TailorAlterDishdashaScreen(
-                tailorId: widget.tailorId,
-                tailorName: widget.tailorName,
-                imageUrl: widget.imageUrl,
-                basePriceOMR: 1.500,
-                serviceTitle: 'تعديل دشداشة',
-              ),
-            ),
-          );
-        };
+        // لا يوجد زر أسفل الشاشة لقسم التفصيل
         break;
       case _Section.store:
         ctaLabel = 'إضافة منتج من المتجر';
@@ -224,24 +102,26 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
       child: Scaffold(
         backgroundColor: cs.surface,
 
-        // ✅ زر الإجراء أصبح في bottomNavigationBar بدل Positioned داخل Stack
-        bottomNavigationBar: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            child: FilledButton.icon(
-              onPressed: ctaAction,
-              icon: Icon(
-                _selected == _Section.store
-                    ? Icons.add_shopping_cart_rounded
-                    : Icons.shopping_bag_rounded,
-              ),
-              label: Text(ctaLabel),
-              style: FilledButton.styleFrom(
-                  minimumSize: const Size.fromHeight(52)),
-            ),
-          ),
-        ),
+        // ✅ زر الإجراء في الأسفل يظهر فقط لغير قسم التفصيل
+        bottomNavigationBar: (ctaLabel != null && ctaAction != null)
+            ? SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  child: FilledButton.icon(
+                    onPressed: ctaAction,
+                    icon: Icon(
+                      _selected == _Section.store
+                          ? Icons.add_shopping_cart_rounded
+                          : Icons.shopping_bag_rounded,
+                    ),
+                    label: Text(ctaLabel),
+                    style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52)),
+                  ),
+                ),
+              )
+            : null,
 
         // ✅ Scroll واحدة أساسية باستخدام Slivers
         body: SafeArea(
@@ -411,29 +291,14 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
                       itemBuilder: (_, i) => _ServiceCard(
                         item: filtered[i],
                         onTap: () {
-                          if (filtered[i].kind == _Section.tailoring) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => TailorDesignLoaderScreen(
-                                    tailorId: widget.tailorId,
-                                    tailorName: widget.tailorName),
-                              ),
-                            );
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => TailorAlterDishdashaScreen(
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TailorDesignLoaderScreen(
                                   tailorId: widget.tailorId,
-                                  tailorName: widget.tailorName,
-                                  imageUrl: widget.imageUrl,
-                                  basePriceOMR: filtered[i].price,
-                                  serviceTitle: filtered[i].title,
-                                ),
-                              ),
-                            );
-                          }
+                                  tailorName: widget.tailorName),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -453,8 +318,6 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
     switch (s) {
       case _Section.tailoring:
         return 'التفصيل';
-      case _Section.alter:
-        return 'التعديل دشداشة';
       case _Section.store:
         return 'المتجر';
     }
@@ -899,7 +762,6 @@ class _SectionCircles extends StatelessWidget {
   Widget build(BuildContext context) {
     const items = [
       (_Section.tailoring, Icons.checkroom_rounded, 'التفصيل'),
-      (_Section.alter, Icons.cut_rounded, 'التعديل دشداشة'),
       (_Section.store, Icons.shop_two_rounded, 'المتجر'),
     ];
 
@@ -953,9 +815,7 @@ class _CircleSectionButton extends StatelessWidget {
     // Hero tag خاص بكل قسم
     final heroTag = section == _Section.tailoring
         ? 'tailoring_button'
-        : section == _Section.alter
-            ? 'alter_button'
-            : 'store_button';
+        : 'store_button';
 
     return Column(
       mainAxisSize: MainAxisSize.min,

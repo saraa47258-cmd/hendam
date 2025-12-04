@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 
 // صفحات الأقسام
 import '../../catalog/presentation/men_services_screen.dart';
@@ -197,7 +198,7 @@ class _HeaderGreeting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
+    return const RepaintBoundary(
       child: _HeaderGreetingContent(),
     );
   }
@@ -244,13 +245,10 @@ class _HeaderGreetingContent extends StatelessWidget {
           ),
         ),
         IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.notifications_none, size: context.iconSize()),
-            tooltip: 'إشعارات'),
-        IconButton(
-            onPressed: () {},
-            icon: Icon(Icons.settings_outlined, size: context.iconSize()),
-            tooltip: 'الإعدادات'),
+          onPressed: () => context.push('/favorites'),
+          icon: Icon(Icons.favorite_border, size: context.iconSize()),
+          tooltip: 'مفضلاتي',
+        ),
       ],
     );
   }
@@ -262,7 +260,7 @@ class _SearchAndFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
+    return const RepaintBoundary(
       child: _SearchAndFilterContent(),
     );
   }
@@ -341,7 +339,7 @@ class _PromoBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepaintBoundary(
+    return const RepaintBoundary(
       child: _PromoBannerContent(),
     );
   }
