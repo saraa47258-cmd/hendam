@@ -320,6 +320,7 @@ class _FavoriteItemCard extends StatelessWidget {
   });
 
   bool get _isTailor => favorite['productType'] == 'tailor';
+  bool get _isAbaya => favorite['productType'] == 'abaya';
 
   @override
   Widget build(BuildContext context) {
@@ -367,6 +368,11 @@ class _FavoriteItemCard extends StatelessWidget {
             if (tailorId != null) {
               context.push('/app/tailor/$tailorId');
             }
+          } else if (_isAbaya) {
+            final abayaId = favorite['productId'] as String?;
+            if (abayaId != null) {
+              context.push('/app/product/$abayaId');
+            }
           }
         },
         child: Padding(
@@ -409,7 +415,9 @@ class _FavoriteItemCard extends StatelessWidget {
                             Text(
                               favorite['productType'] == 'tailor'
                                   ? 'خياط'
-                                  : 'مفضل',
+                                  : favorite['productType'] == 'abaya'
+                                      ? 'عباية'
+                                      : 'مفضل',
                               style: tt.labelSmall?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
@@ -431,7 +439,9 @@ class _FavoriteItemCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            productData['name'] ?? 'عنصر',
+                            productData['name'] ?? 
+                            productData['title'] ?? 
+                            'عنصر',
                             style: tt.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: cs.onSurface,
@@ -459,6 +469,17 @@ class _FavoriteItemCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         productData['type'],
+                        style: tt.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    if (_isAbaya && productData['subtitle'] != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        productData['subtitle'],
                         style: tt.bodySmall?.copyWith(
                           color: cs.onSurfaceVariant,
                         ),

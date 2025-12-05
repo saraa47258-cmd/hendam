@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:provider/provider.dart';
 
 // نموذج العباية
 import '../models/abaya_item.dart';
@@ -8,6 +10,13 @@ import '../../../measurements/presentation/abaya_measure_screen.dart';
 
 // الودجت الذكي للصور
 import '../../../shared/widgets/any_image.dart';
+
+// حالة السلة
+import '../../../core/state/cart_scope.dart';
+
+// خدمة المفضلة
+import '../../favorites/services/favorite_service.dart';
+import '../../auth/providers/auth_provider.dart';
 
 class ProductPreviewScreen extends StatefulWidget {
   final String productId;
@@ -25,6 +34,10 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen> {
   late final PageController _pc;
   int _index = 0;
   bool _wish = false;
+  bool _isLoadingFavorite = false;
+  bool _isInitialized = false;
+
+  final _favoriteService = FavoriteService();
 
   // بيانات تجريبية
   late final AbayaItem item;
@@ -52,6 +65,113 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen> {
         const Color(0xFF654321),
       ],
     );
+    _checkFavoriteStatus();
+  }
+
+  Future<void> _checkFavoriteStatus() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      if (mounted) {
+        setState(() {
+          _wish = false;
+          _isInitialized = true;
+        });
+      }
+      return;
+    }
+
+    try {
+      final isFav = await _favoriteService.isFavorite(
+        productId: item.id,
+        productType: 'abaya',
+      );
+      if (mounted) {
+        setState(() {
+          _wish = isFav;
+          _isInitialized = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _wish = false;
+          _isInitialized = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى تسجيل الدخول أولاً'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    if (_isLoadingFavorite) return;
+    setState(() => _isLoadingFavorite = true);
+
+    try {
+      if (_wish) {
+        final removed = await _favoriteService.removeFromFavorites(
+          productId: item.id,
+          productType: 'abaya',
+        );
+        if (mounted && removed) {
+          setState(() => _wish = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم إزالة من المفضلة'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        final added = await _favoriteService.addToFavorites(
+          productId: item.id,
+          productType: 'abaya',
+          productData: {
+            'name': item.title,
+            'title': item.title,
+            'subtitle': item.subtitle,
+            'imageUrl': item.imageUrl,
+            'gallery': item.gallery,
+            'price': item.price,
+            'colors': item.colors.map((c) => c.value).toList(),
+            'isNew': item.isNew,
+            'type': 'عباية',
+          },
+        );
+        if (mounted && added) {
+          setState(() => _wish = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تمت الإضافة للمفضلة'),
+              duration: Duration(seconds: 2),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('حدث خطأ: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingFavorite = false);
+      }
+    }
   }
 
   @override
@@ -116,12 +236,22 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen> {
                     child: Material(
                       color: Colors.white.withOpacity(0.9),
                       shape: const CircleBorder(),
+                      elevation: 2,
+                      shadowColor: Colors.black.withOpacity(0.2),
                       child: IconButton(
-                        onPressed: () => setState(() => _wish = !_wish),
-                        icon: Icon(
-                          _wish ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                          color: _wish ? Colors.red : cs.onSurface,
-                        ),
+                        onPressed: _isInitialized ? _toggleFavorite : null,
+                        icon: _isLoadingFavorite
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(
+                                _wish
+                                    ? Icons.favorite_rounded
+                                    : Icons.favorite_border_rounded,
+                                color: _wish ? Colors.red : cs.onSurface,
+                              ),
                       ),
                     ),
                   ),
@@ -209,8 +339,18 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen> {
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
+                      final cartState = CartScope.of(context);
+                      cartState.addAbayaItem(
+                        id: item.id,
+                        title: item.title,
+                        price: item.price,
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('تمت إضافة المنتج إلى السلة')),
+                        SnackBar(
+                          content: Text('تمت إضافة ${item.title} إلى السلة'),
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
                       );
                     },
                     icon: const Icon(Icons.shopping_bag_outlined),

@@ -167,7 +167,7 @@ class _OrderCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'طلب #${order.id.substring(0, 8)}',
+                          'طلب #${order.id.length >= 8 ? order.id.substring(0, 8) : order.id}',
                           style: tt.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -344,7 +344,10 @@ class _OrderCard extends StatelessWidget {
 
   Color _parseColor(String hexColor) {
     try {
-      return Color(int.parse(hexColor.replaceAll('#', '0xFF')));
+      if (hexColor.isEmpty) return Colors.grey;
+      final cleanHex = hexColor.replaceAll('#', '').trim();
+      if (cleanHex.isEmpty) return Colors.grey;
+      return Color(int.parse('0xFF$cleanHex'));
     } catch (e) {
       return Colors.grey;
     }
@@ -391,7 +394,7 @@ class _OrderCard extends StatelessWidget {
                 _DetailRow(
                   icon: Icons.tag_rounded,
                   label: 'رقم الطلب',
-                  value: order.id.substring(0, 12),
+                  value: order.id.length >= 12 ? order.id.substring(0, 12) : order.id,
                 ),
                 _DetailRow(
                   icon: Icons.storefront_rounded,

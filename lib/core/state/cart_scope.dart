@@ -95,6 +95,20 @@ class CartState extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// إضافة عباية للسلة
+  void addAbayaItem({required String id, required String title, required double price}) {
+    // التحقق من وجود العباية في السلة بالفعل
+    final idx = _items.indexWhere((i) => i.serviceName == title && i.price == price);
+    if (idx >= 0) {
+      final cur = _items[idx];
+      _items[idx] = cur.copyWith(qty: cur.qty + 1);
+    } else {
+      _items.add(CartItem(serviceName: title, price: price, qty: 1));
+    }
+    _saveData();
+    notifyListeners();
+  }
+
   void inc(CartItem item) { 
     item.qty += 1; 
     _saveData();

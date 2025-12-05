@@ -900,7 +900,7 @@ class _OrderDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'رقم الطلب: #${order.id.substring(0, 8)}',
+              'رقم الطلب: #${order.id.length >= 8 ? order.id.substring(0, 8) : order.id}',
               style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 4),

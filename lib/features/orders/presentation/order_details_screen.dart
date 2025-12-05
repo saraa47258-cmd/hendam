@@ -1,5 +1,6 @@
 // lib/features/orders/presentation/order_details_screen.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hindam/core/state/cart_scope.dart';
 import 'package:hindam/features/orders/models/order.dart';
 
@@ -165,11 +166,7 @@ class OrderDetailsScreen extends StatelessWidget {
                   Expanded(
                     child: FilledButton(
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('سيتم إضافة تتبع الطلب قريباً'),
-                          ),
-                        );
+                        context.push('/app/order/${order.id}/tracking');
                       },
                       child: const Text('تتبع الطلب'),
                     ),

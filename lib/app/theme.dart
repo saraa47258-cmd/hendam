@@ -74,11 +74,29 @@ class AppTheme {
       // --- 5. تخصيص عناصر الواجهة (Components) ---
 
       appBarTheme: AppBarTheme(
-        backgroundColor: colorScheme.surface,
-        scrolledUnderElevation: 2.0,
-        shadowColor: colorScheme.shadow.withOpacity(0.1),
-        titleTextStyle: refinedTextTheme.titleLarge,
-        iconTheme: IconThemeData(color: colorScheme.onSurfaceVariant),
+        // تدرج لوني احترافي من أزرق داكن إلى أزرق متوسط
+        backgroundColor: brightness == Brightness.light
+            ? const Color(0xFF0D4A6B) // أزرق داكن احترافي للوضع الفاتح
+            : const Color(0xFF1A3A4F), // أزرق داكن للوضع المظلم
+        foregroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 4.0,
+        shadowColor: colorScheme.shadow.withOpacity(0.15),
+        surfaceTintColor: Colors.transparent,
+        centerTitle: false,
+        titleTextStyle: refinedTextTheme.titleLarge?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+          size: 24,
+        ),
+        actionsIconTheme: const IconThemeData(
+          color: Colors.white,
+          size: 24,
+        ),
       ),
 
       cardTheme: CardThemeData(

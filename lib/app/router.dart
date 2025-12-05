@@ -5,6 +5,7 @@ import 'package:hindam/app/nav_shell.dart';
 import 'package:hindam/features/tailors/presentation/tailor_details_screen.dart';
 import 'package:hindam/features/tailors/presentation/tailor_store_screen.dart';
 import 'package:hindam/features/orders/presentation/order_details_screen.dart';
+import 'package:hindam/features/orders/presentation/order_tracking_screen.dart';
 import 'package:hindam/features/orders/presentation/customer_orders_screen.dart';
 import 'package:hindam/features/catalog/presentation/product_preview_screen.dart';
 import 'package:hindam/test_firebase.dart';
@@ -113,6 +114,16 @@ final GoRouter appRouter = GoRouter(
           builder: (context, state) {
             final orderId = state.pathParameters['id']!;
             return OrderDetailsScreen(orderId: orderId);
+          },
+        ),
+
+        // تتبع الطلب
+        GoRoute(
+          path: 'order/:id/tracking',
+          name: 'order-tracking',
+          builder: (context, state) {
+            final orderId = state.pathParameters['id']!;
+            return OrderTrackingScreen(orderId: orderId);
           },
         ),
 

@@ -1,5 +1,6 @@
 // lib/features/shops/presentation/abaya_shops_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/shop.dart';
 import '../../catalog/presentation/abaya_services_screen.dart';
@@ -113,52 +114,80 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
         backgroundColor: cs.surface,
         body: CustomScrollView(
           slivers: [
-            // رأس بتدرّج
+            // AppBar بنمط iOS ولون بناتي
             SliverAppBar(
               pinned: true,
               floating: true,
-              expandedHeight: 120,
+              expandedHeight: 100,
+              collapsedHeight: kToolbarHeight,
               elevation: 0,
-              backgroundColor: cs.surface,
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      cs.primaryContainer.withOpacity(.55),
-                      cs.tertiaryContainer.withOpacity(.35),
-                      cs.surface,
-                    ],
+              backgroundColor: const Color(0xFFE91E63), // لون بناتي جميل
+              surfaceTintColor: Colors.transparent,
+              shadowColor: Colors.transparent,
+              scrolledUnderElevation: 0,
+              leading: CupertinoButton(
+                padding: EdgeInsets.zero,
+                minSize: 0,
+                onPressed: () => Navigator.maybePop(context),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.back,
+                    color: Colors.white,
+                    size: 28,
                   ),
                 ),
-                child: FlexibleSpaceBar(
-                  expandedTitleScale: 1.15,
-                  titlePadding:
-                      const EdgeInsetsDirectional.only(start: 16, bottom: 12),
-                  title: Text(
-                    'محلات العبايات',
-                    style: TextStyle(
-                      color: cs.onSurface,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: .3,
-                    ),
+              ),
+              leadingWidth: 56,
+              flexibleSpace: FlexibleSpaceBar(
+                expandedTitleScale: 1.1,
+                titlePadding:
+                    const EdgeInsetsDirectional.only(start: 16, bottom: 16),
+                centerTitle: false,
+                title: Text(
+                  'محلات العبايات',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.2,
+                    fontSize: 24,
                   ),
                 ),
               ),
               actions: [
-                IconButton(
-                  tooltip: 'فلترة متقدمة',
-                  icon: const Icon(Icons.tune_rounded),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  minSize: 0,
                   onPressed: () {},
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      CupertinoIcons.slider_horizontal_3,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
                 ),
+                const SizedBox(width: 8),
               ],
             ),
 
             // البحث + فلاتر
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Column(
                   children: [
                     TextField(
@@ -177,24 +206,24 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
                                 },
                               ),
                         filled: true,
-                        fillColor: cs.surfaceContainerHighest.withOpacity(.7),
+                        fillColor: cs.surfaceContainerHighest.withOpacity(.8),
                         contentPadding:
-                            const EdgeInsets.symmetric(vertical: 12),
+                            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                         border: OutlineInputBorder(
-                          borderSide: BorderSide(color: cs.outlineVariant),
-                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: cs.outlineVariant),
-                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: cs.primary, width: 1.3),
-                          borderRadius: BorderRadius.circular(14),
+                          borderSide: BorderSide(color: cs.primary, width: 2.0),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         FilterChip(
@@ -246,32 +275,57 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
 
             // قائمة المحلات
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, i) {
-                    final s = _shown[i];
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          bottom: i == _shown.length - 1 ? 0 : 12),
-                      child: _ShopCardModern(
-                        shop: s,
-                        priceText: _price(s.minPrice),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  AbayaServicesScreen(shopName: s.name),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              sliver: _shown.isEmpty
+                  ? SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.store_outlined,
+                              size: 64,
+                              color: cs.onSurfaceVariant.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'لا توجد محلات',
+                              style: TextStyle(
+                                color: cs.onSurfaceVariant,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, i) {
+                          final s = _shown[i];
+                          return Padding(
+                            padding: EdgeInsets.only(
+                                bottom: i == _shown.length - 1 ? 0 : 16),
+                            child: _ShopCardModern(
+                              shop: s,
+                              priceText: _price(s.minPrice),
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        AbayaServicesScreen(shopName: s.name),
+                                  ),
+                                );
+                              },
                             ),
                           );
                         },
+                        childCount: _shown.length,
                       ),
-                    );
-                  },
-                  childCount: _shown.length,
-                ),
-              ),
+                    ),
             ),
           ],
         ),
@@ -393,7 +447,7 @@ class _ShopCardModern extends StatelessWidget {
               // معلومات
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+                  padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -408,22 +462,27 @@ class _ShopCardModern extends StatelessWidget {
                               style: TextStyle(
                                 color: cs.onSurface,
                                 fontWeight: FontWeight.w900,
-                                fontSize: 16,
+                                fontSize: 17,
+                                letterSpacing: 0.2,
                               ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           // تقييم قابل للتصغير تلقائيًا
                           _Rating(rate: shop.rating, reviews: shop.reviews),
                         ],
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         '${shop.city} · ${shop.category}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: cs.onSurfaceVariant),
+                        style: TextStyle(
+                          color: cs.onSurfaceVariant,
+                          fontSize: 13,
+                        ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(

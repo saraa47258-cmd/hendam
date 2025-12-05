@@ -306,7 +306,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'طلب #${order.id.substring(0, 8)}',
+                        'طلب #${order.id.length >= 8 ? order.id.substring(0, 8) : order.id}',
                         style: tt.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
