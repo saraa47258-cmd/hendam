@@ -1,5 +1,6 @@
 // lib/features/catalog/models/abaya_item.dart
 import 'dart:ui' show Color;
+import '../../../core/utils/color_converter.dart';
 
 class AbayaItem {
   final String id;
@@ -33,19 +34,48 @@ class AbayaItem {
         ? rawPrice.toDouble()
         : (rawPrice is double ? rawPrice : 0.0);
 
-    // الألوان تُخزّن كقيم int للـ ARGB ثم نحولها إلى Color
+    // الألوان تُخزّن كقيم int أو strings في Firebase
     final List<dynamic> rawColors = (m['colors'] as List?) ?? const [];
     final colors = rawColors
-        .map((e) => e is int ? Color(e) : null)
+        .map((e) => ColorConverter.fromFirebase(e))
         .whereType<Color>()
         .toList();
 
+    // معالجة الصور - يمكن أن تكون في imageUrl أو imageUrls
+    String imageUrl = m['imageUrl'] as String? ?? '';
+    if (imageUrl.isEmpty) {
+      final imageUrls = m['imageUrls'] as List<dynamic>? ?? [];
+      if (imageUrls.isNotEmpty) {
+        imageUrl = imageUrls.first.toString();
+      }
+    }
+
+    // معالجة العنوان - يمكن أن يكون في name أو title
+    String title = m['title'] as String? ?? '';
+    if (title.isEmpty) {
+      title = m['name'] as String? ?? '';
+    }
+
+    // معالجة الوصف - يمكن أن يكون في subtitle أو description
+    String subtitle = m['subtitle'] as String? ?? '';
+    if (subtitle.isEmpty) {
+      subtitle = m['description'] as String? ?? '';
+    }
+
+    // معالجة gallery
+    List<String> gallery = [];
+    if (m['gallery'] != null) {
+      gallery = List<String>.from(m['gallery'] ?? const []);
+    } else if (m['imageUrls'] != null) {
+      gallery = (m['imageUrls'] as List<dynamic>).map((e) => e.toString()).toList();
+    }
+
     return AbayaItem(
       id: id,
-      title: m['title'] ?? '',
-      subtitle: m['subtitle'] ?? '',
-      imageUrl: m['imageUrl'] ?? '',
-      gallery: List<String>.from(m['gallery'] ?? const []),
+      title: title,
+      subtitle: subtitle,
+      imageUrl: imageUrl,
+      gallery: gallery,
       price: price,
       colors: colors,
       isNew: (m['isNew'] as bool?) ?? false,

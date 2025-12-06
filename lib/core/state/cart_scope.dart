@@ -96,13 +96,26 @@ class CartState extends ChangeNotifier {
   }
 
   /// إضافة عباية للسلة
-  void addAbayaItem({required String id, required String title, required double price}) {
+  void addAbayaItem({
+    required String id,
+    required String title,
+    required double price,
+    String? imageUrl,
+    String? subtitle,
+  }) {
     // التحقق من وجود العباية في السلة بالفعل
-    final idx = _items.indexWhere((i) => i.serviceName == title && i.price == price);
+    // نبحث عن نفس العنوان والسعر (يمكن تحسينه لاحقاً باستخدام id فريد)
+    final idx = _items.indexWhere((i) => 
+      i.serviceName == title && 
+      i.price == price
+    );
+    
     if (idx >= 0) {
+      // إذا كانت موجودة، نزيد الكمية
       final cur = _items[idx];
       _items[idx] = cur.copyWith(qty: cur.qty + 1);
     } else {
+      // إضافة عباية جديدة
       _items.add(CartItem(serviceName: title, price: price, qty: 1));
     }
     _saveData();

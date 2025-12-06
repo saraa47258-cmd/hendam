@@ -31,19 +31,35 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
     try {
       // إعادة تحميل البيانات من Firebase
       await FirebaseService.refreshData();
-      await FirebaseService.getTailorsQuery().get();
+      
+      // محاولة جلب البيانات مباشرة
+      final snapshot = await FirebaseService.getTailorsQuery().get();
+      final count = snapshot.docs.length;
+      
+      print('📊 عدد المحلات بعد التحديث: $count');
+      
+      if (count == 0) {
+        print('⚠️ لا توجد محلات في collection "tailors"');
+        print('💡 تأكد من:');
+        print('   1. وجود collection باسم "tailors" في Firestore');
+        print('   2. وجود محلات مع isActive: true');
+        print('   3. وجود index للـ query (where + orderBy)');
+      }
 
       // إظهار رسالة نجاح
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم تحديث قائمة المحلات بنجاح'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text('تم تحديث قائمة المحلات بنجاح (عدد المحلات: $count)'),
+            duration: const Duration(seconds: 2),
             backgroundColor: Colors.green,
           ),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ خطأ في تحديث المحلات: $e');
+      print('📍 Stack trace: $stackTrace');
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -62,43 +78,76 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
 
   // محوّل وثيقة فايرستور إلى صف واجهة العرض
   _ShopRowData _fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? {};
-    Map<String, dynamic> asMap(dynamic v) =>
-        v is Map<String, dynamic> ? v : <String, dynamic>{};
-    final profile = asMap(data['profile']);
-    final services = asMap(data['services']);
-    final location = asMap(data['location']);
+    try {
+      final data = doc.data() ?? {};
+      Map<String, dynamic> asMap(dynamic v) =>
+          v is Map<String, dynamic> ? v : <String, dynamic>{};
+      final profile = asMap(data['profile']);
+      final services = asMap(data['services']);
+      final location = asMap(data['location']);
+      final business = asMap(data['business']);
 
-    final name =
-        (services['shopName'] ?? data['ownerName'] ?? 'متجر').toString();
-    final cityOrAddress =
-        (location['city'] ?? location['address'] ?? '').toString();
-    final rating =
-        (data['rating'] is num) ? (data['rating'] as num).toDouble() : 0.0;
-    final specialization = (services['specialization'] ?? '').toString().trim();
+      // استخراج اسم المحل (وليس اسم صاحب المحل)
+      // الأولوية: services.shopName > business.shopName > shopName > name (وليس ownerName)
+      final name =
+          (services['shopName'] ?? 
+           business['shopName'] ??
+           data['shopName'] ??
+           data['name'] ?? 
+           'متجر').toString();
+      final cityOrAddress =
+          (location['city'] ?? 
+           location['address'] ?? 
+           data['city'] ?? 
+           '').toString();
+      final rating =
+          (data['rating'] is num) ? (data['rating'] as num).toDouble() : 0.0;
+      final specialization = (services['specialization'] ?? 
+                              data['specialization'] ?? 
+                              '').toString().trim();
 
-    return _ShopRowData(
-      tailor: Tailor(
-        id: doc.id,
-        name: name,
-        city: cityOrAddress.isEmpty ? '—' : cityOrAddress,
-        rating: rating,
-        tags: specialization.isEmpty ? const [] : [specialization],
-      ),
-      imageUrl: (profile['avatar'] ?? '').toString(),
-      badge: specialization.isEmpty ? null : specialization,
-      reviewsCount: (services['totalOrders'] is num)
-          ? (services['totalOrders'] as num).toInt()
-          : null,
-      serviceFeeOMR: null,
-      etaMinutes: null,
-    );
+      return _ShopRowData(
+        tailor: Tailor(
+          id: doc.id,
+          name: name,
+          city: cityOrAddress.isEmpty ? '—' : cityOrAddress,
+          rating: rating,
+          tags: specialization.isEmpty ? const [] : [specialization],
+        ),
+        imageUrl: (profile['avatar'] ?? 
+                   data['avatar'] ?? 
+                   data['imageUrl'] ?? 
+                   '').toString(),
+        badge: specialization.isEmpty ? null : specialization,
+        reviewsCount: (services['totalOrders'] is num)
+            ? (services['totalOrders'] as num).toInt()
+            : ((data['totalOrders'] is num) ? (data['totalOrders'] as num).toInt() : null),
+        serviceFeeOMR: null,
+        etaMinutes: null,
+      );
+    } catch (e) {
+      print('❌ خطأ في تحويل وثيقة المحل: ${doc.id} - $e');
+      // إرجاع بيانات افتراضية في حالة الخطأ
+      return _ShopRowData(
+        tailor: Tailor(
+          id: doc.id,
+          name: 'متجر',
+          city: '—',
+          rating: 0.0,
+          tags: const [],
+        ),
+        imageUrl: null,
+        badge: null,
+        reviewsCount: null,
+        serviceFeeOMR: null,
+        etaMinutes: null,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -106,168 +155,173 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
         backgroundColor: cs.surface,
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: Colors.transparent,
-          centerTitle: true,
-          toolbarHeight: 80,
-          systemOverlayStyle: const SystemUiOverlayStyle(
-            statusBarBrightness: Brightness.light,
-            statusBarIconBrightness: Brightness.dark,
-          ),
-          title: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0.0, end: 1.0),
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, child) {
-              return Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset: Offset(0, (1 - value) * 8),
-                  child: child,
-                ),
-              );
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'الخياطة الرجالية',
-                  style: tt.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'اكتشف أفضل محلات الخياطة القريبة منك',
-                  style: tt.bodySmall?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                ),
-              ],
+          backgroundColor: const Color(0xFF0EA5E9), // لون سماوي للخياطة الرجالية
+          surfaceTintColor: Colors.transparent,
+          leading: CupertinoButton(
+            padding: EdgeInsets.zero,
+            minSize: 0,
+            onPressed: () => Navigator.maybePop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                CupertinoIcons.back,
+                color: Colors.white,
+                size: 28,
+              ),
             ),
           ),
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: [
-                  cs.primary,
-                  cs.secondary,
-                ],
-              ),
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(24),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: cs.primary.withOpacity(0.25),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
+          leadingWidth: 56,
+          title: const Text(
+            '',
+            style: TextStyle(color: Colors.white),
           ),
+          actions: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minSize: 0,
+              onPressed: () {},
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  CupertinoIcons.search,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
         ),
-        body: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: _refreshTailors,
             ),
-            slivers: [
-              CupertinoSliverRefreshControl(
-                onRefresh: _refreshTailors,
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    const _DealBannerMen(),
-                    const SizedBox(height: 12),
-                    _FiltersBarMen(
-                      onRefresh: _refreshTailors,
-                      isRefreshing: _isRefreshing,
-                    ),
-                    const SizedBox(height: 12),
-
-                    // القائمة من فايرستور مع تحديث تلقائي محسّن
-                    StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                      stream: FirebaseService.getTailorsQuery()
-                          .snapshots(includeMetadataChanges: true),
-                      builder: (context, snapshot) {
-                        // معالجة محسّنة للحالات المختلفة
-                        if (snapshot.connectionState ==
-                                ConnectionState.waiting &&
-                            !snapshot.hasData) {
-                          return const _TailorSkeletonList();
-                        }
-
-                        if (snapshot.hasError) {
-                          return _ErrorBox(
-                            message: 'تعذر تحميل محلات الخياطة',
-                            onRetry: _refreshTailors,
-                          );
-                        }
-
-                        final docs = snapshot.data?.docs ?? const [];
-                        if (docs.isEmpty) {
-                          return _EmptyBox(
-                            message: 'لا توجد محلات مسجلة حالياً',
-                            onRefresh: _refreshTailors,
-                          );
-                        }
-
-                        final items = docs.map(_fromDoc).toList();
-                        return Column(
-                          children: items
-                              .map(
-                                (e) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 14),
-                                  child: TailorRowCard(
-                                    tailor: e.tailor,
-                                    reviewsCount: e.reviewsCount,
-                                    serviceFeeOMR: e.serviceFeeOMR,
-                                    etaMinutes: e.etaMinutes,
-                                    badge: e.badge,
-                                    imageUrl: e.imageUrl,
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        CupertinoPageRoute(
-                                          builder: (_) => TailorStoreScreen(
-                                            tailorId: e.tailor.id,
-                                            tailorName: e.tailor.name,
-                                            imageUrl: e.imageUrl,
-                                            reviewsCount: e.reviewsCount,
-                                            serviceFeeOMR: e.serviceFeeOMR,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    onStoreTap: () {
-                                      Navigator.push(
-                                        context,
-                                        CupertinoPageRoute(
-                                          builder: (_) => TailorShopScreen(
-                                            tailor: e.tailor,
-                                            imageUrl: e.imageUrl,
-                                            reviewsCount: e.reviewsCount,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                        );
-                      },
-                    ),
-                  ]),
+            // العنوان الرئيسي
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
+                child: Text(
+                  'الخياطة الرجالية',
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.3,
+                    fontSize: 28,
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  const _DealBannerMen(),
+                  const SizedBox(height: 12),
+                  _FiltersBarMen(
+                    onRefresh: _refreshTailors,
+                    isRefreshing: _isRefreshing,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // القائمة من فايرستور مع تحديث تلقائي محسّن
+                  StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: FirebaseService.getTailorsQuery()
+                        .snapshots(includeMetadataChanges: false),
+                    builder: (context, snapshot) {
+                      // معالجة محسّنة للحالات المختلفة
+                      if (snapshot.connectionState == ConnectionState.waiting &&
+                          !snapshot.hasData) {
+                        return const _TailorSkeletonList();
+                      }
+
+                      if (snapshot.hasError) {
+                        print('❌ خطأ في جلب محلات الخياطة: ${snapshot.error}');
+                        print('📍 Stack trace: ${snapshot.stackTrace}');
+                        return _ErrorBox(
+                          message: 'تعذر تحميل محلات الخياطة: ${snapshot.error}',
+                          onRetry: _refreshTailors,
+                        );
+                      }
+
+                      final docs = snapshot.data?.docs ?? const [];
+                      
+                      // Debug: طباعة عدد المستندات
+                      print('📊 عدد محلات الخياطة: ${docs.length}');
+                      
+                      if (docs.isEmpty) {
+                        print('⚠️ لا توجد محلات في collection "tailors"');
+                        return _EmptyBox(
+                          message: 'لا توجد محلات مسجلة حالياً',
+                          onRefresh: _refreshTailors,
+                        );
+                      }
+
+                      final items = docs.map(_fromDoc).toList();
+                      return Column(
+                        children: items
+                            .map(
+                              (e) => Padding(
+                                padding: const EdgeInsets.only(bottom: 14),
+                                child: TailorRowCard(
+                                  tailor: e.tailor,
+                                  reviewsCount: e.reviewsCount,
+                                  serviceFeeOMR: e.serviceFeeOMR,
+                                  etaMinutes: e.etaMinutes,
+                                  badge: e.badge,
+                                  imageUrl: e.imageUrl,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      CupertinoPageRoute(
+                                        builder: (_) => TailorStoreScreen(
+                                          tailorId: e.tailor.id,
+                                          tailorName: e.tailor.name,
+                                          imageUrl: e.imageUrl,
+                                          reviewsCount: e.reviewsCount,
+                                          serviceFeeOMR: e.serviceFeeOMR,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  onStoreTap: () {
+                                    Navigator.push(
+                                      context,
+                                      CupertinoPageRoute(
+                                        builder: (_) => TailorShopScreen(
+                                          tailor: e.tailor,
+                                          imageUrl: e.imageUrl,
+                                          reviewsCount: e.reviewsCount,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      );
+                    },
+                  ),
+                ]),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -360,6 +414,7 @@ class _FiltersBarMen extends StatelessWidget {
       return RepaintBoundary(
         child: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          minSize: 0,
           onPressed: () {},
           color: cs.surface,
           borderRadius: BorderRadius.circular(20),
@@ -383,7 +438,6 @@ class _FiltersBarMen extends StatelessWidget {
               ],
             ],
           ),
-          minimumSize: Size(0, 0),
         ),
       );
     }
@@ -404,6 +458,7 @@ class _FiltersBarMen extends StatelessWidget {
               child: CupertinoButton(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                minSize: 0,
                 onPressed: isRefreshing ? null : onRefresh,
                 color: cs.surface,
                 borderRadius: BorderRadius.circular(20),
@@ -428,7 +483,6 @@ class _FiltersBarMen extends StatelessWidget {
                     ),
                   ],
                 ),
-                minimumSize: Size(0, 0),
               ),
             ),
         ],

@@ -334,4 +334,97 @@ class OrderService {
       return false;
     }
   }
+
+  /// إرسال طلب عباية من متجر
+  static Future<String?> submitAbayaOrder({
+    required String customerId,
+    required String customerName,
+    required String customerPhone,
+    required String traderId,
+    required String traderName,
+    required String productId,
+    required String productName,
+    required String productImageUrl,
+    required double productPrice,
+    required Map<String, double> measurements, // {length, sleeve, width}
+    String notes = '',
+    String? selectedColor,
+  }) async {
+    try {
+      final orderData = {
+        // نوع الطلب
+        'orderType': 'abaya',
+        
+        // معلومات العميل
+        'customerId': customerId,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
+
+        // معلومات المتجر/التاجر
+        'traderId': traderId,
+        'traderName': traderName,
+
+        // معلومات المنتج
+        'productId': productId,
+        'productName': productName,
+        'productImageUrl': productImageUrl,
+        'productPrice': productPrice,
+        'selectedColor': selectedColor,
+
+        // المقاسات
+        'measurements': measurements,
+
+        // ملاحظات
+        'notes': notes,
+
+        // السعر الإجمالي
+        'totalPrice': productPrice,
+
+        // حالة الطلب
+        'status': 'pending',
+
+        // التواريخ
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      print('📦 إرسال طلب عباية:');
+      print('   👤 العميل: $customerName ($customerPhone)');
+      print('   🏪 المتجر: $traderName');
+      print('   👗 المنتج: $productName');
+      print('   📏 المقاسات: $measurements');
+      print('   💰 السعر: $productPrice ر.ع');
+
+      final docRef = await FirebaseService.firestore
+          .collection(_ordersCollection)
+          .add(orderData);
+
+      print('✅ تم إرسال الطلب بنجاح: ${docRef.id}');
+
+      // إرسال إشعار للمتجر (اختياري - يمكن إضافته لاحقاً)
+      try {
+        await FirebaseService.firestore
+            .collection('abaya_traders')
+            .doc(traderId)
+            .collection('orders')
+            .doc(docRef.id)
+            .set({
+          'orderId': docRef.id,
+          'customerName': customerName,
+          'productName': productName,
+          'totalPrice': productPrice,
+          'status': 'pending',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } catch (e) {
+        print('⚠️ لم يتم إرسال إشعار للمتجر: $e');
+      }
+
+      return docRef.id;
+    } catch (e, stackTrace) {
+      print('❌ خطأ في إرسال طلب العباية: $e');
+      print('📍 Stack trace: $stackTrace');
+      return null;
+    }
+  }
 }

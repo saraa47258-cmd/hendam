@@ -22,29 +22,46 @@ class FabricService {
   }
 
   /// جلب الأقمشة الخاصة بخياط محدد
-  /// حل مؤقت: يعرض جميع الأقمشة المتاحة حتى يتم إضافة tailorId للأقمشة الموجودة
+  /// يعرض فقط الأقمشة التي تحتوي على tailorId مطابق للخياط المحدد
   static Stream<List<Map<String, dynamic>>> getTailorFabrics(String tailorId) {
-    return FirebaseService.firestore
-        .collection(_fabricsCollection)
-        .where('isAvailable', isEqualTo: true)
-        .orderBy('lastUpdated', descending: true)
-        .snapshots()
-        .map((snapshot) {
-      // فلترة الأقمشة حسب tailorId إذا كان موجوداً، وإلا عرض جميع الأقمشة
-      return snapshot.docs
-          .map((doc) => {
-                'id': doc.id,
-                ...doc.data(),
-              })
-          .where((fabric) {
-        // إذا كان القماش يحتوي على tailorId، اعرضه فقط للخياط المحدد
-        if (fabric['tailorId'] != null) {
-          return fabric['tailorId'] == tailorId;
-        }
-        // إذا لم يكن يحتوي على tailorId، اعرضه لجميع الخياطين (حل مؤقت)
-        return true;
-      }).toList();
-    });
+    try {
+      // استخدام where query مباشرة في Firestore لفلترة حسب tailorId
+      return FirebaseService.firestore
+          .collection(_fabricsCollection)
+          .where('tailorId', isEqualTo: tailorId)
+          .where('isAvailable', isEqualTo: true)
+          .orderBy('lastUpdated', descending: true)
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs
+            .map((doc) => {
+                  'id': doc.id,
+                  ...doc.data(),
+                })
+            .toList();
+      });
+    } catch (e) {
+      // في حالة عدم وجود index في Firestore، نستخدم فلترة يدوية
+      print('⚠️ تحذير: استخدام فلترة يدوية لـ getTailorFabrics: $e');
+      return FirebaseService.firestore
+          .collection(_fabricsCollection)
+          .where('isAvailable', isEqualTo: true)
+          .orderBy('lastUpdated', descending: true)
+          .snapshots()
+          .map((snapshot) {
+        return snapshot.docs
+            .map((doc) => {
+                  'id': doc.id,
+                  ...doc.data(),
+                })
+            .where((fabric) {
+          // عرض فقط الأقمشة التي تحتوي على tailorId مطابق
+          // لا نعرض الأقمشة بدون tailorId
+          return fabric['tailorId'] != null && 
+                 fabric['tailorId'] == tailorId;
+        }).toList();
+      });
+    }
   }
 
   /// جلب قماش واحد بالتفصيل

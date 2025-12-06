@@ -76,13 +76,20 @@ class AnyImage extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     // أبعاد متجاوبة - تحسين للأداء
-    final effectiveWidth = width ??
-        (context.isPhone
+    // إذا لم يتم تحديد الأبعاد، نستخدم قيم افتراضية فقط إذا لم تكن infinity
+    final hasWidth = width != null && width!.isFinite;
+    final hasHeight = height != null && height!.isFinite;
+    
+    final effectiveWidth = hasWidth
+        ? width!
+        : (context.isPhone
             ? 120.0
             : context.isTablet
                 ? 150.0
                 : 180.0);
-    final effectiveHeight = height ?? effectiveWidth;
+    final effectiveHeight = hasHeight
+        ? height!
+        : (hasWidth ? effectiveWidth : 120.0);
     final effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(context.responsiveRadius());
 
@@ -94,63 +101,82 @@ class AnyImage extends StatelessWidget {
     Widget imageWidget;
 
     if (_isNetwork(raw)) {
+      final pixelRatio = MediaQuery.of(context).devicePixelRatio;
+      // التحقق من أن القيم ليست Infinity أو NaN قبل التحويل
+      final cacheWidth = (effectiveWidth.isFinite && effectiveWidth > 0)
+          ? (effectiveWidth * pixelRatio).round()
+          : null;
+      final cacheHeight = (effectiveHeight.isFinite && effectiveHeight > 0)
+          ? (effectiveHeight * pixelRatio).round()
+          : null;
+
       imageWidget = CachedNetworkImage(
         imageUrl: raw,
         fit: fit,
         alignment: alignment,
-        width: effectiveWidth,
-        height: effectiveHeight,
+        width: effectiveWidth.isFinite ? effectiveWidth : null,
+        height: effectiveHeight.isFinite ? effectiveHeight : null,
         filterQuality: FilterQuality.low, // تحسين الأداء
-        memCacheWidth:
-            (effectiveWidth * MediaQuery.of(context).devicePixelRatio).round(),
-        memCacheHeight:
-            (effectiveHeight * MediaQuery.of(context).devicePixelRatio).round(),
-        placeholder: (context, url) => _buildLoadingWidget(
-            context, effectiveWidth, effectiveHeight, effectiveBorderRadius),
-        errorWidget: (context, url, error) => _fallback(
-            cs, effectiveWidth, effectiveHeight, effectiveBorderRadius),
+        memCacheWidth: cacheWidth,
+        memCacheHeight: cacheHeight,
+        placeholder: (context, url) {
+          final placeholderWidth = hasWidth ? effectiveWidth : 120.0;
+          final placeholderHeight = hasHeight ? effectiveHeight : 120.0;
+          return _buildLoadingWidget(
+              context, placeholderWidth, placeholderHeight, effectiveBorderRadius);
+        },
+        errorWidget: (context, url, error) {
+          final errorWidth = hasWidth ? effectiveWidth : 120.0;
+          final errorHeight = hasHeight ? effectiveHeight : 120.0;
+          return _fallback(cs, errorWidth, errorHeight, effectiveBorderRadius);
+        },
       );
     } else if (raw.endsWith('.svg')) {
       imageWidget = SvgPicture.asset(
         _resolveAssetPath(raw),
         fit: fit,
         alignment: alignment,
-        width: effectiveWidth,
-        height: effectiveHeight,
+        width: hasWidth ? effectiveWidth : null,
+        height: hasHeight ? effectiveHeight : null,
         placeholderBuilder: (context) => _buildLoadingWidget(
             context, effectiveWidth, effectiveHeight, effectiveBorderRadius),
       );
     } else {
       final candidates = _assetCandidates(raw);
       imageWidget = _assetWithFallback(
-          context, candidates, 0, cs, effectiveWidth, effectiveHeight);
+          context, candidates, 0, cs, 
+          hasWidth ? effectiveWidth : null, 
+          hasHeight ? effectiveHeight : null);
     }
 
     // تطبيق BorderRadius إذا كان محدد
-    if (effectiveBorderRadius != BorderRadius.zero) {
-      return ClipRRect(
-        borderRadius: effectiveBorderRadius,
-        child: Container(
-          width: effectiveWidth,
-          height: effectiveHeight,
-          color: backgroundColor ?? cs.surfaceContainerHighest,
-          child: imageWidget,
-        ),
-      );
-    }
+    // لا نحدد width/height إذا كانت infinity لتسمح للصورة بالتمدد
+    final container = effectiveBorderRadius != BorderRadius.zero
+        ? ClipRRect(
+            borderRadius: effectiveBorderRadius,
+            child: Container(
+              width: hasWidth ? effectiveWidth : null,
+              height: hasHeight ? effectiveHeight : null,
+              color: backgroundColor ?? cs.surfaceContainerHighest,
+              child: imageWidget,
+            ),
+          )
+        : Container(
+            width: hasWidth ? effectiveWidth : null,
+            height: hasHeight ? effectiveHeight : null,
+            color: backgroundColor ?? cs.surfaceContainerHighest,
+            child: imageWidget,
+          );
 
-    return Container(
-      width: effectiveWidth,
-      height: effectiveHeight,
-      color: backgroundColor ?? cs.surfaceContainerHighest,
-      child: imageWidget,
-    );
+    return container;
   }
 
   Widget _assetWithFallback(BuildContext context, List<String> candidates,
-      int i, ColorScheme cs, double width, double height) {
+      int i, ColorScheme cs, double? width, double? height) {
     if (i >= candidates.length) {
-      return _fallback(cs, width, height, BorderRadius.zero);
+      final fallbackWidth = width ?? 120.0;
+      final fallbackHeight = height ?? 120.0;
+      return _fallback(cs, fallbackWidth, fallbackHeight, BorderRadius.zero);
     }
     final path = candidates[i];
     return Image.asset(

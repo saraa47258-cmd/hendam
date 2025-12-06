@@ -1,5 +1,6 @@
 // lib/features/catalog/presentation/small_merchant_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../../shops/models/shop.dart';
 
 // استبدل الاستيراد:
@@ -108,48 +109,78 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: cs.surface,
+        appBar: AppBar(
+          elevation: 0,
+          backgroundColor: const Color(0xFFF59E0B), // لون كهرماني للتجار
+          surfaceTintColor: Colors.transparent,
+          leading: CupertinoButton(
+            padding: EdgeInsets.zero,
+            minSize: 0,
+            onPressed: () => Navigator.maybePop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                CupertinoIcons.back,
+                color: Colors.white,
+                size: 28,
+              ),
+            ),
+          ),
+          leadingWidth: 56,
+          title: const Text(
+            '',
+            style: TextStyle(color: Colors.white),
+          ),
+          actions: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              minSize: 0,
+              onPressed: () {},
+              child: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  CupertinoIcons.search,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
         body: CustomScrollView(
           slivers: [
-            // رأس بتدرّج
-            SliverAppBar(
-              pinned: true,
-              floating: true,
-              expandedHeight: 120,
-              elevation: 0,
-              backgroundColor: cs.surface,
-              flexibleSpace: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                    colors: [
-                      cs.primaryContainer.withOpacity(.55),
-                      cs.tertiaryContainer.withOpacity(.35),
-                      cs.surface,
-                    ],
-                  ),
-                ),
-                child: FlexibleSpaceBar(
-                  expandedTitleScale: 1.15,
-                  titlePadding:
-                  const EdgeInsetsDirectional.only(start: 16, bottom: 12),
-                  title: Text(
-                    'محلات المستلزمات الرجالية',
-                    style: TextStyle(
-                      color: cs.onSurface,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: .3,
-                    ),
+            // العنوان الرئيسي
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
+                child: Text(
+                  'محلات المستلزمات الرجالية',
+                  style: TextStyle(
+                    color: cs.onSurface,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.3,
+                    fontSize: 28,
                   ),
                 ),
               ),
-              actions: const [],
             ),
-
             // بحث + فلاتر
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
                 child: Column(
                   children: [
                     TextField(

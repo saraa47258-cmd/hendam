@@ -132,15 +132,48 @@ class FirebaseService {
 
   // الحصول على استعلام محسّن للخياطين
   static Query<Map<String, dynamic>> getTailorsQuery({int? limit}) {
-    var query = firestore
-        .collection('tailors')
-        .orderBy('updatedAt', descending: true)
-        .orderBy('createdAt', descending: true);
+    try {
+      // جلب المحلات النشطة مع الترتيب حسب createdAt
+      // ملاحظة: إذا أردت استخدام where + orderBy، تحتاج index في Firestore
+      var query = firestore
+          .collection('tailors')
+          .where('isActive', isEqualTo: true)
+          .orderBy('createdAt', descending: true);
 
-    if (limit != null) {
-      query = query.limit(limit);
+      if (limit != null) {
+        query = query.limit(limit);
+      }
+
+      return query;
+    } catch (e) {
+      // في حالة الخطأ (مثلاً لا يوجد index)، نستخدم query بدون where
+      debugPrint('تحذير: خطأ في getTailorsQuery: $e');
+      debugPrint('محاولة استخدام query بسيط بدون where...');
+      
+      try {
+        // محاولة بدون where
+        var query = firestore
+            .collection('tailors')
+            .orderBy('createdAt', descending: true);
+        
+        if (limit != null) {
+          query = query.limit(limit);
+        }
+        
+        return query;
+      } catch (e2) {
+        // إذا فشل الترتيب أيضاً، نرجع query بسيط جداً
+        debugPrint('تحذير: خطأ في الترتيب أيضاً: $e2');
+        debugPrint('استخدام query بسيط بدون ترتيب...');
+        
+        Query<Map<String, dynamic>> query = firestore.collection('tailors');
+        
+        if (limit != null) {
+          query = query.limit(limit);
+        }
+        
+        return query;
+      }
     }
-
-    return query;
   }
 }

@@ -1,13 +1,16 @@
 // lib/features/catalog/presentation/abaya_services_screen.dart
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 import '../models/abaya_item.dart';
+import '../services/abaya_service.dart';
 import 'product_preview_screen.dart';
 import '../../favorites/services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/state/cart_scope.dart';
 
 // يفضَّل الاستيراد النسبي لتفادي مشاكل اسم الحزمة
 import '../../../shared/widgets/any_image.dart';
@@ -17,7 +20,8 @@ enum _SortMode { popular, priceLow, priceHigh, newest, titleAZ }
 
 class AbayaServicesScreen extends StatefulWidget {
   final String? shopName; // اسم المحل (اختياري للعرض كشارة)
-  const AbayaServicesScreen({super.key, this.shopName});
+  final String? traderId; // معرف التاجر (لجلب منتجات متجر محدد)
+  const AbayaServicesScreen({super.key, this.shopName, this.traderId});
 
   @override
   State<AbayaServicesScreen> createState() => _AbayaServicesScreenState();
@@ -30,110 +34,86 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
   // ✅ استخدم مجلد الأصول الجذري assets/ (تأكد من pubspec.yaml)
   String _asset(String name) => 'assets/abaya/$name';
 
-  // البيانات الأصلية + المعروضة
-  final List<AbayaItem> _items = [];
+  // خدمة Firebase
+  final _abayaService = AbayaService();
+
+  // البيانات الأصلية + المعروضة (من Firebase)
+  List<AbayaItem> _items = [];
   List<AbayaItem> _shown = [];
 
   // خيارات الفلترة
-  late double _minPrice, _maxPrice;
+  double _minPrice = 0.0, _maxPrice = 100.0;
   late RangeValues _priceRange;
   bool _onlyNew = false;
-  late List<Color> _colorChoices;
+  List<Color> _colorChoices = [];
   final Set<Color> _selectedColors = {};
 
   // وضع الفرز
   _SortMode _sort = _SortMode.popular;
 
+  // حالة التحميل
+  bool _isLoading = true;
+  StreamSubscription<List<AbayaItem>>? _subscription;
+
+  // Tabs (من JavaScript)
+  String _selectedTab = 'model'; // 'model' or 'product'
+
   @override
   void initState() {
     super.initState();
-    _seedItems();
-    _bootstrapFilters();
-    _applyFiltersAndSort();
+    _priceRange = RangeValues(_minPrice, _maxPrice);
+
+    // الاشتراك في stream لجلب البيانات
+    // إذا كان هناك traderId محدد، نجلب منتجات ذلك المتجر فقط
+    final stream = widget.traderId != null && widget.traderId!.isNotEmpty
+        ? _abayaService.getAbayaProducts(traderId: widget.traderId)
+        : _abayaService.getAbayaProductsSimple();
+
+    _subscription = stream.listen(
+      (items) {
+        if (mounted) {
+          setState(() {
+            _items = items;
+            _isLoading = false;
+            _bootstrapFilters(_items);
+            _applyFiltersAndSort();
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+        print('خطأ في جلب بيانات العبايات: $error');
+      },
+    );
   }
 
-  void _seedItems() {
-    // تقليل عدد العناصر لتحسين الأداء
-    _items.addAll([
-      AbayaItem(
-        id: 'a1',
-        title: 'Tank',
-        subtitle: 'كريب قطني',
-        price: 9.5,
-        imageUrl: _asset('abaya1.jpeg'),
-        gallery: [
-          _asset('abaya1.jpeg'),
-          _asset('abaya2.jpeg'),
-        ], // تقليل من 3 إلى 2
-        colors: const [
-          Color(0xFFC0C3C9),
-          Color(0xFFE5D3C5),
-        ], // تقليل من 4 إلى 2
-      ),
-      AbayaItem(
-        id: 'a2',
-        title: 'Tank',
-        subtitle: 'كريب قطني',
-        price: 10.0,
-        imageUrl: _asset('abaya2.jpeg'),
-        gallery: [
-          _asset('abaya2.jpeg'),
-          _asset('abaya1.jpeg'),
-        ],
-        colors: const [
-          Color(0xFFF1D6E5),
-          Color(0xFFEAD0C2),
-          Color(0xFFC9B1A3),
-          Color(0xFF8CA1B2),
-          Color(0xFF2F4A5A),
-        ],
-        isNew: true,
-      ),
-      AbayaItem(
-        id: 'a3',
-        title: 'Oversize',
-        subtitle: 'كريب ناعم',
-        price: 12.0,
-        imageUrl: _asset('abaya3.jpeg'),
-        gallery: [
-          _asset('abaya3.jpeg'),
-          _asset('abaya4.jpeg'),
-        ],
-        colors: const [
-          Color(0xFF2F4A5A),
-          Color(0xFFC0C3C9),
-          Color(0xFFEAD0C2),
-        ],
-      ),
-      AbayaItem(
-        id: 'a4',
-        title: 'Classic',
-        subtitle: 'كريب رسمي',
-        price: 14.0,
-        imageUrl: _asset('abaya4.jpeg'),
-        gallery: [
-          _asset('abaya4.jpeg'),
-          _asset('abaya5.jpeg'),
-          _asset('abaya6.jpeg'),
-        ],
-        colors: const [
-          Color(0xFF111111),
-          Color(0xFF696969),
-          Color(0xFFE5D3C5),
-        ],
-      ),
-    ]);
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
-  void _bootstrapFilters() {
-    _minPrice = _items.map((e) => e.price).reduce(math.min);
-    _maxPrice = _items.map((e) => e.price).reduce(math.max);
+  void _bootstrapFilters(List<AbayaItem> items) {
+    if (items.isEmpty) {
+      _minPrice = 0.0;
+      _maxPrice = 100.0;
+      _priceRange = RangeValues(_minPrice, _maxPrice);
+      _colorChoices = [];
+      return;
+    }
+
+    _minPrice = items.map((e) => e.price).reduce(math.min);
+    _maxPrice = items.map((e) => e.price).reduce(math.max);
     _priceRange = RangeValues(_minPrice, _maxPrice);
 
     // ألوان فريدة
     final seen = <int>{};
     final all = <Color>[];
-    for (final c in _items.expand((i) => i.colors)) {
+    for (final c in items.expand((i) => i.colors)) {
       if (seen.add(c.value)) all.add(c);
     }
     _colorChoices = all;
@@ -143,10 +123,12 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
     List<AbayaItem> list = List.of(_items);
 
     // فلترة السعر
-    list = list
-        .where(
-            (i) => i.price >= _priceRange.start && i.price <= _priceRange.end)
-        .toList();
+    if (_items.isNotEmpty) {
+      list = list
+          .where(
+              (i) => i.price >= _priceRange.start && i.price <= _priceRange.end)
+          .toList();
+    }
 
     // جديد فقط
     if (_onlyNew) list = list.where((i) => i.isNew).toList();
@@ -184,199 +166,208 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
   String _price(double v) =>
       '${v == v.truncateToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)} ر.ع';
 
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // ألوان من JavaScript
+    const primaryBrown = Color(0xFF8B7355);
+    const lightGray = Color(0xFFF3F4F6);
+    const darkGray = Color(0xFF1F2937);
+    const mediumGray = Color(0xFF6B7280);
+    const dividerGray = Color(0xFFE5E7EB);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
-          elevation: 0,
-          backgroundColor: const Color(0xFFE91E63), // لون بناتي جميل
-          surfaceTintColor: Colors.transparent,
-          leading: CupertinoButton(
-            padding: EdgeInsets.zero,
-            minSize: 0,
-            onPressed: () => Navigator.maybePop(context),
-            child: Container(
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                CupertinoIcons.back,
-                color: Colors.white,
-                size: 28,
-              ),
-            ),
-          ),
-          leadingWidth: 56,
-          title: const Text(
-            '',
-            style: TextStyle(color: Colors.white),
-          ),
-          actions: [
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              minSize: 0,
-              onPressed: () {},
-              child: Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+        backgroundColor: Colors.white,
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(primaryBrown),
                 ),
-                child: const Icon(
-                  CupertinoIcons.search,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-        ),
-        body: Stack(
-          children: [
-            CustomScrollView(
-              slivers: [
-                // العنوان + شارة اسم المتجر
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'العبايات',
-                          style: TextStyle(
-                            color: cs.onSurface,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.3,
-                            fontSize: 28,
-                          ),
-                        ),
-                        if (widget.shopName != null &&
-                            widget.shopName!.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: cs.primaryContainer.withOpacity(0.3),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: cs.primary.withOpacity(0.2),
-                                  width: 1,
+              )
+            : Stack(
+                children: [
+                  CustomScrollView(
+                    slivers: [
+                      // Header
+                      SliverToBoxAdapter(
+                        child: SafeArea(
+                          bottom: false,
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                                20, 16, 20, 20),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                IconButton(
+                                  onPressed: () => Navigator.maybePop(context),
+                                  icon: const Icon(
+                                    Icons.arrow_back,
+                                    size: 24,
+                                    color: darkGray,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.store_rounded,
-                                    size: 16,
-                                    color: cs.primary,
+                                IconButton(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons.search,
+                                    size: 24,
+                                    color: darkGray,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'المتجر: ${widget.shopName!}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: cs.primary,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                              ],
                             ),
                           ),
-                      ],
-                    ),
-                  ),
-                ),
-                // شريط الشرائح
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    child: _ChipsRow(
-                      chips: _chips,
-                      selectedIndex: _selectedChip,
-                      onChanged: (i) => setState(() => _selectedChip = i),
-                    ),
-                  ),
-                ),
-                // الشبكة
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  sliver: SliverLayoutBuilder(
-                    builder: (context, constraints) {
-                      // حساب عدد الأعمدة حسب عرض الشاشة
-                      final crossAxisCount =
-                          constraints.crossAxisExtent > 600 ? 3 : 2;
-                      final childAspectRatio =
-                          constraints.crossAxisExtent > 600 ? 0.8 : 0.75;
-
-                      return SliverGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: crossAxisCount,
-                          mainAxisSpacing: 14,
-                          crossAxisSpacing: 14,
-                          childAspectRatio: childAspectRatio,
                         ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, i) {
-                            final item = _shown[i];
-                            return _AbayaCard(
-                              item: item,
-                              priceText: _price(item.price),
-                              heroTag: 'abaya-${item.id}',
-                              imageBuilder: (src) => AnyImage(
-                                src: src,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                                filterQuality: FilterQuality.medium,
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  PageRouteBuilder(
-                                    transitionDuration: const Duration(
-                                        milliseconds:
-                                            200), // تقليل مدة الانتقال
-                                    reverseTransitionDuration:
-                                        const Duration(milliseconds: 150),
-                                    pageBuilder: (_, __, ___) =>
-                                        ProductPreviewScreen(
-                                      productId: item.id,
+                      ),
+                      // Category Pills
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: 60,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                                20, 0, 20, 10),
+                            itemCount: _chips.length,
+                            itemBuilder: (context, index) {
+                              final isSelected = index == _selectedChip;
+                              return Padding(
+                                padding:
+                                    const EdgeInsetsDirectional.only(end: 10),
+                                child: _CategoryPill(
+                                  label: _chips[index],
+                                  isSelected: isSelected,
+                                  onTap: () =>
+                                      setState(() => _selectedChip = index),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      // Title
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding:
+                              EdgeInsetsDirectional.fromSTEB(20, 20, 20, 16),
+                          child: Text(
+                            'العبايات',
+                            style: TextStyle(
+                              fontSize: 40,
+                              fontWeight: FontWeight.w700,
+                              color: primaryBrown,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Tabs
+                      SliverToBoxAdapter(
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(color: dividerGray, width: 1),
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                                20, 0, 20, 0),
+                            child: Row(
+                              children: [
+                                _TabButton(
+                                  label: 'نموذج',
+                                  isSelected: _selectedTab == 'model',
+                                  onTap: () =>
+                                      setState(() => _selectedTab = 'model'),
+                                ),
+                                const SizedBox(width: 32),
+                                _TabButton(
+                                  label: 'منتج',
+                                  isSelected: _selectedTab == 'product',
+                                  onTap: () =>
+                                      setState(() => _selectedTab = 'product'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Products Grid
+                      if (_shown.isEmpty && !_isLoading)
+                        const SliverFillRemaining(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.inventory_2_outlined,
+                                  size: 64,
+                                  color: mediumGray,
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'لا توجد منتجات متاحة',
+                                  style: TextStyle(
+                                    color: mediumGray,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsetsDirectional.fromSTEB(
+                              0, 20, 0, 100),
+                          sliver: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, i) {
+                                final item = _shown[i];
+                                return Padding(
+                                  padding: const EdgeInsetsDirectional.fromSTEB(
+                                      16, 0, 16, 12),
+                                  child: _AbayaListItem(
+                                    item: item,
+                                    priceText: _price(item.price),
+                                    heroTag: 'abaya-${item.id}',
+                                    imageBuilder: (src) => AnyImage(
+                                      src: src,
+                                      fit: BoxFit.cover,
+                                      filterQuality: FilterQuality.medium,
                                     ),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        PageRouteBuilder(
+                                          transitionDuration:
+                                              const Duration(milliseconds: 200),
+                                          reverseTransitionDuration:
+                                              const Duration(milliseconds: 150),
+                                          pageBuilder: (_, __, ___) =>
+                                              ProductPreviewScreen(
+                                            productId: item.id,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 );
                               },
-                            );
-                          },
-                          childCount: _shown.length,
-                          addAutomaticKeepAlives: false, // تحسين الذاكرة
-                          addRepaintBoundaries: false, // تحسين الأداء
+                              childCount: _shown.length,
+                            ),
+                          ),
                         ),
-                      );
-                    },
+                    ],
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
+                ],
+              ),
       ),
     );
   }
@@ -405,8 +396,10 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
           }
         }
 
-        final divisions =
-            math.max(1, math.min(100, ((_maxPrice - _minPrice) * 10).round()));
+        final priceDiff = _maxPrice - _minPrice;
+        final divisions = priceDiff > 0
+            ? math.max(1, math.min(100, (priceDiff * 10).round()))
+            : 1;
 
         return StatefulBuilder(
           builder: (ctx, setLocal) {
@@ -640,6 +633,85 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
 
 /* ===================== بقية الويدجتس ===================== */
 
+// Category Pill (من JavaScript)
+class _CategoryPill extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryPill({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF8B7355) : const Color(0xFFF3F4F6),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Tab Button (من JavaScript)
+class _TabButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _TabButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: isSelected
+                    ? const Color(0xFF1F2937)
+                    : const Color(0xFF9CA3AF),
+              ),
+            ),
+            if (isSelected)
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                height: 2,
+                color: const Color(0xFF1F2937),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ChipsRow extends StatelessWidget {
   final List<String> chips;
   final int selectedIndex;
@@ -682,6 +754,222 @@ class _ChipsRow extends StatelessWidget {
   }
 }
 
+// List Item Design (من الصورة)
+class _AbayaListItem extends StatefulWidget {
+  final AbayaItem item;
+  final String priceText;
+  final String heroTag;
+  final Widget Function(String src) imageBuilder;
+  final VoidCallback onTap;
+
+  const _AbayaListItem({
+    required this.item,
+    required this.priceText,
+    required this.heroTag,
+    required this.imageBuilder,
+    required this.onTap,
+  });
+
+  @override
+  State<_AbayaListItem> createState() => _AbayaListItemState();
+}
+
+class _AbayaListItemState extends State<_AbayaListItem> {
+  int _selectedColor = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    const primaryBrown = Color(0xFF8B7355);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.2),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // نقاط السحب (من الصورة)
+              Padding(
+                padding: const EdgeInsetsDirectional.only(end: 8, top: 4),
+                child: Column(
+                  children: List.generate(
+                      3,
+                      (i) => Container(
+                            width: 4,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.withOpacity(0.4),
+                              shape: BoxShape.circle,
+                            ),
+                          )),
+                ),
+              ),
+              // الصورة على اليسار
+              SizedBox(
+                width: 80,
+                height: 80,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Hero(
+                        tag: widget.heroTag,
+                        child: widget.imageBuilder(item.imageUrl),
+                      ),
+                    ),
+                    // شارة "جديد" في الأعلى
+                    if (item.isNew)
+                      Positioned(
+                        top: 4,
+                        left: 4,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: primaryBrown,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'جديد',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // المعلومات في المنتصف
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // اسم المنتج
+                    Text(
+                      item.title.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1F2937),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // شارات الألوان
+                    if (item.colors.isNotEmpty)
+                      SizedBox(
+                        height: 24,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: item.colors.length,
+                          separatorBuilder: (_, __) => const SizedBox(width: 6),
+                          itemBuilder: (_, idx) => _ColorSwatch(
+                            color: item.colors[idx],
+                            selected: idx == _selectedColor,
+                            onTap: () => setState(() => _selectedColor = idx),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              // زر دائري على اليمين
+              Column(
+                children: [
+                  // أيقونة المفضلة
+                  _FavButton(item: item),
+                  const SizedBox(height: 8),
+                  // زر إضافة للسلة
+                  GestureDetector(
+                    onTap: () {
+                      try {
+                        final cartState = CartScope.of(context);
+                        cartState.addAbayaItem(
+                          id: item.id,
+                          title: item.title,
+                          price: item.price,
+                          imageUrl: item.imageUrl,
+                          subtitle: item.subtitle,
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'تمت إضافة ${item.title} إلى السلة',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            duration: const Duration(seconds: 2),
+                            behavior: SnackBarBehavior.floating,
+                            backgroundColor: Colors.green,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('حدث خطأ: $e'),
+                            backgroundColor: Colors.red,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: primaryBrown,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.add,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _AbayaCard extends StatefulWidget {
   final AbayaItem item;
   final String priceText;
@@ -706,136 +994,141 @@ class _AbayaCardState extends State<_AbayaCard> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final item = widget.item;
 
     return Material(
-      color: cs.surface,
-      borderRadius: BorderRadius.circular(18),
-      clipBehavior: Clip.antiAlias,
-      elevation: 0,
+      color: Colors.transparent,
       child: InkWell(
         onTap: widget.onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: Hero(
-                        tag: widget.heroTag,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: widget.imageBuilder(item.imageUrl),
+        borderRadius: BorderRadius.circular(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // الصورة
+            AspectRatio(
+              aspectRatio: 0.72,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: Hero(
+                      tag: widget.heroTag,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: widget.imageBuilder(item.imageUrl),
+                      ),
+                    ),
+                  ),
+                  // أيقونة المفضلة في الزاوية اليمنى السفلى
+                  Positioned(
+                    bottom: 12,
+                    right: 12,
+                    child: _FavButton(item: item),
+                  ),
+                  // شارة "جديد" في الزاوية اليسرى السفلى
+                  if (item.isNew)
+                    Positioned(
+                      bottom: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B7355),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'جديد',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
-                    Positioned(
-                      top: 8,
-                      left: 8,
-                      child: _FavButton(item: item),
+                ],
+              ),
+            ),
+            const SizedBox(height: 6),
+            // شارات الألوان (Color Swatches)
+            if (item.colors.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: SizedBox(
+                  height: 26,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: item.colors.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (_, idx) => _ColorSwatch(
+                      color: item.colors[idx],
+                      selected: idx == _selectedColor,
+                      onTap: () => setState(() => _selectedColor = idx),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 30,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: item.colors.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (_, idx) => _ColorDot(
-                    color: item.colors[idx],
-                    selected: idx == _selectedColor,
-                    onTap: () => setState(() => _selectedColor = idx),
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
-              if (item.isNew)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6D4C41),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'جديد',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12),
-                  ),
-                ),
-              if (item.isNew) const SizedBox(height: 4),
-              Text(
-                item.subtitle.toUpperCase(),
+            // اسم المنتج (من JavaScript: productName)
+            Flexible(
+              child: Text(
+                item.title.toUpperCase(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: cs.onSurfaceVariant,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.0,
-                  fontSize: 11.5,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF6B7280),
+                  letterSpacing: 0.4,
+                  height: 1.1,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                item.title,
+            ),
+            const SizedBox(height: 2),
+            // عنوان المنتج (من JavaScript: productTitle)
+            Flexible(
+              child: Text(
+                item.subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    color: cs.onSurface,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF1F2937),
+                  height: 1.1,
+                ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                widget.priceText,
-                style: TextStyle(
-                    color: cs.onSurface,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ColorDot extends StatelessWidget {
+class _ColorSwatch extends StatelessWidget {
   final Color color;
   final bool selected;
   final VoidCallback onTap;
-  const _ColorDot(
+  const _ColorSwatch(
       {required this.color, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 26,
-        height: 26,
+        width: 24,
+        height: 24,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
+          color: color,
           border: Border.all(
-              color: selected ? cs.onSurface : cs.outlineVariant,
-              width: selected ? 2.0 : 1),
+            color: selected ? const Color(0xFF1F2937) : const Color(0xFFE5E7EB),
+            width: selected ? 2.0 : 1.0,
+          ),
         ),
-        alignment: Alignment.center,
-        child: Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
       ),
     );
   }
@@ -913,104 +1206,99 @@ class _FavButtonState extends State<_FavButton> {
       );
     }
 
-    return Material(
-      color: Colors.white.withOpacity(0.9),
-      shape: const CircleBorder(),
-      elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.2),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: authProvider.isAuthenticated
-            ? () async {
-                if (_isLoading) return;
-                setState(() => _isLoading = true);
+    return GestureDetector(
+      onTap: authProvider.isAuthenticated
+          ? () async {
+              if (_isLoading) return;
+              setState(() => _isLoading = true);
 
-                try {
-                  if (_isFavorite) {
-                    final removed = await _favoriteService.removeFromFavorites(
-                      productId: widget.item.id,
-                      productType: 'abaya',
-                    );
-                    if (mounted && removed) {
-                      setState(() => _isFavorite = false);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('تم إزالة من المفضلة'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    }
-                  } else {
-                    final added = await _favoriteService.addToFavorites(
-                      productId: widget.item.id,
-                      productType: 'abaya',
-                      productData: {
-                        'name': widget.item.title,
-                        'subtitle': widget.item.subtitle,
-                        'imageUrl': widget.item.imageUrl,
-                        'gallery': widget.item.gallery,
-                        'price': widget.item.price,
-                        'colors': widget.item.colors.map((c) => c.value).toList(),
-                        'isNew': widget.item.isNew,
-                        'type': 'عباية',
-                      },
-                    );
-                    if (mounted && added) {
-                      setState(() => _isFavorite = true);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('تمت الإضافة للمفضلة'),
-                          duration: Duration(seconds: 2),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  }
-                } catch (e) {
-                  if (mounted) {
+              try {
+                if (_isFavorite) {
+                  final removed = await _favoriteService.removeFromFavorites(
+                    productId: widget.item.id,
+                    productType: 'abaya',
+                  );
+                  if (mounted && removed) {
+                    setState(() => _isFavorite = false);
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('حدث خطأ: $e'),
-                        backgroundColor: Colors.red,
+                      const SnackBar(
+                        content: Text('تم إزالة من المفضلة'),
+                        duration: Duration(seconds: 2),
                       ),
                     );
                   }
-                } finally {
-                  if (mounted) {
-                    setState(() => _isLoading = false);
+                } else {
+                  final added = await _favoriteService.addToFavorites(
+                    productId: widget.item.id,
+                    productType: 'abaya',
+                    productData: {
+                      'name': widget.item.title,
+                      'subtitle': widget.item.subtitle,
+                      'imageUrl': widget.item.imageUrl,
+                      'gallery': widget.item.gallery,
+                      'price': widget.item.price,
+                      'colors': widget.item.colors.map((c) => c.value).toList(),
+                      'isNew': widget.item.isNew,
+                      'type': 'عباية',
+                    },
+                  );
+                  if (mounted && added) {
+                    setState(() => _isFavorite = true);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('تمت الإضافة للمفضلة'),
+                        duration: Duration(seconds: 2),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
                   }
                 }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('حدث خطأ: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              } finally {
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                }
               }
-            : () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('يرجى تسجيل الدخول أولاً'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              },
-        child: Padding(
-          padding: const EdgeInsets.all(6),
-          child: _isLoading
-              ? const SizedBox(
+            }
+          : () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('يرجى تسجيل الدخول أولاً'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.white.withOpacity(0.9),
+        ),
+        child: _isLoading
+            ? const Padding(
+                padding: EdgeInsets.all(8),
+                child: SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
-                  transitionBuilder: (c, a) =>
-                      ScaleTransition(scale: a, child: c),
-                  child: Icon(
-                    _isFavorite
-                        ? Icons.favorite_rounded
-                        : Icons.favorite_border_rounded,
-                    key: ValueKey(_isFavorite),
-                    size: 20,
-                    color: _isFavorite ? Colors.red : cs.onSurface,
-                  ),
                 ),
-        ),
+              )
+            : Icon(
+                _isFavorite
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
+                size: 20,
+                color: _isFavorite ? Colors.red : const Color(0xFF1F2937),
+              ),
       ),
     );
   }

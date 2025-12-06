@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../features/catalog/models/abaya_item.dart';
+import '../../features/catalog/services/abaya_service.dart';
+import '../../features/orders/services/order_service.dart';
+import '../../features/auth/providers/auth_provider.dart';
 
 const _kGuideAsset = 'assets/abaya/abaya_guide.jpeg';
 const _brand = Color(0xFF6D4C41);
@@ -38,6 +42,8 @@ class AbayaMeasureScreen extends StatefulWidget {
 
 class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _abayaService = AbayaService();
+  bool _isSubmitting = false;
 
   // الحقول
   final _lengthC = TextEditingController();
@@ -58,17 +64,115 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   double _toNum(TextEditingController c) =>
       double.tryParse(c.text.trim().replaceAll(',', '.')) ?? 0;
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final m = AbayaMeasurements(
-      length: _toNum(_lengthC),
-      sleeve: _toNum(_sleeveC),
-      width: _toNum(_widthC),
-      notes: _notesC.text.trim(),
-    );
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // التحقق من تسجيل الدخول
+    if (!authProvider.isAuthenticated || authProvider.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يرجى تسجيل الدخول أولاً'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
-    Navigator.pop(context, m);
+    setState(() => _isSubmitting = true);
+
+    try {
+      // الحصول على معلومات المستخدم
+      final user = authProvider.currentUser!;
+      final customerId = user.uid;
+      final customerName = user.name;
+      final customerPhone = user.phoneNumber ?? '';
+
+      // الحصول على معلومات المتجر
+      String? traderId;
+      String traderName = 'متجر العبايات';
+      
+      try {
+        traderId = await _abayaService.getTraderIdByProductId(widget.item.id);
+        if (traderId != null) {
+          final name = await _abayaService.getTraderName(traderId);
+          if (name != null) {
+            traderName = name;
+          }
+        }
+      } catch (e) {
+        print('خطأ في جلب معلومات المتجر: $e');
+      }
+
+      // إنشاء المقاسات
+      final measurements = {
+        'length': _toNum(_lengthC),
+        'sleeve': _toNum(_sleeveC),
+        'width': _toNum(_widthC),
+      };
+
+      // إرسال الطلب إلى Firebase
+      final orderId = await OrderService.submitAbayaOrder(
+        customerId: customerId,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        traderId: traderId ?? 'general',
+        traderName: traderName,
+        productId: widget.item.id,
+        productName: widget.item.title,
+        productImageUrl: widget.item.imageUrl,
+        productPrice: widget.item.price,
+        measurements: measurements,
+        notes: _notesC.text.trim(),
+      );
+
+      if (!mounted) return;
+
+      if (orderId != null) {
+        // نجح إرسال الطلب
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ تم إرسال الطلب بنجاح!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+
+        // إرجاع المقاسات للصفحة السابقة (للتوافق مع الكود القديم)
+        final m = AbayaMeasurements(
+          length: _toNum(_lengthC),
+          sleeve: _toNum(_sleeveC),
+          width: _toNum(_widthC),
+          notes: _notesC.text.trim(),
+        );
+
+        // العودة للصفحة السابقة
+        Navigator.pop(context, m);
+      } else {
+        // فشل إرسال الطلب
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ فشل إرسال الطلب. يرجى المحاولة مرة أخرى.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -240,21 +344,31 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
             child: SizedBox(
               height: 48,
               child: ElevatedButton(
-                onPressed: _submit,
+                onPressed: _isSubmitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _brand,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
+                  disabledBackgroundColor: Colors.grey,
                 ),
-                child: const Text(
-                  'تأكيد المقاسات ومتابعة الطلب',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'تأكيد المقاسات ومتابعة الطلب',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ),

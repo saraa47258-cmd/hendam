@@ -1,8 +1,10 @@
 // lib/features/shops/presentation/abaya_shops_screen.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/shop.dart';
+import '../services/abaya_traders_service.dart';
 import '../../catalog/presentation/abaya_services_screen.dart';
 import '../../../shared/widgets/skeletons.dart';
 
@@ -16,69 +18,44 @@ class AbayaShopsScreen extends StatefulWidget {
 
 class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
   final TextEditingController _search = TextEditingController();
+  final _abayaTradersService = AbayaTradersService();
 
-  // بيانات تجريبية بصور من الأصول
-  final List<Shop> _all = [
-    Shop(
-      id: 's1',
-      name: 'عبايات الروز',
-      category: 'عبايات',
-      city: 'مسقط',
-      imageUrl: 'assets/abaya/abaya1.jpeg',
-      rating: 4.8,
-      reviews: 120,
-      minPrice: 9.5,
-      servicesCount: 24,
-      delivery: true,
-      isOpen: true,
-    ),
-    Shop(
-      id: 's2',
-      name: 'دار الأناقة',
-      category: 'عبايات',
-      city: 'السيب',
-      imageUrl: 'assets/abaya/abaya2.jpeg',
-      rating: 4.6,
-      reviews: 95,
-      minPrice: 10.0,
-      servicesCount: 18,
-      delivery: true,
-      isOpen: true,
-    ),
-    Shop(
-      id: 's3',
-      name: 'بيت العباية',
-      category: 'تفصيل',
-      city: 'مطرح',
-      imageUrl: 'assets/abaya/abaya3.jpeg',
-      rating: 4.3,
-      reviews: 63,
-      minPrice: 8.0,
-      servicesCount: 12,
-      delivery: false,
-      isOpen: false,
-    ),
-    Shop(
-      id: 's4',
-      name: 'لمسة حرير',
-      category: 'عبايات',
-      city: 'العذيبة',
-      imageUrl: 'assets/abaya/abaya4.jpeg',
-      rating: 4.9,
-      reviews: 210,
-      minPrice: 12.0,
-      servicesCount: 30,
-      delivery: true,
-      isOpen: true,
-    ),
-  ];
-
-  late List<Shop> _shown = List.of(_all);
+  // البيانات من Firebase
+  List<Shop> _all = [];
+  late List<Shop> _shown = [];
   bool _onlyOpen = false;
   bool _onlyDelivery = false;
+  bool _isLoading = true;
+  StreamSubscription<List<Shop>>? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // الاشتراك في stream لجلب البيانات
+    _subscription = _abayaTradersService.getAbayaTraders().listen(
+      (traders) {
+        if (mounted) {
+          setState(() {
+            _all = traders;
+            _isLoading = false;
+            _applyFilters();
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+        print('خطأ في جلب بيانات التجار: $error');
+      },
+    );
+  }
 
   @override
   void dispose() {
+    _subscription?.cancel();
     _search.dispose();
     super.dispose();
   }
@@ -112,7 +89,15 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: cs.surface,
-        body: CustomScrollView(
+        body: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Color(0xFFE91E63),
+                  ),
+                ),
+              )
+            : CustomScrollView(
           slivers: [
             // AppBar بنمط iOS ولون بناتي
             SliverAppBar(
@@ -145,10 +130,10 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
                 ),
               ),
               leadingWidth: 56,
-              flexibleSpace: FlexibleSpaceBar(
+              flexibleSpace: const FlexibleSpaceBar(
                 expandedTitleScale: 1.1,
                 titlePadding:
-                    const EdgeInsetsDirectional.only(start: 16, bottom: 16),
+                    EdgeInsetsDirectional.only(start: 16, bottom: 16),
                 centerTitle: false,
                 title: Text(
                   'محلات العبايات',
@@ -315,8 +300,10 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        AbayaServicesScreen(shopName: s.name),
+                                    builder: (_) => AbayaServicesScreen(
+                                      shopName: s.name,
+                                      traderId: s.id, // تمرير معرف التاجر
+                                    ),
                                   ),
                                 );
                               },
@@ -509,13 +496,6 @@ class _ShopCardModern extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          // زر السعر يتقلّص تلقائيًا لو المساحة ضاقت
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.centerRight,
-                            child: _PriceCTA(text: 'من $priceText'),
-                          ),
                         ],
                       ),
                     ],
@@ -650,32 +630,3 @@ class _MiniIconText extends StatelessWidget {
   }
 }
 
-class _PriceCTA extends StatelessWidget {
-  final String text;
-  const _PriceCTA({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF6D4C41),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6D4C41).withOpacity(.18),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Text(
-        text,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style:
-            const TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
-      ),
-    );
-  }
-}
