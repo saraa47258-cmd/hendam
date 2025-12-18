@@ -167,7 +167,7 @@ class _Body extends StatelessWidget {
             ],
           ),
 
-          if ((item.variantsLabel ?? '').isNotEmpty) ...[
+          if (item.variantsLabel.isNotEmpty) ...[
             SizedBox(height: spacing),
             Chip(
               label: Text(

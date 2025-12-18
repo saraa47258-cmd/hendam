@@ -221,24 +221,6 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     return p;
   }
 
-  // ==== ألوان واجهة ديناميكية حسب اللون ====
-  LinearGradient get _headerGradient {
-    const base = Color(0xFF5C6BC0); // لون افتراضي
-    final a = _tint(base, 1.00);
-    final b = _tint(base, 0.86);
-    return LinearGradient(
-      colors: [a, b],
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-    );
-  }
-
-  Color _tint(Color c, double k) {
-    final hsl = HSLColor.fromColor(c);
-    final l = (hsl.lightness * k).clamp(0.0, 1.0);
-    return hsl.withLightness(l).toColor();
-  }
-
   // الحصول على اسم اللون بالعربي
   String _getColorName(Color color) {
     const colorNames = {
@@ -466,7 +448,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                 const Divider(height: 24),
                 const _KV('مصدر القماش', 'قماش من المتجر'),
                 _KV('نوع القماش', _fabricType ?? '—'),
-                _KV('لون القماش', chosenColorHex),
+                const _KV('لون القماش', chosenColorHex),
                 if (_fabricThumb != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -710,15 +692,31 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
         child: Scaffold(
           backgroundColor: cs.surface,
           body: SafeArea(
+            top: false,
             child: Column(
               children: [
                 // ===== الهيدر =====
                 Container(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
                   decoration: BoxDecoration(
-                    gradient: _headerGradient,
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFF5B6FDE),
+                        const Color(0xFF7C5FDE),
+                        const Color(0xFF9554DE),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(18)),
+                        bottom: Radius.circular(28)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF7C5FDE).withOpacity(0.35),
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: Center(
                     child: ConstrainedBox(
@@ -732,58 +730,74 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                               height: 56,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
+                                color: Colors.white.withOpacity(0.2),
                                 border: Border.all(
-                                    color: Colors.white.withOpacity(.5),
+                                    color: Colors.white.withOpacity(.7),
                                     width: 2),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(.08),
-                                    blurRadius: 10,
+                                    color: Colors.black.withOpacity(.12),
+                                    blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   )
                                 ],
                               ),
-                              child: const CircleAvatar(
-                                backgroundColor: Colors.white24,
-                                child: Icon(Icons.checkroom_rounded,
-                                    color: Colors.white, size: 26),
-                              ),
+                              child: const Icon(Icons.checkroom_rounded,
+                                  color: Colors.white, size: 28),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(widget.tailorName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: tt.titleLarge?.copyWith(
                                         color: Colors.white,
-                                        fontWeight: FontWeight.w900)),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.location_on_outlined,
-                                        size: 16, color: Colors.white),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text('مسقط',
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: tt.bodySmall?.copyWith(
-                                              color: Colors.white
-                                                  .withOpacity(.9))),
-                                    )
-                                  ],
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -0.3,
+                                        height: 1.2)),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.22),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(Icons.location_on,
+                                          size: 13, color: Colors.white),
+                                      const SizedBox(width: 5),
+                                      Text('مسقط',
+                                          style: tt.labelMedium?.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 0.2)),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                           ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close_rounded,
-                                color: Colors.white),
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.18),
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close_rounded,
+                                  color: Colors.white, size: 22),
+                            ),
                           ),
                         ],
                       ),
@@ -793,7 +807,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
                 // ===== شريط التقدّم =====
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 840),
@@ -858,10 +872,16 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                 SafeArea(
                   top: false,
                   child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                     decoration: BoxDecoration(
                       color: cs.surface,
-                      border: Border(top: BorderSide(color: cs.outlineVariant)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 20,
+                          offset: const Offset(0, -6),
+                        ),
+                      ],
                     ),
                     child: Center(
                       child: ConstrainedBox(
@@ -869,37 +889,105 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                         child: Row(
                           children: [
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('التكلفة التقديرية',
-                                      style: tt.labelMedium?.copyWith(
-                                          color: cs.onSurfaceVariant)),
-                                  const SizedBox(height: 2),
-                                  Text('ر.ع ${_price.toStringAsFixed(3)}',
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFFF5F3FF), Color(0xFFFAFAFF)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xFF7C5FDE).withOpacity(0.2),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.account_balance_wallet_rounded,
+                                          size: 16,
+                                          color: const Color(0xFF7C5FDE),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            'التكلفة التقديرية',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: tt.labelMedium?.copyWith(
+                                              color: const Color(0xFF7C5FDE),
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: -0.2,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'ر.ع ${_price.toStringAsFixed(3)}',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                       style: tt.titleLarge?.copyWith(
-                                          fontWeight: FontWeight.w900)),
-                                ],
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF6366F1),
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 10),
                             OutlinedButton.icon(
                               onPressed: _back,
-                              icon: const Icon(Icons.arrow_back_rounded),
+                              icon: const Icon(Icons.arrow_back_rounded, size: 16),
                               label: Text(_step == 0 ? 'رجوع' : 'السابق'),
                               style: OutlinedButton.styleFrom(
-                                minimumSize: const Size(116, 46),
+                                minimumSize: const Size(82, 44),
+                                padding: const EdgeInsets.symmetric(horizontal: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                side: BorderSide(
+                                  color: cs.outline.withOpacity(0.5),
+                                  width: 1.5,
+                                ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            FilledButton.icon(
-                              onPressed: _next,
-                              icon: Icon(_step == 2
-                                  ? Icons.check_circle_rounded
-                                  : Icons.arrow_forward_rounded),
-                              label:
-                                  Text(_step == 2 ? 'إرسال الطلب' : 'التالي'),
-                              style: FilledButton.styleFrom(
-                                minimumSize: const Size(152, 46),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: FilledButton.icon(
+                                onPressed: _next,
+                                icon: Icon(
+                                  _step == 2
+                                      ? Icons.check_circle_rounded
+                                      : Icons.arrow_forward_rounded,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  _step == 2 ? 'إرسال الطلب' : 'التالي',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(98, 44),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 3,
+                                  backgroundColor: const Color(0xFF7C5FDE),
+                                  foregroundColor: Colors.white,
+                                  shadowColor: const Color(0xFF7C5FDE).withOpacity(0.4),
+                                ),
                               ),
                             ),
                           ],
@@ -928,17 +1016,25 @@ class _StepperHeader extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final items = List.generate(labels.length, (i) {
       final active = i <= current;
+      final completed = i < current;
       return Expanded(
         child: Row(
           children: [
-            _dot(i + 1, labels[i], active, cs),
+            _dot(i + 1, labels[i], active, completed, cs),
             if (i < labels.length - 1)
               Expanded(
-                child: Container(
-                  height: 2,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeOutCubic,
+                  height: 2.5,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
-                    color: active ? cs.primary : cs.outlineVariant,
+                    gradient: active
+                        ? const LinearGradient(
+                            colors: [Color(0xFF7C5FDE), Color(0xFF9554DE)],
+                          )
+                        : null,
+                    color: active ? null : cs.outlineVariant.withOpacity(0.5),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -950,36 +1046,74 @@ class _StepperHeader extends StatelessWidget {
     return Column(children: [Row(children: items)]);
   }
 
-  Widget _dot(int n, String label, bool active, ColorScheme cs) {
+  Widget _dot(int n, String label, bool active, bool completed, ColorScheme cs) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: active ? cs.primary : cs.surface,
-            border: Border.all(
-                color: active ? cs.primary : cs.outlineVariant, width: 2),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '$n',
-            style: TextStyle(
-              fontSize: 11,
-              color: active ? cs.onPrimary : cs.onSurface,
-              fontWeight: FontWeight.w800,
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: active ? 1.0 : 0.0),
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutBack,
+          builder: (context, value, child) => Transform.scale(
+            scale: 0.90 + (value * 0.10),
+            child: Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: active
+                    ? const LinearGradient(
+                        colors: [Color(0xFF6366F1), Color(0xFF9554DE)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      )
+                    : null,
+                color: active ? null : cs.surfaceContainerHighest,
+                border: Border.all(
+                  color: active ? Colors.transparent : cs.outline.withOpacity(0.4),
+                  width: 1.5,
+                ),
+                boxShadow: active
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF7C5FDE).withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ]
+                    : null,
+              ),
+              alignment: Alignment.center,
+              child: completed
+                  ? const Icon(
+                      Icons.check_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    )
+                  : Text(
+                      '$n',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: active ? Colors.white : cs.onSurfaceVariant.withOpacity(0.7),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
             ),
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: active ? cs.onSurface : cs.onSurfaceVariant,
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+              color: active ? const Color(0xFF7C5FDE) : cs.onSurfaceVariant.withOpacity(0.75),
+              letterSpacing: -0.2,
+            ),
           ),
         ),
       ],
@@ -1081,6 +1215,82 @@ class _FabricStepState extends State<_FabricStep> {
         color: cs.surfaceContainerHighest,
         child:
             Icon(Icons.image_not_supported_rounded, color: cs.onSurfaceVariant),
+      ),
+    );
+  }
+
+  Widget _fabricGridCard({
+    required Map<String, dynamic> fabric,
+    required bool selected,
+    required int index,
+    required VoidCallback onTap,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    final imageUrl = fabric['imageUrl'] as String? ?? '';
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected ? const Color(0xFF7C5FDE) : cs.outlineVariant.withOpacity(0.3),
+              width: selected ? 3 : 1.5,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF7C5FDE).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.04),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _fabricImage(imageUrl, cs),
+                if (selected)
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF7C5FDE),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 6,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1714,35 +1924,94 @@ class _FabricStepState extends State<_FabricStep> {
       if (fabrics.isEmpty) {
         return Center(
           child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.checkroom_outlined,
-                    size: 80, color: cs.onSurfaceVariant),
-                const SizedBox(height: 16),
-                Text(
-                  'لا توجد أقمشة متاحة حالياً',
-                  style: tt.titleMedium?.copyWith(color: cs.onSurfaceVariant),
+            padding: const EdgeInsets.all(48),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOutBack,
+              builder: (context, value, child) => Transform.scale(
+                scale: value,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [
+                            cs.primary.withOpacity(0.1),
+                            cs.secondary.withOpacity(0.05),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: cs.primary.withOpacity(0.08),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Icon(Icons.checkroom_rounded,
+                          size: 96, color: cs.primary.withOpacity(0.7)),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      'لا توجد أقمشة متاحة حالياً',
+                      textAlign: TextAlign.center,
+                      style: tt.headlineSmall?.copyWith(
+                        color: cs.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'سيتم إضافة أقمشة جديدة قريباً',
+                      textAlign: TextAlign.center,
+                      style: tt.bodyLarge?.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    OutlinedButton.icon(
+                      onPressed: () {},
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: const Text('تحديث'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
       }
 
-      return ListView.separated(
+      return GridView.builder(
         controller: _fabricScrollController,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 1.0,
+        ),
         itemCount: fabrics.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (_, i) {
           final fabric = fabrics[i];
           final sel = widget.selectedFabricId != null &&
               widget.selectedFabricId == fabric['id'];
 
-          return _fabricOptionCard(
+          return _fabricGridCard(
             fabric: fabric,
             selected: sel,
             index: i,
@@ -1765,10 +2034,63 @@ class _FabricStepState extends State<_FabricStep> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('اختر نوع القماش من المتجر',
-                    style:
-                        tt.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
-                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        cs.primaryContainer.withOpacity(0.5),
+                        cs.surface,
+                      ],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: cs.primary.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: cs.primary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.auto_awesome_rounded,
+                          color: cs.primary,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'اختر نوع القماش من المتجر',
+                              style: tt.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: cs.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'تصفح أفضل الأقمشة المتوفرة',
+                              style: tt.bodySmall?.copyWith(
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
                 // عرض القماش
                 StreamBuilder<List<Map<String, dynamic>>>(
                   stream: FabricService.getTailorFabrics(widget.tailorId),
@@ -4681,14 +5003,12 @@ class _KV extends StatelessWidget {
 /// كادر أنيق (بدون تأثير زجاجي إذا useBlur=false)
 class _ElegantFrame extends StatelessWidget {
   final Widget child;
-  final double radius;
   final EdgeInsets padding;
   final bool useBlur;
   const _ElegantFrame({
     required this.child,
     this.padding = const EdgeInsets.all(14),
     this.useBlur = true,
-    this.radius = 16.0,
   });
 
   @override
@@ -4699,6 +5019,7 @@ class _ElegantFrame extends StatelessWidget {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
+    const radius = 16.0;
 
     return Container(
       decoration: BoxDecoration(

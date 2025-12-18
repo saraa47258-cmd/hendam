@@ -106,7 +106,7 @@ class EmbroideryStepWidget extends StatelessWidget {
                               : null,
                         ),
                         child: isSelected
-                            ? Icon(Icons.check, color: Colors.white, size: 24)
+                            ? const Icon(Icons.check, color: Colors.white, size: 24)
                             : null,
                       ),
                     );
@@ -354,7 +354,7 @@ class _EmbroideryDesignCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (design.price != null && design.price! > 0) ...[
+                    if (design.price > 0) ...[
                       const SizedBox(height: 4),
                       Text(
                         'ر.ع ${design.price.toStringAsFixed(3)}',

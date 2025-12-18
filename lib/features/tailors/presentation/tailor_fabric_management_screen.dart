@@ -25,7 +25,6 @@ class _TailorFabricManagementScreenState
     extends State<TailorFabricManagementScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -42,7 +41,6 @@ class _TailorFabricManagementScreenState
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -740,7 +738,6 @@ class _AddColorDialogState extends State<_AddColorDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
 
     return AlertDialog(
       title: const Text('إضافة لون جديد'),

@@ -2,7 +2,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 import '../models/abaya_item.dart';
@@ -30,9 +29,6 @@ class AbayaServicesScreen extends StatefulWidget {
 class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
   static const _chips = ['الكل', 'عبايات', 'أقمشة', 'أطقم', 'إكسسوارات'];
   int _selectedChip = 1;
-
-  // ✅ استخدم مجلد الأصول الجذري assets/ (تأكد من pubspec.yaml)
-  String _asset(String name) => 'assets/abaya/$name';
 
   // خدمة Firebase
   final _abayaService = AbayaService();
@@ -168,10 +164,8 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     // ألوان من JavaScript
     const primaryBrown = Color(0xFF8B7355);
-    const lightGray = Color(0xFFF3F4F6);
     const darkGray = Color(0xFF1F2937);
     const mediumGray = Color(0xFF6B7280);
     const dividerGray = Color(0xFFE5E7EB);
@@ -712,48 +706,6 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-class _ChipsRow extends StatelessWidget {
-  final List<String> chips;
-  final int selectedIndex;
-  final ValueChanged<int> onChanged;
-  const _ChipsRow({
-    required this.chips,
-    required this.selectedIndex,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: List.generate(chips.length, (i) {
-          final selected = i == selectedIndex;
-          return Padding(
-            padding:
-                EdgeInsetsDirectional.only(end: i == chips.length - 1 ? 0 : 8),
-            child: ChoiceChip(
-              label: Text(chips[i]),
-              selected: selected,
-              onSelected: (_) => onChanged(i),
-              backgroundColor: cs.surfaceContainerHighest.withOpacity(0.7),
-              selectedColor: const Color(0xFF6D4C41),
-              labelStyle: TextStyle(
-                color: selected ? Colors.white : cs.onSurface,
-                fontWeight: FontWeight.w600,
-              ),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
 // List Item Design (من الصورة)
 class _AbayaListItem extends StatefulWidget {
   final AbayaItem item;
@@ -1188,7 +1140,6 @@ class _FavButtonState extends State<_FavButton> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     if (!_isInitialized) {

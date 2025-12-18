@@ -43,3 +43,7 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation("com.google.mediapipe:tasks-vision:latest.release")
+}

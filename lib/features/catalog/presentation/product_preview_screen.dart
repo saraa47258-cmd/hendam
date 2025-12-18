@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 
 // نموذج العباية
@@ -496,7 +495,7 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: item == null ? null : () async {
-                      final measurements = await Navigator.push(
+                      await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => AbayaMeasureScreen(item: item!),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hindam/core/services/firebase_service.dart';
 import '../../tailors/widgets/tailor_row_card.dart';

@@ -16,9 +16,6 @@ class SmallMerchantScreen extends StatefulWidget {
 class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
   final TextEditingController _search = TextEditingController();
 
-  // صور المتاجر من الأصول
-  String _asset(String name) => 'assets/shops/$name';
-
   // بيانات تجريبية رجالية
   final List<Shop> _all = [
     Shop(

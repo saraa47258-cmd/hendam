@@ -268,7 +268,7 @@ class _Header extends StatelessWidget {
                 const Icon(Icons.star_rate_rounded, size: 18, color: Color(0xFFFFD54F)),
                 const SizedBox(width: 2),
                 Text(
-                  (tailor.rating ?? 4.5).toStringAsFixed(1),
+                  tailor.rating.toStringAsFixed(1),
                   style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 if (reviewsCount != null) ...[

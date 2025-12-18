@@ -422,8 +422,6 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
   // 0 الطول — 1 الكم — 2 العرض
   int _selected = 0;
 
-  Alignment _a(double x, double y) => Alignment(x * 2 - 1, y * 2 - 1);
-
   String get _tip {
     switch (_selected) {
       case 0:

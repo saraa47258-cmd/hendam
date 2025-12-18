@@ -149,14 +149,14 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
     // منطق تحديد الجزء بناءً على الموضع
     // يمكن تحسينه باستخدام Path.contains()
     final parts = <Map<String, dynamic>>[
-      {'key': 'neck', 'label': 'محيط الرقبة', 'bounds': Rect.fromLTWH(100, 50, 80, 40)},
-      {'key': 'shoulder', 'label': 'الكتف', 'bounds': Rect.fromLTWH(60, 90, 160, 30)},
-      {'key': 'chest', 'label': 'الصدر', 'bounds': Rect.fromLTWH(70, 120, 140, 60)},
-      {'key': 'waist', 'label': 'الخصر', 'bounds': Rect.fromLTWH(80, 180, 120, 40)},
-      {'key': 'sleeve', 'label': 'طول الكم', 'bounds': Rect.fromLTWH(20, 100, 40, 100)},
-      {'key': 'upperSleeve', 'label': 'محيط الكم العلوي', 'bounds': Rect.fromLTWH(15, 110, 30, 30)},
-      {'key': 'lowerSleeve', 'label': 'محيط الكم السفلي', 'bounds': Rect.fromLTWH(15, 170, 30, 30)},
-      {'key': 'length', 'label': 'الطول الكلي', 'bounds': Rect.fromLTWH(90, 50, 100, 200)},
+      {'key': 'neck', 'label': 'محيط الرقبة', 'bounds': const Rect.fromLTWH(100, 50, 80, 40)},
+      {'key': 'shoulder', 'label': 'الكتف', 'bounds': const Rect.fromLTWH(60, 90, 160, 30)},
+      {'key': 'chest', 'label': 'الصدر', 'bounds': const Rect.fromLTWH(70, 120, 140, 60)},
+      {'key': 'waist', 'label': 'الخصر', 'bounds': const Rect.fromLTWH(80, 180, 120, 40)},
+      {'key': 'sleeve', 'label': 'طول الكم', 'bounds': const Rect.fromLTWH(20, 100, 40, 100)},
+      {'key': 'upperSleeve', 'label': 'محيط الكم العلوي', 'bounds': const Rect.fromLTWH(15, 110, 30, 30)},
+      {'key': 'lowerSleeve', 'label': 'محيط الكم السفلي', 'bounds': const Rect.fromLTWH(15, 170, 30, 30)},
+      {'key': 'length', 'label': 'الطول الكلي', 'bounds': const Rect.fromLTWH(90, 50, 100, 200)},
     ];
 
     for (var part in parts) {
