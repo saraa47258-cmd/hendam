@@ -136,39 +136,81 @@ class _NavShellState extends State<NavShell> {
 
           bottomNavigationBar: SafeArea(
             top: false,
-            child: NavigationBarTheme(
-              data: NavigationBarThemeData(
-                height: 64, // 👈 اختياري لتقليل الارتفاع (يمكن تغييره/حذفه)
-                backgroundColor: cs.surface,
-                indicatorColor: cs.primary.withOpacity(.12),
-                labelTextStyle: WidgetStateProperty.resolveWith((states) {
-                  final selected = states.contains(WidgetState.selected);
-                  return TextStyle(
-                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                  );
-                }),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: cs.surface,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 24,
+                    offset: const Offset(0, -4),
+                  ),
+                  BoxShadow(
+                    color: cs.primary.withOpacity(0.05),
+                    blurRadius: 40,
+                    offset: const Offset(0, -8),
+                  ),
+                ],
+                border: Border.all(
+                  color: cs.outlineVariant.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
-              child: NavigationBar(
-                selectedIndex: _index,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                destinations: destinations,
-                onDestinationSelected: (i) async {
-                  HapticFeedback.selectionClick();
-                  if (_index == i) {
-                    // رجوع لأول صفحة + تمرير لأعلى
-                    _navKeys[i].currentState?.popUntil((r) => r.isFirst);
-                    final c = _tabScrollCtrls[i];
-                    if (c.hasClients) {
-                      await c.animateTo(
-                        0,
-                        duration: const Duration(milliseconds: 280),
-                        curve: Curves.easeOutCubic,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: NavigationBarTheme(
+                  data: NavigationBarThemeData(
+                    height: 68,
+                    elevation: 0,
+                    backgroundColor: Colors.transparent,
+                    surfaceTintColor: Colors.transparent,
+                    indicatorColor: cs.primary.withOpacity(.15),
+                    indicatorShape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                      final selected = states.contains(WidgetState.selected);
+                      return TextStyle(
+                        fontWeight:
+                            selected ? FontWeight.w800 : FontWeight.w500,
+                        fontSize: 12,
+                        color: selected ? cs.primary : cs.onSurfaceVariant,
                       );
-                    }
-                  } else {
-                    setState(() => _index = i);
-                  }
-                },
+                    }),
+                    iconTheme: WidgetStateProperty.resolveWith((states) {
+                      final selected = states.contains(WidgetState.selected);
+                      return IconThemeData(
+                        size: 24,
+                        color: selected ? cs.primary : cs.onSurfaceVariant,
+                      );
+                    }),
+                  ),
+                  child: NavigationBar(
+                    selectedIndex: _index,
+                    labelBehavior:
+                        NavigationDestinationLabelBehavior.alwaysShow,
+                    destinations: destinations,
+                    onDestinationSelected: (i) async {
+                      HapticFeedback.selectionClick();
+                      if (_index == i) {
+                        // رجوع لأول صفحة + تمرير لأعلى
+                        _navKeys[i].currentState?.popUntil((r) => r.isFirst);
+                        final c = _tabScrollCtrls[i];
+                        if (c.hasClients) {
+                          await c.animateTo(
+                            0,
+                            duration: const Duration(milliseconds: 280),
+                            curve: Curves.easeOutCubic,
+                          );
+                        }
+                      } else {
+                        setState(() => _index = i);
+                      }
+                    },
+                  ),
+                ),
               ),
             ),
           ),

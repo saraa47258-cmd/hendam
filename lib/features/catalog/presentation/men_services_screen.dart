@@ -328,67 +328,278 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
 }
 
 /// بانر العروض أعلى القائمة
-class _DealBannerMen extends StatelessWidget {
+class _DealBannerMen extends StatefulWidget {
   const _DealBannerMen();
 
   @override
+  State<_DealBannerMen> createState() => _DealBannerMenState();
+}
+
+class _DealBannerMenState extends State<_DealBannerMen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _shimmerAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    )..repeat();
+    _shimmerAnimation = Tween<double>(begin: -1.0, end: 2.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
     return RepaintBoundary(
-      child: Container(
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerHighest.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: cs.outlineVariant.withOpacity(0.3),
-            width: 0.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            RichText(
-              text: TextSpan(
-                style: tt.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  color: cs.onSurface,
-                ),
-                children: const [
-                  TextSpan(text: 'وفّر حتى '),
-                  TextSpan(
-                      text: '٣ ر.ع',
-                      style: TextStyle(color: Color(0xFFE65100))),
-                  TextSpan(text: ' على خياطة الدشداشة'),
+      child: AnimatedBuilder(
+        animation: _shimmerAnimation,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF1A237E), // أزرق داكن
+                  Color(0xFF283593),
+                  Color(0xFF3949AB),
                 ],
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF1A237E).withOpacity(0.4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
-            Text(
-              'اكتشف محلات جديدة أو جرّب خياطين ما طلبت منهم من فترة',
-              style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                // دوائر ديكورية
+                Positioned(
+                  top: -40,
+                  right: -30,
+                  child: Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.08),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: -50,
+                  left: -20,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.06),
+                    ),
+                  ),
+                ),
+                // أيقونة المقص الكبيرة
+                Positioned(
+                  left: 15,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Icon(
+                      Icons.content_cut_rounded,
+                      size: 80,
+                      color: Colors.white.withOpacity(0.1),
+                    ),
+                  ),
+                ),
+                // تأثير لامع متحرك
+                Positioned(
+                  top: 0,
+                  bottom: 0,
+                  left: _shimmerAnimation.value * 400 - 100,
+                  width: 80,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.white.withOpacity(0),
+                          Colors.white.withOpacity(0.15),
+                          Colors.white.withOpacity(0),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                // المحتوى
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // شارة العرض
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF6D00).withOpacity(0.9),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFF6D00).withOpacity(0.4),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.local_fire_department_rounded,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'عرض حصري',
+                              style: tt.labelSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // العنوان الرئيسي
+                      RichText(
+                        text: TextSpan(
+                          style: tt.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            height: 1.2,
+                          ),
+                          children: const [
+                            TextSpan(text: 'وفّر حتى '),
+                            TextSpan(
+                              text: '٣ ر.ع',
+                              style: TextStyle(
+                                color: Color(0xFFFFD54F),
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            TextSpan(text: '\nعلى خياطة الدشداشة'),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // الوصف
+                      Text(
+                        'اكتشف محلات جديدة أو جرّب خياطين ما طلبت منهم من فترة',
+                        style: tt.bodySmall?.copyWith(
+                          color: Colors.white.withOpacity(0.85),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      // صف الزر والمؤقت
+                      Row(
+                        children: [
+                          // زر اكتشف الآن
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'اكتشف الآن',
+                                  style: tt.labelLarge?.copyWith(
+                                    color: const Color(0xFF1A237E),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                const Icon(
+                                  Icons.arrow_forward_rounded,
+                                  size: 18,
+                                  color: Color(0xFF1A237E),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          // المؤقت
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.timer_outlined,
+                                  size: 16,
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '14:43',
+                                  style: tt.labelLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: cs.outlineVariant),
-              ),
-              child: Text('14:43', style: tt.labelLarge),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

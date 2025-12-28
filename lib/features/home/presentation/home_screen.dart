@@ -212,43 +212,155 @@ class _HeaderGreetingContent extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
 
-    final avatarRadius = context.pick(22.0, tablet: 26.0, desktop: 30.0);
-    final iconSize = context.pick(22.0, tablet: 24.0, desktop: 26.0);
+    final avatarRadius = context.pick(26.0, tablet: 30.0, desktop: 34.0);
+    final iconSize = context.pick(24.0, tablet: 26.0, desktop: 28.0);
     final titleSize = context.responsiveFontSize(18.0);
 
     return Row(
       children: [
-        CircleAvatar(
-          radius: avatarRadius,
-          backgroundColor: cs.primaryContainer,
-          child: Icon(Icons.person, size: iconSize),
-        ),
-        SizedBox(width: context.responsiveSpacing()),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              style: tt.titleMedium?.copyWith(
-                color: cs.onSurface,
-                fontSize: titleSize,
-              ),
-              children: [
-                const TextSpan(text: 'مرحباً، '),
-                TextSpan(
-                  text: 'عميلنا',
-                  style: tt.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    fontSize: titleSize,
-                  ),
-                ),
+        // أفاتار متدرج احترافي
+        Container(
+          width: avatarRadius * 2,
+          height: avatarRadius * 2,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cs.primary,
+                cs.primary.withOpacity(0.7),
               ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: cs.primary.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child:
+              Icon(Icons.person_rounded, size: iconSize, color: Colors.white),
+        ),
+        SizedBox(width: context.responsiveSpacing() * 1.2),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'مرحباً 👋',
+                style: tt.bodyMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                  fontSize: context.responsiveFontSize(14.0),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'عميلنا العزيز',
+                style: tt.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: titleSize,
+                  color: cs.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // زر الإشعارات
+        _GlassIconButton(
+          icon: Icons.notifications_none_rounded,
+          onTap: () {},
+          badge: 3,
+        ),
+        const SizedBox(width: 8),
+        // زر المفضلة
+        _GlassIconButton(
+          icon: Icons.favorite_border_rounded,
+          onTap: () => context.push('/favorites'),
+        ),
+      ],
+    );
+  }
+}
+
+// زر زجاجي احترافي
+class _GlassIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  final int? badge;
+
+  const _GlassIconButton({
+    required this.icon,
+    required this.onTap,
+    this.badge,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final size = context.pick(44.0, tablet: 48.0, desktop: 52.0);
+
+    return Stack(
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest.withOpacity(0.8),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: cs.outlineVariant.withOpacity(0.5),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(14),
+              child: Icon(
+                icon,
+                size: context.iconSize(),
+                color: cs.onSurfaceVariant,
+              ),
             ),
           ),
         ),
-        IconButton(
-          onPressed: () => context.push('/favorites'),
-          icon: Icon(Icons.favorite_border, size: context.iconSize()),
-          tooltip: 'مفضلاتي',
-        ),
+        if (badge != null && badge! > 0)
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.4),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                '$badge',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -278,175 +390,415 @@ class _SearchAndFilterContent extends StatelessWidget {
     final borderRadius = context.responsiveRadius();
     final fontSize = context.responsiveFontSize(14.0);
 
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            decoration: InputDecoration(
-              hintText: 'ابحث عن خدمة (دشداشة، عباية، تعديل)',
-              hintStyle: tt.bodyMedium?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontSize: fontSize,
-              ),
-              prefixIcon: Icon(Icons.search, size: context.iconSize()),
-              filled: true,
-              fillColor: cs.surfaceContainerHighest,
-              contentPadding: EdgeInsets.symmetric(
-                vertical: context.responsiveSpacing(),
-                horizontal: context.responsivePadding(),
-              ),
-              border: OutlineInputBorder(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(borderRadius + 4),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: BorderSide(color: cs.outlineVariant),
+                border: Border.all(
+                  color: cs.outlineVariant.withOpacity(0.5),
+                  width: 1.5,
+                ),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: BorderSide(color: cs.outlineVariant),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(borderRadius),
-                borderSide: BorderSide(color: cs.primary, width: 1.4),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'ابحث عن خدمة (دشداشة، عباية، تعديل)',
+                  hintStyle: tt.bodyMedium?.copyWith(
+                    color: cs.onSurfaceVariant.withOpacity(0.6),
+                    fontSize: fontSize,
+                  ),
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Icon(
+                      Icons.search_rounded,
+                      size: context.iconSize(),
+                      color: cs.primary,
+                    ),
+                  ),
+                  filled: true,
+                  fillColor: Colors.transparent,
+                  contentPadding: EdgeInsets.symmetric(
+                    vertical: context.responsiveSpacing() * 1.2,
+                    horizontal: context.responsivePadding(),
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                ),
               ),
             ),
           ),
-        ),
-        SizedBox(width: context.responsiveSpacing()),
-        SizedBox(
-          height: buttonSize,
-          width: buttonSize,
-          child: Material(
-            color: cs.primary,
-            borderRadius: BorderRadius.circular(borderRadius),
-            child: InkWell(
-              onTap: () {},
+          SizedBox(width: context.responsiveSpacing()),
+          Container(
+            height: buttonSize,
+            width: buttonSize,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  cs.primary,
+                  cs.primary.withOpacity(0.8),
+                ],
+              ),
               borderRadius: BorderRadius.circular(borderRadius),
-              child: Icon(
-                Icons.filter_list_rounded,
-                color: Colors.white,
-                size: context.iconSize(),
+              boxShadow: [
+                BoxShadow(
+                  color: cs.primary.withOpacity(0.35),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(borderRadius),
+              child: InkWell(
+                onTap: () {},
+                borderRadius: BorderRadius.circular(borderRadius),
+                child: Icon(
+                  Icons.tune_rounded,
+                  color: Colors.white,
+                  size: context.iconSize(),
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-/* ======================= Promo Banner ====================== */
+/* ======================= Promo Banner Carousel ====================== */
 class _PromoBanner extends StatelessWidget {
   const _PromoBanner();
 
   @override
   Widget build(BuildContext context) {
     return const RepaintBoundary(
-      child: _PromoBannerContent(),
+      child: _PromoBannerCarousel(),
     );
   }
 }
 
-class _PromoBannerContent extends StatelessWidget {
-  const _PromoBannerContent();
+// نموذج بيانات الإعلان
+class _PromoData {
+  final String title;
+  final String subtitle;
+  final String buttonText;
+  final IconData icon;
+  final List<Color> gradientColors;
+  final String? badge;
+
+  const _PromoData({
+    required this.title,
+    required this.subtitle,
+    required this.buttonText,
+    required this.icon,
+    required this.gradientColors,
+    this.badge,
+  });
+}
+
+class _PromoBannerCarousel extends StatefulWidget {
+  const _PromoBannerCarousel();
+
+  @override
+  State<_PromoBannerCarousel> createState() => _PromoBannerCarouselState();
+}
+
+class _PromoBannerCarouselState extends State<_PromoBannerCarousel> {
+  final PageController _pageController = PageController(viewportFraction: 1.0);
+  int _currentPage = 0;
+
+  // الإعلانات الافتراضية
+  static const List<_PromoData> _promos = [
+    _PromoData(
+      title: 'خصم 40%',
+      subtitle: 'على جميع خدمات التفصيل الرجالي',
+      buttonText: 'اطلب الآن',
+      icon: Icons.content_cut_rounded,
+      gradientColors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+      badge: '🔥 عرض محدود',
+    ),
+    _PromoData(
+      title: 'توصيل مجاني',
+      subtitle: 'للطلبات فوق 50 ريال عُماني',
+      buttonText: 'تسوق الآن',
+      icon: Icons.local_shipping_rounded,
+      gradientColors: [Color(0xFF11998E), Color(0xFF38EF7D)],
+      badge: '🚚 جديد',
+    ),
+    _PromoData(
+      title: 'دشداشة العيد',
+      subtitle: 'تشكيلة حصرية بأجود الأقمشة',
+      buttonText: 'اكتشف المزيد',
+      icon: Icons.diamond_rounded,
+      gradientColors: [Color(0xFFFC466B), Color(0xFF3F5EFB)],
+      badge: '✨ حصري',
+    ),
+    _PromoData(
+      title: 'عباية أنيقة',
+      subtitle: 'تصاميم عصرية بلمسة عُمانية',
+      buttonText: 'تصفح الآن',
+      icon: Icons.auto_awesome,
+      gradientColors: [Color(0xFF8E2DE2), Color(0xFF4A00E0)],
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // تغيير تلقائي كل 4 ثواني
+    Future.delayed(const Duration(seconds: 4), _autoScroll);
+  }
+
+  void _autoScroll() {
+    if (!mounted) return;
+    final nextPage = (_currentPage + 1) % _promos.length;
+    _pageController.animateToPage(
+      nextPage,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOutCubic,
+    );
+    Future.delayed(const Duration(seconds: 4), _autoScroll);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    final bannerHeight = context.pick(165.0, tablet: 180.0, desktop: 200.0);
 
-    final bannerHeight = context.pick(140.0, tablet: 160.0, desktop: 180.0);
-    final borderRadius = context.responsiveRadius();
-    final titleSize = context.responsiveFontSize(24.0);
-    final iconSize = context.pick(56.0, tablet: 64.0, desktop: 72.0);
+    return Column(
+      children: [
+        SizedBox(
+          height: bannerHeight,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) => setState(() => _currentPage = index),
+            itemCount: _promos.length,
+            itemBuilder: (context, index) {
+              return _PromoBannerCard(promo: _promos[index]);
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+        // مؤشرات الصفحات
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(_promos.length, (index) {
+            final isActive = index == _currentPage;
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: isActive ? 24 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                color: isActive
+                    ? _promos[_currentPage].gradientColors[0]
+                    : Colors.grey.withOpacity(0.3),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+}
+
+class _PromoBannerCard extends StatelessWidget {
+  final _PromoData promo;
+
+  const _PromoBannerCard({required this.promo});
+
+  @override
+  Widget build(BuildContext context) {
+    final tt = Theme.of(context).textTheme;
+    final borderRadius = context.pick(20.0, tablet: 24.0, desktop: 28.0);
     final padding = context.responsivePadding();
 
     return Container(
-      height: bannerHeight,
+      margin: const EdgeInsets.symmetric(horizontal: 2),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(borderRadius),
         gradient: LinearGradient(
-          begin: Alignment.topRight,
-          end: Alignment.bottomLeft,
-          colors: [cs.primaryContainer, cs.tertiaryContainer],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: promo.gradientColors,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.06),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          )
+            color: promo.gradientColors[0].withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          Positioned.fill(
-            child: DecoratedBox(
+          // خلفية زخرفية
+          Positioned(
+            top: -20,
+            right: -20,
+            child: Container(
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.white.withOpacity(.08), Colors.transparent],
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -30,
+            left: -10,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.08),
+              ),
+            ),
+          ),
+          // الأيقونة الكبيرة
+          Positioned(
+            left: 20,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Icon(
+                promo.icon,
+                size: 70,
+                color: Colors.white.withOpacity(0.15),
+              ),
+            ),
+          ),
+          // المحتوى
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: padding, vertical: padding * 0.7),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      // الشارة والعنوان
+                      Row(
+                        children: [
+                          if (promo.badge != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              margin: const EdgeInsets.only(left: 8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                promo.badge!,
+                                style: tt.labelSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      // العنوان
+                      Text(
+                        promo.title,
+                        style: tt.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          height: 1.0,
+                        ),
+                      ),
+                      // الوصف
+                      Text(
+                        promo.subtitle,
+                        style: tt.bodySmall?.copyWith(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      // الزر
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              promo.buttonText,
+                              style: tt.labelSmall?.copyWith(
+                                color: promo.gradientColors[0],
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 14,
+                              color: promo.gradientColors[0],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                // أيقونة صغيرة على اليسار
+                Icon(
+                  promo.icon,
+                  size: 48,
+                  color: Colors.white.withOpacity(0.3),
+                ),
+              ],
             ),
-          ),
-          PositionedDirectional(
-            start: padding,
-            top: padding,
-            child: Text(
-              'خصم 40%',
-              style: tt.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                fontSize: titleSize,
-              ),
-            ),
-          ),
-          Center(child: Icon(Icons.content_cut, size: iconSize)),
-          PositionedDirectional(
-            end: padding,
-            bottom: padding,
-            child: _CtaPill(text: 'اطلب الآن', onTap: () {}),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CtaPill extends StatelessWidget {
-  final String text;
-  final VoidCallback onTap;
-  const _CtaPill({required this.text, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    final borderRadius = context.responsiveRadius();
-    final fontSize = context.responsiveFontSize(14.0);
-    final padding = EdgeInsets.symmetric(
-      horizontal: context.responsivePadding(),
-      vertical: context.responsiveSpacing(),
-    );
-
-    return Material(
-      color: cs.primary,
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: Padding(
-          padding: padding,
-          child: Text(
-            text,
-            style: tt.titleSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: fontSize,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -619,17 +971,63 @@ class _Cat {
 /* ===================== Section Header Row ================== */
 class _SectionHeader extends StatelessWidget {
   final String title;
-  const _SectionHeader({required this.title});
+  final String? actionText;
+  final VoidCallback? onAction;
+  const _SectionHeader({required this.title, this.actionText, this.onAction});
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
     return RepaintBoundary(
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-              fontSize: context.responsiveFontSize(20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: tt.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: context.responsiveFontSize(20.0),
+                  color: cs.onSurface,
+                ),
+              ),
+            ],
+          ),
+          if (actionText != null)
+            TextButton(
+              onPressed: onAction,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    actionText!,
+                    style: tt.labelLarge?.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 14,
+                    color: cs.primary,
+                  ),
+                ],
+              ),
             ),
+        ],
       ),
     );
   }
