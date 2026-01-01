@@ -451,156 +451,362 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // واجهة تسجيل الدخول المحسنة
+  // واجهة تسجيل الدخول الاحترافية
   Widget _buildLoginPrompt(BuildContext context, ColorScheme cs) {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [
-                cs.primary.withOpacity(0.1),
-                cs.secondary.withOpacity(0.05),
-                cs.tertiary.withOpacity(0.1),
-              ],
+        body: Stack(
+          children: [
+            // خلفية متدرجة احترافية
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF1A1A2E),
+                    const Color(0xFF16213E),
+                    const Color(0xFF0F3460),
+                  ],
+                ),
+              ),
             ),
-          ),
-          child: SafeArea(
-            child: Center(
+            // نمط دوائر ديكورية
+            Positioned(
+              top: -100,
+              right: -100,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      cs.primary.withOpacity(0.3),
+                      cs.primary.withOpacity(0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: -50,
+              left: -50,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      cs.tertiary.withOpacity(0.2),
+                      cs.tertiary.withOpacity(0.0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // المحتوى الرئيسي
+            SafeArea(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(32.0),
+                padding: const EdgeInsets.symmetric(horizontal: 28.0),
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: SlideTransition(
                     position: _slideAnimation,
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // أيقونة محسنة
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                cs.primary,
-                                cs.secondary,
-                              ],
+                        const SizedBox(height: 60),
+                        // الأفاتار الاحترافي
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // الحلقة الخارجية المتوهجة
+                            Container(
+                              width: 140,
+                              height: 140,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: SweepGradient(
+                                  colors: [
+                                    cs.primary,
+                                    cs.tertiary,
+                                    cs.secondary,
+                                    cs.primary,
+                                  ],
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: cs.primary.withOpacity(0.4),
+                                    blurRadius: 30,
+                                    spreadRadius: 5,
+                                  ),
+                                ],
+                              ),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: cs.primary.withOpacity(0.3),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
+                            // الدائرة الداخلية
+                            Container(
+                              width: 125,
+                              height: 125,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    const Color(0xFF2D2D44),
+                                    const Color(0xFF1A1A2E),
+                                  ],
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.person_rounded,
+                                size: 55,
+                                color: Colors.white.withOpacity(0.9),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 40),
+
+                        // العنوان الرئيسي
+                        ShaderMask(
+                          shaderCallback: (bounds) => LinearGradient(
+                            colors: [Colors.white, Colors.white70],
+                          ).createShader(bounds),
+                          child: Text(
+                            'أهلاً وسهلاً',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 1.2,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'انضم إلينا واستمتع بتجربة تسوق فريدة',
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: Colors.white60,
+                                    height: 1.6,
+                                  ),
+                        ),
+                        const SizedBox(height: 40),
+
+                        // مميزات التطبيق
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              _buildFeatureItem(
+                                icon: Icons.local_shipping_outlined,
+                                title: 'توصيل سريع',
+                                subtitle: 'لجميع أنحاء السلطنة',
+                                color: const Color(0xFF4CAF50),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildFeatureItem(
+                                icon: Icons.verified_outlined,
+                                title: 'جودة مضمونة',
+                                subtitle: 'منتجات أصلية 100%',
+                                color: const Color(0xFF2196F3),
+                              ),
+                              const SizedBox(height: 16),
+                              _buildFeatureItem(
+                                icon: Icons.support_agent_outlined,
+                                title: 'دعم متواصل',
+                                subtitle: 'خدمة عملاء على مدار الساعة',
+                                color: const Color(0xFFFF9800),
                               ),
                             ],
-                          ),
-                          child: const Icon(
-                            Icons.person_outline_rounded,
-                            size: 60,
-                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 40),
 
-                        // العنوان المحسن
-                        Text(
-                          'مرحباً بك!',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineMedium
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: cs.onSurface,
-                              ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        // الوصف المحسن
-                        Text(
-                          'سجل دخولك للوصول إلى حسابك\nومتابعة طلباتك ومفضلاتك',
-                          textAlign: TextAlign.center,
-                          style:
-                              Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: cs.onSurface.withOpacity(0.7),
-                                  ),
-                        ),
-                        const SizedBox(height: 48),
-
-                        // زر تسجيل الدخول المحسن
-                        SizedBox(
+                        // زر تسجيل الدخول
+                        Container(
                           width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton.icon(
+                          height: 58,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            gradient: LinearGradient(
+                              colors: [cs.primary, cs.tertiary],
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: cs.primary.withOpacity(0.4),
+                                blurRadius: 20,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
                             onPressed: () => context.push('/login'),
-                            icon: const Icon(Icons.login_rounded),
-                            label: const Text('تسجيل الدخول'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: cs.primary,
-                              foregroundColor: cs.onPrimary,
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              elevation: 8,
-                              shadowColor: cs.primary.withOpacity(0.3),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.login_rounded,
+                                    color: Colors.white),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'تسجيل الدخول',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                         const SizedBox(height: 16),
 
-                        // زر إنشاء حساب محسن
-                        SizedBox(
+                        // زر إنشاء حساب
+                        Container(
                           width: double.infinity,
-                          height: 56,
-                          child: OutlinedButton.icon(
+                          height: 58,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                              width: 2,
+                            ),
+                          ),
+                          child: TextButton(
                             onPressed: () => context.push('/signup'),
-                            icon: const Icon(Icons.person_add_rounded),
-                            label: const Text('إنشاء حساب جديد'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: cs.primary,
-                              side: BorderSide(color: cs.primary, width: 2),
+                            style: TextButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.person_add_alt_1_rounded,
+                                    color: Colors.white.withOpacity(0.9)),
+                                const SizedBox(width: 10),
+                                Text(
+                                  'إنشاء حساب جديد',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleMedium
+                                      ?.copyWith(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 30),
 
-                        // روابط إضافية محسنة
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
+                        // تصفح كزائر
+                        TextButton(
+                          onPressed: () => context.push('/welcome'),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'تصفح كزائر',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 14,
+                                color: Colors.white.withOpacity(0.6),
                               ),
                             ],
                           ),
-                          child: TextButton(
-                            onPressed: () => context.push('/welcome'),
-                            child: const Text('عرض المزيد من الخيارات'),
-                          ),
                         ),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
         ),
       ),
+    );
+  }
+
+  // عنصر ميزة في قائمة المميزات
+  Widget _buildFeatureItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: color, size: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Icon(
+          Icons.check_circle_rounded,
+          color: color.withOpacity(0.7),
+          size: 20,
+        ),
+      ],
     );
   }
 

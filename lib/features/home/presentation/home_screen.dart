@@ -207,161 +207,324 @@ class _HeaderGreeting extends StatelessWidget {
 class _HeaderGreetingContent extends StatelessWidget {
   const _HeaderGreetingContent();
 
+  // تحية حسب الوقت
+  String _getTimeGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return 'صباح الخير';
+    } else if (hour >= 12 && hour < 17) {
+      return 'مساء الخير';
+    } else if (hour >= 17 && hour < 21) {
+      return 'مساء النور';
+    } else {
+      return 'أهلاً بك';
+    }
+  }
+
+  // أيقونة حسب الوقت
+  String _getTimeEmoji() {
+    final hour = DateTime.now().hour;
+    if (hour >= 5 && hour < 12) {
+      return '☀️';
+    } else if (hour >= 12 && hour < 17) {
+      return '🌤️';
+    } else if (hour >= 17 && hour < 21) {
+      return '🌅';
+    } else {
+      return '🌙';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
 
-    final avatarRadius = context.pick(26.0, tablet: 30.0, desktop: 34.0);
-    final iconSize = context.pick(24.0, tablet: 26.0, desktop: 28.0);
-    final titleSize = context.responsiveFontSize(18.0);
+    final avatarSize = context.pick(52.0, tablet: 58.0, desktop: 64.0);
+    final iconSize = context.pick(26.0, tablet: 28.0, desktop: 30.0);
+    final titleSize = context.responsiveFontSize(20.0);
+    final subtitleSize = context.responsiveFontSize(13.0);
 
-    return Row(
-      children: [
-        // أفاتار متدرج احترافي
-        Container(
-          width: avatarRadius * 2,
-          height: avatarRadius * 2,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                cs.primary,
-                cs.primary.withOpacity(0.7),
+    return Container(
+      padding: EdgeInsets.all(context.responsiveSpacing()),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            cs.primaryContainer.withOpacity(0.15),
+            cs.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: cs.outlineVariant.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          // أفاتار احترافي مع حلقة متدرجة
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  cs.primary,
+                  cs.tertiary,
+                  cs.secondary,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: cs.primary.withOpacity(0.25),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                  spreadRadius: 2,
+                ),
               ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: cs.primary.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+            child: Container(
+              width: avatarSize,
+              height: avatarSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cs.surface,
+                border: Border.all(color: cs.surface, width: 2),
               ),
-            ],
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      cs.primary.withOpacity(0.9),
+                      cs.primary.withOpacity(0.6),
+                    ],
+                  ),
+                ),
+                child: Icon(
+                  Icons.person_rounded,
+                  size: iconSize,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
-          child:
-              Icon(Icons.person_rounded, size: iconSize, color: Colors.white),
-        ),
-        SizedBox(width: context.responsiveSpacing() * 1.2),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          SizedBox(width: context.responsiveSpacing() * 1.4),
+          // النص
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // تحية الوقت
+                Row(
+                  children: [
+                    Text(
+                      _getTimeGreeting(),
+                      style: tt.bodyMedium?.copyWith(
+                        color: cs.primary,
+                        fontSize: subtitleSize,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _getTimeEmoji(),
+                      style: TextStyle(fontSize: subtitleSize + 2),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // اسم المستخدم
+                Text(
+                  'عميلنا العزيز',
+                  style: tt.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: titleSize,
+                    color: cs.onSurface,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // الأزرار
+          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'مرحباً 👋',
-                style: tt.bodyMedium?.copyWith(
-                  color: cs.onSurfaceVariant,
-                  fontSize: context.responsiveFontSize(14.0),
-                ),
+              _PremiumIconButton(
+                icon: Icons.favorite_border_rounded,
+                activeIcon: Icons.favorite_rounded,
+                onTap: () => context.push('/favorites'),
+                primaryColor: const Color(0xFFE91E63),
               ),
-              const SizedBox(height: 2),
-              Text(
-                'عميلنا العزيز',
-                style: tt.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: titleSize,
-                  color: cs.onSurface,
-                ),
+              const SizedBox(width: 10),
+              _PremiumIconButton(
+                icon: Icons.notifications_none_rounded,
+                activeIcon: Icons.notifications_rounded,
+                onTap: () {},
+                badge: 3,
+                primaryColor: cs.primary,
               ),
             ],
           ),
-        ),
-        // زر الإشعارات
-        _GlassIconButton(
-          icon: Icons.notifications_none_rounded,
-          onTap: () {},
-          badge: 3,
-        ),
-        const SizedBox(width: 8),
-        // زر المفضلة
-        _GlassIconButton(
-          icon: Icons.favorite_border_rounded,
-          onTap: () => context.push('/favorites'),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-// زر زجاجي احترافي
-class _GlassIconButton extends StatelessWidget {
+// زر أيقونة احترافي محسّن
+class _PremiumIconButton extends StatefulWidget {
   final IconData icon;
+  final IconData? activeIcon;
   final VoidCallback onTap;
   final int? badge;
+  final Color? primaryColor;
 
-  const _GlassIconButton({
+  const _PremiumIconButton({
     required this.icon,
+    this.activeIcon,
     required this.onTap,
     this.badge,
+    this.primaryColor,
   });
+
+  @override
+  State<_PremiumIconButton> createState() => _PremiumIconButtonState();
+}
+
+class _PremiumIconButtonState extends State<_PremiumIconButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _isPressed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.9).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final size = context.pick(44.0, tablet: 48.0, desktop: 52.0);
+    final size = context.pick(46.0, tablet: 50.0, desktop: 54.0);
+    final iconSize = context.pick(22.0, tablet: 24.0, desktop: 26.0);
+    final color = widget.primaryColor ?? cs.primary;
 
-    return Stack(
-      children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerHighest.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.5),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: BorderRadius.circular(14),
-              child: Icon(
-                icon,
-                size: context.iconSize(),
-                color: cs.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ),
-        if (badge != null && badge! > 0)
-          Positioned(
-            top: 6,
-            right: 6,
-            child: Container(
-              padding: const EdgeInsets.all(4),
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: GestureDetector(
+        onTapDown: (_) {
+          setState(() => _isPressed = true);
+          _controller.forward();
+        },
+        onTapUp: (_) {
+          setState(() => _isPressed = false);
+          _controller.reverse();
+          widget.onTap();
+        },
+        onTapCancel: () {
+          setState(() => _isPressed = false);
+          _controller.reverse();
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: size,
+              height: size,
               decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.red.withOpacity(0.4),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: _isPressed
+                    ? color.withOpacity(0.15)
+                    : cs.surfaceContainerHighest.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _isPressed
+                      ? color.withOpacity(0.4)
+                      : cs.outlineVariant.withOpacity(0.3),
+                  width: 1.5,
+                ),
+                boxShadow: _isPressed
+                    ? []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
-              child: Text(
-                '$badge',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
+              child: Icon(
+                _isPressed ? (widget.activeIcon ?? widget.icon) : widget.icon,
+                size: iconSize,
+                color: _isPressed ? color : cs.onSurfaceVariant,
+              ),
+            ),
+            // شارة الإشعارات
+            if (widget.badge != null && widget.badge! > 0)
+              Positioned(
+                top: -4,
+                right: -4,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFFEF4444),
+                        const Color(0xFFDC2626),
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: cs.surface, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFEF4444).withOpacity(0.4),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  child: Text(
+                    widget.badge! > 9 ? '9+' : '${widget.badge}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-      ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -840,7 +1003,7 @@ class _CategoriesBar extends StatelessWidget {
       ),
       _Cat(
         'merchants',
-        'التجّار',
+        'المتاجر',
         svg: '${_iconPath}store-svgrepo-com.svg',
         fallback: Icons.store,
         baseColor: const Color(0xFFF59E0B), // كهرماني
@@ -1121,7 +1284,6 @@ class _AnimatedCategoryButtonState extends State<_AnimatedCategoryButton>
 
   void _handleTapUp(TapUpDetails details) {
     _controller.reverse();
-    widget.onTap();
   }
 
   void _handleTapCancel() {
