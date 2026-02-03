@@ -6,12 +6,28 @@ class EmbroideryDesign {
   final double price;
   final DateTime uploadedAt;
 
+  /// ألوان الخيوط المتاحة لهذا التصميم
+  final List<String> availableColors;
+
+  /// الحد الأقصى لعدد الخيوط
+  final int maxThreads;
+
+  /// الحد الأدنى لعدد الخيوط
+  final int minThreads;
+
+  /// هل يدعم اختيار ألوان متعددة؟
+  final bool multiColorSupported;
+
   EmbroideryDesign({
     required this.id,
     required this.imageUrl,
     required this.name,
     required this.price,
     required this.uploadedAt,
+    this.availableColors = const [],
+    this.maxThreads = 5,
+    this.minThreads = 1,
+    this.multiColorSupported = false,
   });
 
   factory EmbroideryDesign.fromMap(Map<String, dynamic> map, String id) {
@@ -23,6 +39,13 @@ class EmbroideryDesign {
       uploadedAt: map['uploadedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['uploadedAt'] as int)
           : DateTime.now(),
+      availableColors: (map['availableColors'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      maxThreads: (map['maxThreads'] as num?)?.toInt() ?? 5,
+      minThreads: (map['minThreads'] as num?)?.toInt() ?? 1,
+      multiColorSupported: map['multiColorSupported'] as bool? ?? false,
     );
   }
 
@@ -32,6 +55,10 @@ class EmbroideryDesign {
       'name': name,
       'price': price,
       'uploadedAt': uploadedAt.millisecondsSinceEpoch,
+      'availableColors': availableColors,
+      'maxThreads': maxThreads,
+      'minThreads': minThreads,
+      'multiColorSupported': multiColorSupported,
     };
   }
 
@@ -41,6 +68,10 @@ class EmbroideryDesign {
     String? name,
     double? price,
     DateTime? uploadedAt,
+    List<String>? availableColors,
+    int? maxThreads,
+    int? minThreads,
+    bool? multiColorSupported,
   }) {
     return EmbroideryDesign(
       id: id ?? this.id,
@@ -48,7 +79,40 @@ class EmbroideryDesign {
       name: name ?? this.name,
       price: price ?? this.price,
       uploadedAt: uploadedAt ?? this.uploadedAt,
+      availableColors: availableColors ?? this.availableColors,
+      maxThreads: maxThreads ?? this.maxThreads,
+      minThreads: minThreads ?? this.minThreads,
+      multiColorSupported: multiColorSupported ?? this.multiColorSupported,
     );
   }
 }
 
+/// تفاصيل الخيوط المختارة للتطريز
+class ThreadDetails {
+  final List<String> selectedColorIds;
+  final int threadCount;
+
+  const ThreadDetails({
+    required this.selectedColorIds,
+    required this.threadCount,
+  });
+
+  bool get isValid => selectedColorIds.isNotEmpty && threadCount > 0;
+
+  Map<String, dynamic> toMap() {
+    return {
+      'selectedColorIds': selectedColorIds,
+      'threadCount': threadCount,
+    };
+  }
+
+  factory ThreadDetails.fromMap(Map<String, dynamic> map) {
+    return ThreadDetails(
+      selectedColorIds: (map['selectedColorIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      threadCount: (map['threadCount'] as num?)?.toInt() ?? 1,
+    );
+  }
+}

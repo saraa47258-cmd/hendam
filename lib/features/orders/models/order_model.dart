@@ -1,6 +1,39 @@
 // lib/features/orders/models/order_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+/// نموذج بيانات مستلم الهدية
+class GiftRecipientDetails {
+  final String recipientName;
+  final String? recipientPhone;
+  final String? giftMessage;
+  final String? deliveryNotes;
+
+  GiftRecipientDetails({
+    required this.recipientName,
+    this.recipientPhone,
+    this.giftMessage,
+    this.deliveryNotes,
+  });
+
+  factory GiftRecipientDetails.fromMap(Map<String, dynamic> map) {
+    return GiftRecipientDetails(
+      recipientName: map['recipientName'] ?? '',
+      recipientPhone: map['recipientPhone'],
+      giftMessage: map['giftMessage'],
+      deliveryNotes: map['deliveryNotes'],
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'recipientName': recipientName,
+      'recipientPhone': recipientPhone,
+      'giftMessage': giftMessage,
+      'deliveryNotes': deliveryNotes,
+    };
+  }
+}
+
 /// نموذج بيانات الطلب
 class OrderModel {
   final String id;
@@ -17,13 +50,22 @@ class OrderModel {
   final String fabricColorHex;
   final Map<String, double> measurements; // المقاسات
   final String notes;
-  
+
   // معلومات التطريز
   final String? embroideryDesignId;
   final String? embroideryDesignName;
   final String? embroideryDesignImageUrl;
   final double? embroideryDesignPrice;
-  
+
+  // تفاصيل الخيوط
+  final List<String>? threadColorIds;
+  final List<String>? threadColorNames;
+  final int? threadCount;
+
+  // معلومات الهدية
+  final bool isGift;
+  final GiftRecipientDetails? giftRecipientDetails;
+
   final double totalPrice;
   final OrderStatus status;
   final DateTime createdAt;
@@ -50,6 +92,11 @@ class OrderModel {
     this.embroideryDesignName,
     this.embroideryDesignImageUrl,
     this.embroideryDesignPrice,
+    this.threadColorIds,
+    this.threadColorNames,
+    this.threadCount,
+    this.isGift = false,
+    this.giftRecipientDetails,
     required this.totalPrice,
     required this.status,
     required this.createdAt,
@@ -79,7 +126,20 @@ class OrderModel {
       embroideryDesignId: data['embroideryDesignId'],
       embroideryDesignName: data['embroideryDesignName'],
       embroideryDesignImageUrl: data['embroideryDesignImageUrl'],
-      embroideryDesignPrice: (data['embroideryDesignPrice'] as num?)?.toDouble(),
+      embroideryDesignPrice:
+          (data['embroideryDesignPrice'] as num?)?.toDouble(),
+      threadColorIds: (data['threadColorIds'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
+      threadColorNames: (data['threadColorNames'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
+      threadCount: (data['threadCount'] as num?)?.toInt(),
+      isGift: data['isGift'] ?? false,
+      giftRecipientDetails: data['giftRecipientDetails'] != null
+          ? GiftRecipientDetails.fromMap(
+              Map<String, dynamic>.from(data['giftRecipientDetails']))
+          : null,
       totalPrice: (data['totalPrice'] as num?)?.toDouble() ?? 0.0,
       status: OrderStatus.values.firstWhere(
         (e) => e.toString() == 'OrderStatus.${data['status']}',
@@ -126,6 +186,15 @@ class OrderModel {
       'embroideryDesignImageUrl': embroideryDesignImageUrl,
       'embroideryDesignPrice': embroideryDesignPrice,
 
+      // تفاصيل الخيوط
+      'threadColorIds': threadColorIds,
+      'threadColorNames': threadColorNames,
+      'threadCount': threadCount,
+
+      // معلومات الهدية
+      'isGift': isGift,
+      'giftRecipientDetails': giftRecipientDetails?.toMap(),
+
       // السعر الإجمالي
       'totalPrice': totalPrice,
 
@@ -168,6 +237,11 @@ class OrderModel {
     String? embroideryDesignName,
     String? embroideryDesignImageUrl,
     double? embroideryDesignPrice,
+    List<String>? threadColorIds,
+    List<String>? threadColorNames,
+    int? threadCount,
+    bool? isGift,
+    GiftRecipientDetails? giftRecipientDetails,
     double? totalPrice,
     OrderStatus? status,
     DateTime? createdAt,
@@ -192,8 +266,15 @@ class OrderModel {
       notes: notes ?? this.notes,
       embroideryDesignId: embroideryDesignId ?? this.embroideryDesignId,
       embroideryDesignName: embroideryDesignName ?? this.embroideryDesignName,
-      embroideryDesignImageUrl: embroideryDesignImageUrl ?? this.embroideryDesignImageUrl,
-      embroideryDesignPrice: embroideryDesignPrice ?? this.embroideryDesignPrice,
+      embroideryDesignImageUrl:
+          embroideryDesignImageUrl ?? this.embroideryDesignImageUrl,
+      embroideryDesignPrice:
+          embroideryDesignPrice ?? this.embroideryDesignPrice,
+      threadColorIds: threadColorIds ?? this.threadColorIds,
+      threadColorNames: threadColorNames ?? this.threadColorNames,
+      threadCount: threadCount ?? this.threadCount,
+      isGift: isGift ?? this.isGift,
+      giftRecipientDetails: giftRecipientDetails ?? this.giftRecipientDetails,
       totalPrice: totalPrice ?? this.totalPrice,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,

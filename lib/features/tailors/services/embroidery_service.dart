@@ -1,5 +1,7 @@
+import 'dart:ui' show Color;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import '../models/embroidery_design.dart';
 
 /// خدمة لإدارة تصاميم التطريز
@@ -7,27 +9,99 @@ class EmbroideryService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  /// حد الصفحة للطلبات
+  static const int _designsLimit = 50;
+
   /// جلب جميع تصاميم التطريز المتاحة لخياط معين
-  Future<List<EmbroideryDesign>> getEmbroideryDesigns(String tailorId) async {
+  /// [useCacheFirst] عند true يقرأ من الكاش أولاً إن وُجد (أسرع)
+  Future<List<EmbroideryDesign>> getEmbroideryDesigns(
+    String tailorId, {
+    bool useCacheFirst = false,
+    int limit = _designsLimit,
+    DocumentSnapshot? startAfterDocument,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final fullPath1 = 'tailors/$tailorId/embroideryDesigns';
+
     try {
-      // أولاً: جلب البيانات من Firestore إذا كانت متوفرة
-      final designsSnapshot = await _firestore
+      // 1) محاولة من مجموعة embroideryDesigns
+      Query<Map<String, dynamic>> query = _firestore
           .collection('tailors')
           .doc(tailorId)
           .collection('embroideryDesigns')
           .orderBy('uploadedAt', descending: true)
-          .get();
+          .limit(limit);
 
-      if (designsSnapshot.docs.isNotEmpty) {
-        return designsSnapshot.docs
-            .map((doc) => EmbroideryDesign.fromMap(doc.data(), doc.id))
-            .toList();
+      if (startAfterDocument != null) {
+        query = query.startAfterDocument(startAfterDocument);
       }
 
-      // إذا لم تكن متوفرة في Firestore، جلب الصور من Storage
+      final options = useCacheFirst
+          ? const GetOptions(source: Source.cache)
+          : const GetOptions(source: Source.serverAndCache);
+
+      QuerySnapshot<Map<String, dynamic>> designsSnapshot;
+      try {
+        designsSnapshot = await query.get(options);
+      } catch (e) {
+        debugPrint(
+            '📂 [Embroidery] Firestore path: $fullPath1 | query failed: $e');
+        stopwatch.stop();
+        debugPrint(
+            '📂 [Embroidery] Query time: ${stopwatch.elapsedMilliseconds}ms');
+        rethrow;
+      }
+
+      final count = designsSnapshot.docs.length;
+      stopwatch.stop();
+      debugPrint(
+          '📂 [Embroidery] Firestore path: $fullPath1 | documents: $count | time: ${stopwatch.elapsedMilliseconds}ms');
+
+      if (designsSnapshot.docs.isNotEmpty) {
+        final list = designsSnapshot.docs
+            .map((doc) => EmbroideryDesign.fromMap(doc.data(), doc.id))
+            .toList();
+        return list;
+      }
+
+      // 2) محاولة من مجموعة embroidery_images (إذا كانت البيانات هناك)
+      final fullPath2 = 'tailors/$tailorId/embroidery_images';
+      debugPrint('📂 [Embroidery] $fullPath1 empty, trying $fullPath2');
+
+      final imagesSnapshot = await _firestore
+          .collection('tailors')
+          .doc(tailorId)
+          .collection('embroidery_images')
+          .limit(limit)
+          .get(options);
+
+      final count2 = imagesSnapshot.docs.length;
+      debugPrint(
+          '📂 [Embroidery] Firestore path: $fullPath2 | documents: $count2');
+
+      if (imagesSnapshot.docs.isNotEmpty) {
+        return imagesSnapshot.docs.map((doc) {
+          final d = doc.data();
+          final rawUploaded = d['uploadedAt'];
+          final uploadedMs = rawUploaded is Timestamp
+              ? rawUploaded.millisecondsSinceEpoch
+              : (rawUploaded as int?) ?? DateTime.now().millisecondsSinceEpoch;
+          return EmbroideryDesign.fromMap({
+            'imageUrl': d['imageUrl'] ?? d['url'] ?? '',
+            'name': d['name'] ?? 'تطريز ${doc.id}',
+            'price': (d['price'] as num?)?.toDouble() ?? 0.0,
+            'uploadedAt': uploadedMs,
+          }, doc.id);
+        }).toList();
+      }
+
+      // 3) Fallback: جلب من Storage
+      debugPrint('📂 [Embroidery] Firestore empty, falling back to Storage');
       return await _getDesignsFromStorage(tailorId);
-    } catch (e) {
-      print('❌ خطأ في جلب تصاميم التطريز: $e');
+    } catch (e, st) {
+      stopwatch.stop();
+      debugPrint('❌ [Embroidery] Error path: $fullPath1 | $e');
+      debugPrint('❌ [Embroidery] Stack: $st');
       return [];
     }
   }
@@ -44,7 +118,7 @@ class EmbroideryService {
         try {
           final url = await item.getDownloadURL();
           final metadata = await item.getMetadata();
-          
+
           // استخراج ID من اسم الملف (بدون الامتداد)
           final fileName = item.name;
           final id = fileName.split('.').first;
@@ -99,7 +173,7 @@ class EmbroideryService {
           .collection('embroideryDesigns')
           .doc(design.id)
           .set(design.toMap());
-      
+
       print('✅ تم حفظ تصميم التطريز بنجاح');
     } catch (e) {
       print('❌ خطأ في حفظ تصميم التطريز: $e');
@@ -116,7 +190,7 @@ class EmbroideryService {
           .collection('embroideryDesigns')
           .doc(designId)
           .delete();
-      
+
       print('✅ تم حذف تصميم التطريز بنجاح');
     } catch (e) {
       print('❌ خطأ في حذف تصميم التطريز: $e');
@@ -137,12 +211,115 @@ class EmbroideryService {
           .collection('embroideryDesigns')
           .doc(designId)
           .update(updates);
-      
+
       print('✅ تم تحديث تصميم التطريز بنجاح');
     } catch (e) {
       print('❌ خطأ في تحديث تصميم التطريز: $e');
       rethrow;
     }
   }
+
+  /// جلب ألوان خيوط التطريز المتاحة من Firebase
+  Future<List<ThreadColor>> getThreadColors(String tailorId) async {
+    try {
+      // أولاً: جلب ألوان الخياط المحددة
+      final colorsSnapshot = await _firestore
+          .collection('tailors')
+          .doc(tailorId)
+          .collection('threadColors')
+          .orderBy('order', descending: false)
+          .get();
+
+      if (colorsSnapshot.docs.isNotEmpty) {
+        return colorsSnapshot.docs
+            .map((doc) => ThreadColor.fromMap(doc.data(), doc.id))
+            .toList();
+      }
+
+      // إذا لم تكن موجودة، جلب الألوان العامة
+      final globalSnapshot =
+          await _firestore.collection('settings').doc('threadColors').get();
+
+      if (globalSnapshot.exists) {
+        final data = globalSnapshot.data();
+        final colorsList = data?['colors'] as List<dynamic>? ?? [];
+        return colorsList.asMap().entries.map((entry) {
+          final colorData = entry.value as Map<String, dynamic>;
+          return ThreadColor(
+            id: 'color_${entry.key}',
+            name: colorData['name'] ?? 'لون ${entry.key + 1}',
+            hexCode: colorData['hex'] ?? '#000000',
+            order: entry.key,
+          );
+        }).toList();
+      }
+
+      // ألوان افتراضية
+      return _defaultThreadColors;
+    } catch (e) {
+      print('❌ خطأ في جلب ألوان الخيوط: $e');
+      return _defaultThreadColors;
+    }
+  }
+
+  /// Stream لمتابعة تحديثات ألوان الخيوط
+  Stream<List<ThreadColor>> streamThreadColors(String tailorId) {
+    return _firestore
+        .collection('tailors')
+        .doc(tailorId)
+        .collection('threadColors')
+        .orderBy('order', descending: false)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        return snapshot.docs
+            .map((doc) => ThreadColor.fromMap(doc.data(), doc.id))
+            .toList();
+      }
+      return _defaultThreadColors;
+    });
+  }
+
+  /// الألوان الافتراضية
+  static final List<ThreadColor> _defaultThreadColors = [
+    const ThreadColor(id: 'navy', name: 'كحلي', hexCode: '#1a237e', order: 0),
+    const ThreadColor(
+        id: 'teal', name: 'أخضر زيتي', hexCode: '#00695c', order: 1),
+    const ThreadColor(
+        id: 'burgundy', name: 'خمري', hexCode: '#880e4f', order: 2),
+    const ThreadColor(id: 'gold', name: 'ذهبي', hexCode: '#c9a227', order: 3),
+    const ThreadColor(id: 'silver', name: 'فضي', hexCode: '#9e9e9e', order: 4),
+    const ThreadColor(id: 'white', name: 'أبيض', hexCode: '#ffffff', order: 5),
+    const ThreadColor(id: 'black', name: 'أسود', hexCode: '#212121', order: 6),
+    const ThreadColor(id: 'brown', name: 'بني', hexCode: '#5d4037', order: 7),
+  ];
 }
 
+/// نموذج لون خيط التطريز
+class ThreadColor {
+  final String id;
+  final String name;
+  final String hexCode;
+  final int order;
+
+  const ThreadColor({
+    required this.id,
+    required this.name,
+    required this.hexCode,
+    required this.order,
+  });
+
+  factory ThreadColor.fromMap(Map<String, dynamic> data, String id) {
+    return ThreadColor(
+      id: id,
+      name: data['name'] ?? '',
+      hexCode: data['hex'] ?? data['hexCode'] ?? '#000000',
+      order: data['order'] ?? 0,
+    );
+  }
+
+  Color get color {
+    final hex = hexCode.replaceFirst('#', '');
+    return Color(int.parse('FF$hex', radix: 16));
+  }
+}

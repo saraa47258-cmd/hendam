@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/abaya_item.dart';
@@ -10,16 +11,45 @@ import 'product_preview_screen.dart';
 import '../../favorites/services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/state/cart_scope.dart';
-
-// يفضَّل الاستيراد النسبي لتفادي مشاكل اسم الحزمة
 import '../../../shared/widgets/any_image.dart';
 
-/* أوضاع الفرز */
+// ═══════════════════════════════════════════════════════════════════════════
+// Design System
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _DS {
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 20;
+  static const double xxl = 24;
+
+  static const double radiusSm = 8;
+  static const double radiusMd = 12;
+  static const double radiusLg = 16;
+  static const double radiusXxl = 24;
+  static const double radiusPill = 999;
+
+  static const Color primaryBrown = Color(0xFF8B7355);
+  static const Color darkText = Color(0xFF1F2937);
+  static const Color mediumText = Color(0xFF6B7280);
+  static const Color lightText = Color(0xFF9CA3AF);
+  static const Color background = Color(0xFFFBFBFB);
+  static const Color cardBg = Colors.white;
+  static const Color border = Color(0xFFE5E7EB);
+  static const Color borderLight = Color(0xFFF3F4F6);
+}
+
 enum _SortMode { popular, priceLow, priceHigh, newest, titleAZ }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Main Screen
+// ═══════════════════════════════════════════════════════════════════════════
+
 class AbayaServicesScreen extends StatefulWidget {
-  final String? shopName; // اسم المحل (اختياري للعرض كشارة)
-  final String? traderId; // معرف التاجر (لجلب منتجات متجر محدد)
+  final String? shopName;
+  final String? traderId;
   const AbayaServicesScreen({super.key, this.shopName, this.traderId});
 
   @override
@@ -30,37 +60,27 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
   static const _chips = ['الكل', 'عبايات', 'أقمشة', 'أطقم', 'إكسسوارات'];
   int _selectedChip = 1;
 
-  // خدمة Firebase
   final _abayaService = AbayaService();
-
-  // البيانات الأصلية + المعروضة (من Firebase)
   List<AbayaItem> _items = [];
   List<AbayaItem> _shown = [];
 
-  // خيارات الفلترة
   double _minPrice = 0.0, _maxPrice = 100.0;
   late RangeValues _priceRange;
   bool _onlyNew = false;
-  List<Color> _colorChoices = [];
   final Set<Color> _selectedColors = {};
-
-  // وضع الفرز
   _SortMode _sort = _SortMode.popular;
-
-  // حالة التحميل
   bool _isLoading = true;
   StreamSubscription<List<AbayaItem>>? _subscription;
-
-  // Tabs (من JavaScript)
-  String _selectedTab = 'model'; // 'model' or 'product'
+  int _selectedTab = 0;
 
   @override
   void initState() {
     super.initState();
     _priceRange = RangeValues(_minPrice, _maxPrice);
+    _loadData();
+  }
 
-    // الاشتراك في stream لجلب البيانات
-    // إذا كان هناك traderId محدد، نجلب منتجات ذلك المتجر فقط
+  void _loadData() {
     final stream = widget.traderId != null && widget.traderId!.isNotEmpty
         ? _abayaService.getAbayaProducts(traderId: widget.traderId)
         : _abayaService.getAbayaProductsSimple();
@@ -77,12 +97,7 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
         }
       },
       onError: (error) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-        print('خطأ في جلب بيانات العبايات: $error');
+        if (mounted) setState(() => _isLoading = false);
       },
     );
   }
@@ -98,46 +113,28 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
       _minPrice = 0.0;
       _maxPrice = 100.0;
       _priceRange = RangeValues(_minPrice, _maxPrice);
-      _colorChoices = [];
       return;
     }
-
     _minPrice = items.map((e) => e.price).reduce(math.min);
     _maxPrice = items.map((e) => e.price).reduce(math.max);
     _priceRange = RangeValues(_minPrice, _maxPrice);
-
-    // ألوان فريدة
-    final seen = <int>{};
-    final all = <Color>[];
-    for (final c in items.expand((i) => i.colors)) {
-      if (seen.add(c.value)) all.add(c);
-    }
-    _colorChoices = all;
   }
 
   void _applyFiltersAndSort() {
     List<AbayaItem> list = List.of(_items);
-
-    // فلترة السعر
     if (_items.isNotEmpty) {
       list = list
           .where(
               (i) => i.price >= _priceRange.start && i.price <= _priceRange.end)
           .toList();
     }
-
-    // جديد فقط
     if (_onlyNew) list = list.where((i) => i.isNew).toList();
-
-    // فلترة ألوان
     if (_selectedColors.isNotEmpty) {
       list = list
           .where((i) => i.colors
               .any((c) => _selectedColors.any((sc) => sc.value == c.value)))
           .toList();
     }
-
-    // الفرز
     list.sort((a, b) {
       switch (_sort) {
         case _SortMode.priceLow:
@@ -155,968 +152,944 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
           return 0;
       }
     });
-
     setState(() => _shown = list);
   }
 
-  String _price(double v) =>
-      '${v == v.truncateToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)} ر.ع';
-
   @override
   Widget build(BuildContext context) {
-    // ألوان من JavaScript
-    const primaryBrown = Color(0xFF8B7355);
-    const darkGray = Color(0xFF1F2937);
-    const mediumGray = Color(0xFF6B7280);
-    const dividerGray = Color(0xFFE5E7EB);
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
-        body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(primaryBrown),
+        backgroundColor: _DS.background,
+        body: _isLoading ? _buildLoading() : _buildContent(),
+      ),
+    );
+  }
+
+  Widget _buildLoading() {
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(_DS.primaryBrown),
+        strokeWidth: 2,
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(
+        parent: AlwaysScrollableScrollPhysics(),
+      ),
+      slivers: [
+        // Premium Header
+        SliverToBoxAdapter(
+          child: _PremiumHeader(
+            onBack: () => Navigator.maybePop(context),
+            onSearch: () {},
+          ),
+        ),
+
+        // Category Chips
+        SliverToBoxAdapter(
+          child: _CategoryChipsBar(
+            chips: _chips,
+            selectedIndex: _selectedChip,
+            onSelected: (i) => setState(() => _selectedChip = i),
+          ),
+        ),
+
+        // Title Section
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(_DS.xl, _DS.xxl, _DS.xl, _DS.sm),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'العبايات',
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: _DS.darkText,
+                    letterSpacing: -0.5,
+                    height: 1.1,
+                  ),
                 ),
-              )
-            : Stack(
-                children: [
-                  CustomScrollView(
-                    slivers: [
-                      // Header
-                      SliverToBoxAdapter(
-                        child: SafeArea(
-                          bottom: false,
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.fromSTEB(
-                                20, 16, 20, 20),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  onPressed: () => Navigator.maybePop(context),
-                                  icon: const Icon(
-                                    Icons.arrow_back,
-                                    size: 24,
-                                    color: darkGray,
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
-                                IconButton(
-                                  onPressed: () {},
-                                  icon: const Icon(
-                                    Icons.search,
-                                    size: 24,
-                                    color: darkGray,
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
-                              ],
+                const SizedBox(height: _DS.xs),
+                Text(
+                  '${_shown.length} منتج متاح',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: _DS.mediumText,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Segmented Tabs
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(_DS.xl, _DS.lg, _DS.xl, _DS.lg),
+            child: _SegmentedTabs(
+              labels: const ['نموذج', 'منتج'],
+              selectedIndex: _selectedTab,
+              onSelected: (i) => setState(() => _selectedTab = i),
+            ),
+          ),
+        ),
+
+        // Products List
+        if (_shown.isEmpty)
+          SliverFillRemaining(child: _buildEmptyState())
+        else
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(_DS.lg, 0, _DS.lg, 100),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, i) {
+                  final item = _shown[i];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: _DS.md),
+                    child: _PremiumProductCard(
+                      item: item,
+                      heroTag: 'abaya-${item.id}',
+                      onTap: () => _navigateToProduct(item),
+                    ),
+                  );
+                },
+                childCount: _shown.length,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: _DS.border.withOpacity(0.3),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.inventory_2_outlined,
+              size: 36,
+              color: _DS.mediumText,
+            ),
+          ),
+          const SizedBox(height: _DS.lg),
+          const Text(
+            'لا توجد منتجات متاحة',
+            style: TextStyle(
+              color: _DS.darkText,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: _DS.sm),
+          const Text(
+            'جرب تغيير الفئة أو البحث',
+            style: TextStyle(
+              color: _DS.mediumText,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _navigateToProduct(AbayaItem item) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        reverseTransitionDuration: const Duration(milliseconds: 200),
+        pageBuilder: (_, __, ___) => ProductPreviewScreen(productId: item.id),
+        transitionsBuilder: (_, animation, __, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.03),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOut,
+              )),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Premium Header
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _PremiumHeader extends StatelessWidget {
+  final VoidCallback onBack;
+  final VoidCallback onSearch;
+
+  const _PremiumHeader({
+    required this.onBack,
+    required this.onSearch,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(_DS.lg, _DS.md, _DS.lg, _DS.sm),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _HeaderIconButton(
+              icon: Icons.arrow_back_rounded,
+              onTap: onBack,
+            ),
+            _HeaderIconButton(
+              icon: Icons.search_rounded,
+              onTap: onSearch,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeaderIconButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _HeaderIconButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  State<_HeaderIconButton> createState() => _HeaderIconButtonState();
+}
+
+class _HeaderIconButtonState extends State<_HeaderIconButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        HapticFeedback.lightImpact();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: child,
+        ),
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: _DS.cardBg,
+            shape: BoxShape.circle,
+            border: Border.all(color: _DS.border.withOpacity(0.6), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(widget.icon, size: 20, color: _DS.darkText),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Category Chips Bar
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _CategoryChipsBar extends StatelessWidget {
+  final List<String> chips;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  const _CategoryChipsBar({
+    required this.chips,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: _DS.lg),
+        physics: const BouncingScrollPhysics(),
+        itemCount: chips.length,
+        itemBuilder: (context, i) {
+          final isSelected = i == selectedIndex;
+          return Padding(
+            padding: EdgeInsets.only(left: i < chips.length - 1 ? _DS.sm : 0),
+            child: _AnimatedChip(
+              label: chips[i],
+              isSelected: isSelected,
+              onTap: () => onSelected(i),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _AnimatedChip extends StatefulWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _AnimatedChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_AnimatedChip> createState() => _AnimatedChipState();
+}
+
+class _AnimatedChipState extends State<_AnimatedChip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 80),
+      vsync: this,
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        HapticFeedback.selectionClick();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: child,
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          padding:
+              const EdgeInsets.symmetric(horizontal: _DS.xl, vertical: _DS.md),
+          decoration: BoxDecoration(
+            color: widget.isSelected ? _DS.primaryBrown : _DS.cardBg,
+            borderRadius: BorderRadius.circular(_DS.radiusPill),
+            border: Border.all(
+              color: widget.isSelected
+                  ? _DS.primaryBrown
+                  : _DS.border.withOpacity(0.6),
+              width: 1,
+            ),
+            boxShadow: widget.isSelected
+                ? [
+                    BoxShadow(
+                      color: _DS.primaryBrown.withOpacity(0.25),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.w500,
+              color: widget.isSelected ? Colors.white : _DS.mediumText,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Segmented Tabs
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _SegmentedTabs extends StatelessWidget {
+  final List<String> labels;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  const _SegmentedTabs({
+    required this.labels,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 46,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: _DS.borderLight,
+        borderRadius: BorderRadius.circular(_DS.radiusLg),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabWidth = (constraints.maxWidth - 8) / labels.length;
+          return Stack(
+            children: [
+              // Animated selection indicator
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOut,
+                left: selectedIndex * tabWidth,
+                top: 0,
+                bottom: 0,
+                width: tabWidth,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: _DS.cardBg,
+                    borderRadius: BorderRadius.circular(_DS.radiusMd),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Tab labels
+              Row(
+                children: List.generate(labels.length, (i) {
+                  final isSelected = i == selectedIndex;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onSelected(i);
+                      },
+                      behavior: HitTestBehavior.opaque,
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight:
+                                isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: isSelected ? _DS.darkText : _DS.mediumText,
+                          ),
+                          child: Text(labels[i]),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Premium Product Card
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _PremiumProductCard extends StatefulWidget {
+  final AbayaItem item;
+  final String heroTag;
+  final VoidCallback onTap;
+
+  const _PremiumProductCard({
+    required this.item,
+    required this.heroTag,
+    required this.onTap,
+  });
+
+  @override
+  State<_PremiumProductCard> createState() => _PremiumProductCardState();
+}
+
+class _PremiumProductCardState extends State<_PremiumProductCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.98).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        HapticFeedback.lightImpact();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: child,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(_DS.lg),
+          decoration: BoxDecoration(
+            color: _DS.cardBg,
+            borderRadius: BorderRadius.circular(_DS.radiusXxl),
+            border: Border.all(color: _DS.border.withOpacity(0.4), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Overflow Menu (leftmost in RTL)
+              GestureDetector(
+                onTap: () => _showOptionsMenu(context),
+                behavior: HitTestBehavior.opaque,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: _DS.xs),
+                  child: Icon(
+                    Icons.more_vert_rounded,
+                    size: 18,
+                    color: _DS.lightText,
+                  ),
+                ),
+              ),
+
+              // Image Thumbnail
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(_DS.radiusLg),
+                  border:
+                      Border.all(color: _DS.border.withOpacity(0.3), width: 1),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(_DS.radiusLg - 1),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Hero(
+                        tag: widget.heroTag,
+                        child: AnyImage(
+                          src: item.imageUrl,
+                          fit: BoxFit.cover,
+                          borderRadius: BorderRadius.zero,
+                        ),
+                      ),
+                      if (item.isNew)
+                        Positioned(
+                          top: 4,
+                          right: 4,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _DS.primaryBrown,
+                              borderRadius: BorderRadius.circular(_DS.radiusSm),
+                            ),
+                            child: const Text(
+                              'جديد',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
                         ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: _DS.lg),
+
+              // Content (Title + Colors)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: _DS.darkText,
+                        letterSpacing: -0.2,
                       ),
-                      // Category Pills
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: 60,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            padding: const EdgeInsetsDirectional.fromSTEB(
-                                20, 0, 20, 10),
-                            itemCount: _chips.length,
-                            itemBuilder: (context, index) {
-                              final isSelected = index == _selectedChip;
-                              return Padding(
-                                padding:
-                                    const EdgeInsetsDirectional.only(end: 10),
-                                child: _CategoryPill(
-                                  label: _chips[index],
-                                  isSelected: isSelected,
-                                  onTap: () =>
-                                      setState(() => _selectedChip = index),
+                    ),
+                    const SizedBox(height: _DS.sm),
+                    if (item.colors.isNotEmpty)
+                      SizedBox(
+                        height: 16,
+                        child: Row(
+                          children: [
+                            ...item.colors.take(7).map((color) {
+                              final isLight = color.computeLuminance() > 0.7;
+                              return Container(
+                                width: 14,
+                                height: 14,
+                                margin: const EdgeInsets.only(left: 4),
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isLight
+                                        ? _DS.border
+                                        : Colors.transparent,
+                                    width: 1,
+                                  ),
                                 ),
                               );
-                            },
-                          ),
-                        ),
-                      ),
-                      // Title
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding:
-                              EdgeInsetsDirectional.fromSTEB(20, 20, 20, 16),
-                          child: Text(
-                            'العبايات',
-                            style: TextStyle(
-                              fontSize: 40,
-                              fontWeight: FontWeight.w700,
-                              color: primaryBrown,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Tabs
-                      SliverToBoxAdapter(
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: dividerGray, width: 1),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsetsDirectional.fromSTEB(
-                                20, 0, 20, 0),
-                            child: Row(
-                              children: [
-                                _TabButton(
-                                  label: 'نموذج',
-                                  isSelected: _selectedTab == 'model',
-                                  onTap: () =>
-                                      setState(() => _selectedTab = 'model'),
-                                ),
-                                const SizedBox(width: 32),
-                                _TabButton(
-                                  label: 'منتج',
-                                  isSelected: _selectedTab == 'product',
-                                  onTap: () =>
-                                      setState(() => _selectedTab = 'product'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Products Grid
-                      if (_shown.isEmpty && !_isLoading)
-                        const SliverFillRemaining(
-                          child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.inventory_2_outlined,
-                                  size: 64,
-                                  color: mediumGray,
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'لا توجد منتجات متاحة',
-                                  style: TextStyle(
-                                    color: mediumGray,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                            }),
+                            if (item.colors.length > 7)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 4),
+                                child: Text(
+                                  '+${item.colors.length - 7}',
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    color: _DS.mediumText,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        SliverPadding(
-                          padding: const EdgeInsetsDirectional.fromSTEB(
-                              0, 20, 0, 100),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, i) {
-                                final item = _shown[i];
-                                return Padding(
-                                  padding: const EdgeInsetsDirectional.fromSTEB(
-                                      16, 0, 16, 12),
-                                  child: _AbayaListItem(
-                                    item: item,
-                                    priceText: _price(item.price),
-                                    heroTag: 'abaya-${item.id}',
-                                    imageBuilder: (src) => AnyImage(
-                                      src: src,
-                                      fit: BoxFit.cover,
-                                      filterQuality: FilterQuality.medium,
-                                    ),
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        PageRouteBuilder(
-                                          transitionDuration:
-                                              const Duration(milliseconds: 200),
-                                          reverseTransitionDuration:
-                                              const Duration(milliseconds: 150),
-                                          pageBuilder: (_, __, ___) =>
-                                              ProductPreviewScreen(
-                                            productId: item.id,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                );
-                              },
-                              childCount: _shown.length,
-                            ),
-                          ),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
-                ],
+                      ),
+                  ],
+                ),
               ),
-      ),
-    );
-  }
+              const SizedBox(width: _DS.md),
 
-  // ============ BottomSheet: فلترة (محذوف - غير مستخدم) ============
-  // ignore: unused_element
-  void _openFilterSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-
-        // نسخ محلي للتعديل ثم نطبّق عند "تطبيق"
-        RangeValues range = _priceRange;
-        bool onlyNew = _onlyNew;
-
-        final localSelected = <int>{};
-        for (int i = 0; i < _colorChoices.length; i++) {
-          if (_selectedColors.any((c) => c.value == _colorChoices[i].value)) {
-            localSelected.add(i);
-          }
-        }
-
-        final priceDiff = _maxPrice - _minPrice;
-        final divisions = priceDiff > 0
-            ? math.max(1, math.min(100, (priceDiff * 10).round()))
-            : 1;
-
-        return StatefulBuilder(
-          builder: (ctx, setLocal) {
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-                left: 16,
-                right: 16,
-                top: 16,
-              ),
-              child: Column(
+              // Actions Column
+              Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: cs.outlineVariant,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text('الفلترة',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 18,
-                          color: cs.onSurface)),
-                  const SizedBox(height: 16),
-
-                  // السعر
-                  Text('نطاق السعر',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700, color: cs.onSurface)),
-                  const SizedBox(height: 6),
-                  RangeSlider(
-                    min: _minPrice,
-                    max: _maxPrice,
-                    divisions: divisions,
-                    values: range,
-                    labels: RangeLabels(
-                      range.start.toStringAsFixed(2),
-                      range.end.toStringAsFixed(2),
-                    ),
-                    onChanged: (v) => setLocal(() => range = v),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _priceChip('من ${range.start.toStringAsFixed(2)}'),
-                      _priceChip('إلى ${range.end.toStringAsFixed(2)}'),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // جديد فقط
-                  SwitchListTile(
-                    value: onlyNew,
-                    onChanged: (v) => setLocal(() => onlyNew = v),
-                    title: const Text('جديد فقط'),
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  const SizedBox(height: 8),
-
-                  // الألوان
-                  Text('اللون',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w700, color: cs.onSurface)),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: List.generate(_colorChoices.length, (i) {
-                      final color = _colorChoices[i];
-                      final selected = localSelected.contains(i);
-                      return GestureDetector(
-                        onTap: () => setLocal(() {
-                          if (!localSelected.add(i)) localSelected.remove(i);
-                        }),
-                        child: Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color:
-                                  selected ? cs.onSurface : cs.outlineVariant,
-                              width: selected ? 2 : 1,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                                color: color, shape: BoxShape.circle),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // أزرار
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            setState(() {
-                              _priceRange = RangeValues(_minPrice, _maxPrice);
-                              _onlyNew = false;
-                              _selectedColors.clear();
-                            });
-                            _applyFiltersAndSort();
-                            Navigator.pop(ctx);
-                          },
-                          child: const Text('إعادة تعيين'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF6D4C41),
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              _priceRange = range;
-                              _onlyNew = onlyNew;
-                              _selectedColors
-                                ..clear()
-                                ..addAll(
-                                    localSelected.map((i) => _colorChoices[i]));
-                            });
-                            _applyFiltersAndSort();
-                            Navigator.pop(ctx);
-                          },
-                          child: const Text('تطبيق'),
-                        ),
-                      ),
-                    ],
-                  ),
+                  _FavButton(item: item),
+                  const SizedBox(height: _DS.sm),
+                  _AddToCartButton(item: item),
                 ],
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _priceChip(String t) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withOpacity(.7),
-        borderRadius: BorderRadius.circular(10),
+            ],
+          ),
+        ),
       ),
-      child: Text(t,
-          style: TextStyle(fontWeight: FontWeight.w700, color: cs.onSurface)),
     );
   }
 
-  // ============ BottomSheet: فرز (محذوف - غير مستخدم) ============
-  // ignore: unused_element
-  void _openSortSheet() {
+  void _showOptionsMenu(BuildContext context) {
+    HapticFeedback.lightImpact();
     showModalBottomSheet(
       context: context,
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(_DS.radiusXxl)),
       ),
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-
-        Widget tile(String title, _SortMode mode, IconData icon) {
-          final selected = _sort == mode;
-          return ListTile(
-            leading: Icon(icon,
-                color:
-                    selected ? const Color(0xFF6D4C41) : cs.onSurfaceVariant),
-            title: Text(title,
-                style: TextStyle(
-                    fontWeight: selected ? FontWeight.w900 : FontWeight.w600)),
-            trailing: selected ? const Icon(Icons.check_rounded) : null,
-            onTap: () {
-              setState(() => _sort = mode);
-              _applyFiltersAndSort();
-              Navigator.pop(ctx);
-            },
-          );
-        }
-
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(8, 12, 8, 12),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: _DS.lg),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 40,
+                width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: cs.outlineVariant,
-                  borderRadius: BorderRadius.circular(999),
+                  color: _DS.border,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 12),
-              tile('الأشهر', _SortMode.popular,
-                  Icons.local_fire_department_rounded),
-              tile('السعر: الأقل فالأعلى', _SortMode.priceLow,
-                  Icons.south_rounded),
-              tile('السعر: الأعلى فالأقل', _SortMode.priceHigh,
-                  Icons.north_rounded),
-              tile('الأحدث', _SortMode.newest, Icons.fiber_new_rounded),
-              tile('الاسم: أ ⇢ ي', _SortMode.titleAZ,
-                  Icons.sort_by_alpha_rounded),
-              const SizedBox(height: 8),
+              const SizedBox(height: _DS.xl),
+              ListTile(
+                leading: const Icon(Icons.share_outlined, color: _DS.darkText),
+                title: const Text('مشاركة'),
+                onTap: () => Navigator.pop(ctx),
+              ),
+              ListTile(
+                leading: const Icon(Icons.info_outline, color: _DS.darkText),
+                title: const Text('تفاصيل المنتج'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  widget.onTap();
+                },
+              ),
             ],
           ),
-        );
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Add to Cart Button
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _AddToCartButton extends StatefulWidget {
+  final AbayaItem item;
+  const _AddToCartButton({required this.item});
+
+  @override
+  State<_AddToCartButton> createState() => _AddToCartButtonState();
+}
+
+class _AddToCartButtonState extends State<_AddToCartButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 80),
+      vsync: this,
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.88).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        _addToCart(context);
       },
-    );
-  }
-}
-
-/* ===================== بقية الويدجتس ===================== */
-
-// Category Pill (من JavaScript)
-class _CategoryPill extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _CategoryPill({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF8B7355) : const Color(0xFFF3F4F6),
-          borderRadius: BorderRadius.circular(24),
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: child,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : const Color(0xFF6B7280),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Tab Button (من JavaScript)
-class _TabButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _TabButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: isSelected
-                    ? const Color(0xFF1F2937)
-                    : const Color(0xFF9CA3AF),
-              ),
-            ),
-            if (isSelected)
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                height: 2,
-                color: const Color(0xFF1F2937),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// List Item Design (من الصورة)
-class _AbayaListItem extends StatefulWidget {
-  final AbayaItem item;
-  final String priceText;
-  final String heroTag;
-  final Widget Function(String src) imageBuilder;
-  final VoidCallback onTap;
-
-  const _AbayaListItem({
-    required this.item,
-    required this.priceText,
-    required this.heroTag,
-    required this.imageBuilder,
-    required this.onTap,
-  });
-
-  @override
-  State<_AbayaListItem> createState() => _AbayaListItemState();
-}
-
-class _AbayaListItemState extends State<_AbayaListItem> {
-  int _selectedColor = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    final item = widget.item;
-    const primaryBrown = Color(0xFF8B7355);
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.withOpacity(0.2),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // نقاط السحب (من الصورة)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 8, top: 4),
-                child: Column(
-                  children: List.generate(
-                      3,
-                      (i) => Container(
-                            width: 4,
-                            height: 4,
-                            margin: const EdgeInsets.only(bottom: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(0.4),
-                              shape: BoxShape.circle,
-                            ),
-                          )),
-                ),
-              ),
-              // الصورة على اليسار
-              SizedBox(
-                width: 80,
-                height: 80,
-                child: Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Hero(
-                        tag: widget.heroTag,
-                        child: widget.imageBuilder(item.imageUrl),
-                      ),
-                    ),
-                    // شارة "جديد" في الأعلى
-                    if (item.isNew)
-                      Positioned(
-                        top: 4,
-                        left: 4,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: primaryBrown,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Text(
-                            'جديد',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              // المعلومات في المنتصف
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // اسم المنتج
-                    Text(
-                      item.title.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF1F2937),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // شارات الألوان
-                    if (item.colors.isNotEmpty)
-                      SizedBox(
-                        height: 24,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: item.colors.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 6),
-                          itemBuilder: (_, idx) => _ColorSwatch(
-                            color: item.colors[idx],
-                            selected: idx == _selectedColor,
-                            onTap: () => setState(() => _selectedColor = idx),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              // زر دائري على اليمين
-              Column(
-                children: [
-                  // أيقونة المفضلة
-                  _FavButton(item: item),
-                  const SizedBox(height: 8),
-                  // زر إضافة للسلة
-                  GestureDetector(
-                    onTap: () {
-                      try {
-                        final cartState = CartScope.of(context);
-                        cartState.addAbayaItem(
-                          id: item.id,
-                          title: item.title,
-                          price: item.price,
-                          imageUrl: item.imageUrl,
-                          subtitle: item.subtitle,
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(
-                                  Icons.check_circle,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    'تمت إضافة ${item.title} إلى السلة',
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            duration: const Duration(seconds: 2),
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: Colors.green,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('حدث خطأ: $e'),
-                            backgroundColor: Colors.red,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      }
-                    },
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: primaryBrown,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                  ),
-                ],
+            color: _DS.primaryBrown,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: _DS.primaryBrown.withOpacity(0.35),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
+          child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
         ),
       ),
     );
   }
-}
 
-class _AbayaCard extends StatefulWidget {
-  final AbayaItem item;
-  final String priceText;
-  final String heroTag;
-  final Widget Function(String src) imageBuilder; // أصول/شبكة
-  final VoidCallback onTap;
-
-  const _AbayaCard({
-    required this.item,
-    required this.priceText,
-    required this.heroTag,
-    required this.imageBuilder,
-    required this.onTap,
-  });
-
-  @override
-  State<_AbayaCard> createState() => _AbayaCardState();
-}
-
-class _AbayaCardState extends State<_AbayaCard> {
-  int _selectedColor = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    final item = widget.item;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // الصورة
-            AspectRatio(
-              aspectRatio: 0.72,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: Hero(
-                      tag: widget.heroTag,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: widget.imageBuilder(item.imageUrl),
-                      ),
-                    ),
-                  ),
-                  // أيقونة المفضلة في الزاوية اليمنى السفلى
-                  Positioned(
-                    bottom: 12,
-                    right: 12,
-                    child: _FavButton(item: item),
-                  ),
-                  // شارة "جديد" في الزاوية اليسرى السفلى
-                  if (item.isNew)
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8B7355),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'جديد',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 6),
-            // شارات الألوان (Color Swatches)
-            if (item.colors.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: SizedBox(
-                  height: 26,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: item.colors.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 6),
-                    itemBuilder: (_, idx) => _ColorSwatch(
-                      color: item.colors[idx],
-                      selected: idx == _selectedColor,
-                      onTap: () => setState(() => _selectedColor = idx),
-                    ),
-                  ),
+  void _addToCart(BuildContext context) {
+    HapticFeedback.mediumImpact();
+    try {
+      final cartState = CartScope.of(context);
+      cartState.addAbayaItem(
+        id: widget.item.id,
+        title: widget.item.title,
+        price: widget.item.price,
+        imageUrl: widget.item.imageUrl,
+        subtitle: widget.item.subtitle,
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded,
+                  color: Colors.white, size: 20),
+              const SizedBox(width: _DS.sm),
+              Expanded(
+                child: Text(
+                  'تمت إضافة ${widget.item.title} إلى السلة',
+                  style: const TextStyle(fontSize: 14),
                 ),
               ),
-            // اسم المنتج (من JavaScript: productName)
-            Flexible(
-              child: Text(
-                item.title.toUpperCase(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B7280),
-                  letterSpacing: 0.4,
-                  height: 1.1,
-                ),
-              ),
-            ),
-            const SizedBox(height: 2),
-            // عنوان المنتج (من JavaScript: productTitle)
-            Flexible(
-              child: Text(
-                item.subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF1F2937),
-                  height: 1.1,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ColorSwatch extends StatelessWidget {
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-  const _ColorSwatch(
-      {required this.color, required this.selected, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 24,
-        height: 24,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: color,
-          border: Border.all(
-            color: selected ? const Color(0xFF1F2937) : const Color(0xFFE5E7EB),
-            width: selected ? 2.0 : 1.0,
+            ],
           ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF10B981),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(_DS.radiusMd),
+          ),
+          margin: const EdgeInsets.all(_DS.lg),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('حدث خطأ: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Favorite Button
+// ═══════════════════════════════════════════════════════════════════════════
 
 class _FavButton extends StatefulWidget {
   final AbayaItem item;
   const _FavButton({required this.item});
+
   @override
   State<_FavButton> createState() => _FavButtonState();
 }
 
-class _FavButtonState extends State<_FavButton> {
+class _FavButtonState extends State<_FavButton>
+    with SingleTickerProviderStateMixin {
   final _favoriteService = FavoriteService();
   bool _isLoading = false;
   bool _isFavorite = false;
   bool _isInitialized = false;
 
+  late AnimationController _controller;
+  late Animation<double> _scale;
+
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _scale = Tween<double>(begin: 1.0, end: 1.25).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
     _checkFavoriteStatus();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> _checkFavoriteStatus() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (!authProvider.isAuthenticated) {
-      if (mounted) {
-        setState(() {
-          _isFavorite = false;
-          _isInitialized = true;
-        });
-      }
+      if (mounted) setState(() => _isInitialized = true);
       return;
     }
-
     try {
       final isFav = await _favoriteService.isFavorite(
         productId: widget.item.id,
@@ -1129,28 +1102,72 @@ class _FavButtonState extends State<_FavButton> {
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isFavorite = false;
-          _isInitialized = true;
-        });
+      if (mounted) setState(() => _isInitialized = true);
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (!authProvider.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يرجى تسجيل الدخول أولاً')),
+      );
+      return;
+    }
+
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    await _controller.forward();
+    await _controller.reverse();
+
+    HapticFeedback.lightImpact();
+
+    try {
+      if (_isFavorite) {
+        final removed = await _favoriteService.removeFromFavorites(
+          productId: widget.item.id,
+          productType: 'abaya',
+        );
+        if (mounted && removed) setState(() => _isFavorite = false);
+      } else {
+        final added = await _favoriteService.addToFavorites(
+          productId: widget.item.id,
+          productType: 'abaya',
+          productData: {
+            'name': widget.item.title,
+            'subtitle': widget.item.subtitle,
+            'imageUrl': widget.item.imageUrl,
+            'gallery': widget.item.gallery,
+            'price': widget.item.price,
+            'colors': widget.item.colors.map((c) => c.value).toList(),
+            'isNew': widget.item.isNew,
+            'type': 'عباية',
+          },
+        );
+        if (mounted && added) setState(() => _isFavorite = true);
       }
+    } catch (e) {
+      // Silent error
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
     if (!_isInitialized) {
-      return Material(
-        color: Colors.white.withOpacity(0.9),
-        shape: const CircleBorder(),
-        child: const Padding(
-          padding: EdgeInsets.all(6),
+      return Container(
+        width: 36,
+        height: 36,
+        decoration: const BoxDecoration(
+          color: _DS.borderLight,
+          shape: BoxShape.circle,
+        ),
+        child: const Center(
           child: SizedBox(
-            width: 20,
-            height: 20,
+            width: 14,
+            height: 14,
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
@@ -1158,101 +1175,37 @@ class _FavButtonState extends State<_FavButton> {
     }
 
     return GestureDetector(
-      onTap: authProvider.isAuthenticated
-          ? () async {
-              if (_isLoading) return;
-              setState(() => _isLoading = true);
-
-              try {
-                if (_isFavorite) {
-                  final removed = await _favoriteService.removeFromFavorites(
-                    productId: widget.item.id,
-                    productType: 'abaya',
-                  );
-                  if (mounted && removed) {
-                    setState(() => _isFavorite = false);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('تم إزالة من المفضلة'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                } else {
-                  final added = await _favoriteService.addToFavorites(
-                    productId: widget.item.id,
-                    productType: 'abaya',
-                    productData: {
-                      'name': widget.item.title,
-                      'subtitle': widget.item.subtitle,
-                      'imageUrl': widget.item.imageUrl,
-                      'gallery': widget.item.gallery,
-                      'price': widget.item.price,
-                      'colors': widget.item.colors.map((c) => c.value).toList(),
-                      'isNew': widget.item.isNew,
-                      'type': 'عباية',
-                    },
-                  );
-                  if (mounted && added) {
-                    setState(() => _isFavorite = true);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('تمت الإضافة للمفضلة'),
-                        duration: Duration(seconds: 2),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('حدث خطأ: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              } finally {
-                if (mounted) {
-                  setState(() => _isLoading = false);
-                }
-              }
-            }
-          : () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('يرجى تسجيل الدخول أولاً'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.white.withOpacity(0.9),
+      onTap: _toggleFavorite,
+      child: AnimatedBuilder(
+        animation: _scale,
+        builder: (context, child) => Transform.scale(
+          scale: _scale.value,
+          child: child,
         ),
-        child: _isLoading
-            ? const Padding(
-                padding: EdgeInsets.all(8),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: const BoxDecoration(
+            color: _DS.borderLight,
+            shape: BoxShape.circle,
+          ),
+          child: _isLoading
+              ? const Center(
+                  child: SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : Icon(
+                  _isFavorite
+                      ? Icons.favorite_rounded
+                      : Icons.favorite_outline_rounded,
+                  size: 18,
+                  color: _isFavorite ? Colors.red : _DS.mediumText,
                 ),
-              )
-            : Icon(
-                _isFavorite
-                    ? Icons.favorite_rounded
-                    : Icons.favorite_border_rounded,
-                size: 20,
-                color: _isFavorite ? Colors.red : const Color(0xFF1F2937),
-              ),
+        ),
       ),
     );
   }
 }
-
-/* ===================== شريط سفلي زجاجي (محذوف) ===================== */

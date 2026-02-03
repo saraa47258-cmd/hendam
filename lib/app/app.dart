@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
-import 'package:hindam/core/state/cart_scope.dart' as cart; // مزوّد حالة السلة
-import 'package:hindam/core/styles/dimens.dart'; // إضافة
+import 'package:hindam/app/router.dart';
 import 'package:hindam/app/theme.dart' as theme;
-import 'package:hindam/app/router.dart'; // ✅ الجديد: تهيئة GoRouter (appRouter)
+import 'package:hindam/core/state/cart_scope.dart' as cart;
+import 'package:hindam/core/styles/dimens.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 class HendamApp extends StatelessWidget {
   const HendamApp({super.key});
@@ -43,14 +43,9 @@ class HendamApp extends StatelessWidget {
           darkTheme: theme.AppTheme.dark,
           themeMode: ThemeMode.system,
 
-          // إجبار العربية (سيُطبَّق RTL تلقائيًا)
           locale: const Locale('ar'),
-          supportedLocales: const [Locale('ar'), Locale('en')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
 
           // تحسينات متجاوبة مع تحسين الأداء
           builder: (context, child) {

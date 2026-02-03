@@ -1,6 +1,7 @@
 // lib/features/tailors/presentation/tailor_store_screen.dart
 import 'package:flutter/material.dart';
 import 'tailor_design_loader.dart';
+import 'gift_design_screen.dart';
 import 'package:hindam/shared/widgets/any_image.dart';
 
 /// الأقسام
@@ -34,7 +35,7 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
 
   // عناصر (خدمات/منتجات) مع نوع القسم — كل الصور محليّة من assets/fabrics/
   List<_Item> get _items => [
-        // ===== التفصيل =====
+        // ===== الخدمات =====
         _Item(
           title: 'تفصيل دشداشة رجالي',
           price: 6.000,
@@ -78,50 +79,12 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
     final tt = Theme.of(context).textTheme;
     final filtered = _items.where((e) => e.kind == _selected).toList();
 
-    // زر الإجراء حسب القسم (يمكن أن يكون غير موجود لبعض الأقسام)
-    String? ctaLabel;
-    VoidCallback? ctaAction;
-    switch (_selected) {
-      case _Section.tailoring:
-        // لا يوجد زر أسفل الشاشة لقسم التفصيل
-        break;
-      case _Section.store:
-        ctaLabel = 'إضافة منتج من المتجر';
-        ctaAction = () {
-          final firstStore = _items.firstWhere(
-            (e) => e.kind == _Section.store,
-            orElse: () => filtered.first,
-          );
-          _openProductSheet(context, firstStore);
-        };
-        break;
-    }
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: cs.surface,
 
-        // ✅ زر الإجراء في الأسفل يظهر فقط لغير قسم التفصيل
-        bottomNavigationBar: (ctaLabel != null && ctaAction != null)
-            ? SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: FilledButton.icon(
-                    onPressed: ctaAction,
-                    icon: Icon(
-                      _selected == _Section.store
-                          ? Icons.add_shopping_cart_rounded
-                          : Icons.shopping_bag_rounded,
-                    ),
-                    label: Text(ctaLabel),
-                    style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52)),
-                  ),
-                ),
-              )
-            : null,
+        bottomNavigationBar: null,
 
         // ✅ Scroll واحدة أساسية باستخدام Slivers
         body: SafeArea(
@@ -232,8 +195,9 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => TailorDesignLoaderScreen(
-                                tailorId: widget.tailorId,
-                                tailorName: widget.tailorName),
+                              tailorId: widget.tailorId,
+                              tailorName: widget.tailorName,
+                            ),
                           ),
                         );
                       } else {
@@ -250,57 +214,70 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
 
               // محتوى القسم
               if (_selected == _Section.store)
-                // ✅ منتجات المتجر كـ SliverGrid (أفضل أداء وتمرير واحد)
+                // ✅ هدايا - نفس تدفق التفصيل مع خطوة إضافية لبيانات المستلم
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverLayoutBuilder(
-                    builder: (context, constraints) {
-                      final isNarrow = constraints.crossAxisExtent < 380;
-                      final ratio = isNarrow ? 0.72 : 0.76;
-                      return SliverGrid(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: ratio,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (context, i) {
-                            final it = filtered[i];
-                            return _StoreTile(
-                              item: it,
-                              onAdd: () => _openProductSheet(context, it),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.0,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) {
+                        final it = filtered[i];
+                        return _GiftGridCard(
+                          item: it,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => GiftDesignScreen(
+                                  tailorId: widget.tailorId,
+                                  tailorName: widget.tailorName,
+                                ),
+                              ),
                             );
                           },
-                          childCount: filtered.length,
-                        ),
-                      );
-                    },
+                        );
+                      },
+                      childCount: filtered.length,
+                    ),
                   ),
                 )
               else
-                // ✅ خدمات (تفصيل/تعديل) داخل SliverToBoxAdapter
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 244,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (_, i) => _ServiceCard(
-                        item: filtered[i],
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => TailorDesignLoaderScreen(
+                // ✅ خدمات كشبكة مربعة أنيقة
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.0, // بطاقات مربعة
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) {
+                        final it = filtered[i];
+                        return _ServiceGridCard(
+                          item: it,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TailorDesignLoaderScreen(
                                   tailorId: widget.tailorId,
-                                  tailorName: widget.tailorName),
-                            ),
-                          );
-                        },
-                      ),
+                                  tailorName: widget.tailorName,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      childCount: filtered.length,
                     ),
                   ),
                 ),
@@ -317,9 +294,9 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
   String _sectionTitle(_Section s) {
     switch (s) {
       case _Section.tailoring:
-        return 'التفصيل';
+        return 'الخدمات';
       case _Section.store:
-        return 'المتجر';
+        return 'هدية';
     }
   }
 
@@ -553,10 +530,11 @@ class _Item {
   });
 }
 
-class _ServiceCard extends StatelessWidget {
+/// بطاقة خدمة مربعة أنيقة للشبكة
+class _ServiceGridCard extends StatelessWidget {
   final _Item item;
   final VoidCallback? onTap;
-  const _ServiceCard({required this.item, this.onTap});
+  const _ServiceGridCard({required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -565,113 +543,337 @@ class _ServiceCard extends StatelessWidget {
 
     return Material(
       color: cs.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       clipBehavior: Clip.antiAlias,
       elevation: 0,
-      child: InkWell(
-        onTap: onTap,
-        child: SizedBox(
-          width: 220,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: cs.outlineVariant.withOpacity(0.3),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: cs.shadow.withOpacity(0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 0,
+            ),
+            BoxShadow(
+              color: cs.shadow.withOpacity(0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox(
-                height: 136,
-                width: double.infinity,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    AnyImage(
-                      src: item.image,
-                      fit: BoxFit.cover,
-                      fallback: Container(
-                        color: cs.surfaceContainerHighest,
-                        alignment: Alignment.center,
-                        child: Icon(Icons.cut_rounded,
-                            size: 28, color: cs.onSurfaceVariant),
-                      ),
-                    ),
-                    if (item.pro)
-                      PositionedDirectional(
-                        start: 8,
-                        top: 8,
-                        child: Container(
-                          height: 22,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+              // === صورة الخدمة ===
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      AnyImage(
+                        src: item.image,
+                        fit: BoxFit.cover,
+                        fallback: Container(
                           decoration: BoxDecoration(
-                            color: cs.primary.withOpacity(.12),
-                            borderRadius: BorderRadius.circular(6),
-                            border:
-                                Border.all(color: cs.primary.withOpacity(.22)),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                cs.primaryContainer.withOpacity(0.3),
+                                cs.primaryContainer.withOpacity(0.1),
+                              ],
+                            ),
                           ),
                           alignment: Alignment.center,
-                          child: Text(
-                            'PRO',
-                            style: tt.labelSmall?.copyWith(
-                              color: cs.primary,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: .5,
+                          child: Icon(
+                            Icons.checkroom_rounded,
+                            size: 40,
+                            color: cs.primary.withOpacity(0.5),
+                          ),
+                        ),
+                      ),
+                      // تدرج سفلي للوضوح
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 40,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withOpacity(0.15),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                    PositionedDirectional(
-                      end: 8,
-                      top: 8,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(.08),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4))
-                          ],
-                        ),
-                        child: const SizedBox(
-                          width: 34,
-                          height: 34,
-                          child: Icon(Icons.favorite_border_rounded, size: 20),
-                        ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // === معلومات الخدمة ===
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // اسم الخدمة
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: tt.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: cs.onSurface,
                       ),
+                    ),
+                    const SizedBox(height: 6),
+                    // التقييم
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: Color(0xFFFFA000),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          item.rating.toStringAsFixed(1),
+                          style: tt.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFE65100),
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          '(${item.reviews})',
+                          style: tt.labelSmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                child: Text(
-                  item.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// بطاقة هدية مربعة أنيقة للشبكة
+class _GiftGridCard extends StatelessWidget {
+  final _Item item;
+  final VoidCallback? onTap;
+  const _GiftGridCard({required this.item, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Material(
+      color: cs.surface,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFE91E63).withOpacity(0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE91E63).withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // === صورة المنتج مع شارة الهدية ===
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      AnyImage(
+                        src: item.image,
+                        fit: BoxFit.cover,
+                        fallback: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                const Color(0xFFFCE4EC),
+                                const Color(0xFFF8BBD9).withOpacity(0.5),
+                              ],
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.card_giftcard_rounded,
+                            size: 40,
+                            color: Color(0xFFE91E63),
+                          ),
+                        ),
+                      ),
+                      // شارة الهدية
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE91E63),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFE91E63).withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.card_giftcard_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'هدية',
+                                style: tt.labelSmall?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      // تدرج سفلي
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 40,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                const Color(0xFFE91E63).withOpacity(0.1),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
+
+              // === معلومات المنتج ===
               Padding(
-                padding: const EdgeInsetsDirectional.only(start: 10),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.star_rate_rounded,
-                        size: 18, color: Color(0xFFFFA000)),
-                    const SizedBox(width: 2),
-                    Text(item.rating.toStringAsFixed(1),
-                        style: tt.labelLarge
-                            ?.copyWith(fontWeight: FontWeight.w700)),
-                    const SizedBox(width: 4),
-                    Text('(${item.reviews})',
-                        style:
-                            tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: tt.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.star_rounded,
+                          size: 14,
+                          color: Color(0xFFFFA000),
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          item.rating.toStringAsFixed(1),
+                          style: tt.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFE65100),
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFCE4EC),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '${item.price.toStringAsFixed(3)} ر.ع',
+                            style: tt.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFE91E63),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
-                child: Text('ر.ع ${item.price.toStringAsFixed(3)}',
-                    style:
-                        tt.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
               ),
             ],
           ),
@@ -761,8 +963,8 @@ class _SectionCircles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const items = [
-      (_Section.tailoring, Icons.checkroom_rounded, 'التفصيل'),
-      (_Section.store, Icons.shop_two_rounded, 'المتجر'),
+      (_Section.tailoring, Icons.checkroom_rounded, 'الخدمات'),
+      (_Section.store, Icons.card_giftcard_rounded, 'هدية'),
     ];
 
     return LayoutBuilder(
@@ -813,9 +1015,8 @@ class _CircleSectionButton extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
 
     // Hero tag خاص بكل قسم
-    final heroTag = section == _Section.tailoring
-        ? 'tailoring_button'
-        : 'store_button';
+    final heroTag =
+        section == _Section.tailoring ? 'tailoring_button' : 'store_button';
 
     return Column(
       mainAxisSize: MainAxisSize.min,

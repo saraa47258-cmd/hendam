@@ -2,11 +2,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hindam/core/services/firebase_service.dart';
 
-/// خدمة جلب الأقمشة من مجموعة fabrics الموجودة في Firebase
+/// خدمة جلب الأقمشة من Firestore.
+/// الأقمشة مخزنة كمجموعة فرعية تحت كل تاجر: tailors/{tailorId}/fabrics
 class FabricService {
+  static const String _tailorsCollection = 'tailors';
+  static const String _fabricsSubcollection = 'fabrics';
   static const String _fabricsCollection = 'fabrics';
 
-  /// جلب جميع الأقمشة المتاحة
+  /// مرجع مجموعة الأقمشة لتاجر معين: tailors/{tailorId}/fabrics
+  static CollectionReference<Map<String, dynamic>> _tailorFabricsRef(
+      String tailorId) {
+    return FirebaseService.firestore
+        .collection(_tailorsCollection)
+        .doc(tailorId)
+        .collection(_fabricsSubcollection);
+  }
+
+  /// جلب جميع الأقمشة المتاحة (من مجموعة عامة إن وُجدت - للتوافق مع الشاشات الأخرى)
   static Stream<List<Map<String, dynamic>>> getAllFabrics() {
     return FirebaseService.firestore
         .collection(_fabricsCollection)
@@ -21,62 +33,79 @@ class FabricService {
             .toList());
   }
 
-  /// جلب الأقمشة الخاصة بخياط محدد
-  /// يعرض فقط الأقمشة التي تحتوي على tailorId مطابق للخياط المحدد
+  /// جلب الأقمشة الخاصة بتاجر/خياط محدد من المجموعة الفرعية tailors/{tailorId}/fabrics
   static Stream<List<Map<String, dynamic>>> getTailorFabrics(String tailorId) {
+    final ref = _tailorFabricsRef(tailorId);
     try {
-      // استخدام where query مباشرة في Firestore لفلترة حسب tailorId
-      return FirebaseService.firestore
-          .collection(_fabricsCollection)
-          .where('tailorId', isEqualTo: tailorId)
+      return ref
           .where('isAvailable', isEqualTo: true)
           .orderBy('lastUpdated', descending: true)
           .snapshots()
-          .map((snapshot) {
-        return snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
-            .toList();
-      });
+          .map((snapshot) => snapshot.docs
+              .map((doc) => {
+                    'id': doc.id,
+                    ...doc.data(),
+                  })
+              .toList());
     } catch (e) {
-      // في حالة عدم وجود index في Firestore، نستخدم فلترة يدوية
-      print('⚠️ تحذير: استخدام فلترة يدوية لـ getTailorFabrics: $e');
-      return FirebaseService.firestore
-          .collection(_fabricsCollection)
-          .where('isAvailable', isEqualTo: true)
-          .orderBy('lastUpdated', descending: true)
-          .snapshots()
-          .map((snapshot) {
-        return snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
-            .where((fabric) {
-          // عرض فقط الأقمشة التي تحتوي على tailorId مطابق
-          // لا نعرض الأقمشة بدون tailorId
-          return fabric['tailorId'] != null && 
-                 fabric['tailorId'] == tailorId;
-        }).toList();
-      });
+      try {
+        return ref
+            .where('isAvailable', isEqualTo: true)
+            .orderBy('updatedAt', descending: true)
+            .snapshots()
+            .map((snapshot) => snapshot.docs
+                .map((doc) => {
+                      'id': doc.id,
+                      ...doc.data(),
+                    })
+                .toList());
+      } catch (_) {
+        return ref
+            .where('isAvailable', isEqualTo: true)
+            .snapshots()
+            .map((snapshot) {
+          final list = snapshot.docs
+              .map((doc) => {
+                    'id': doc.id,
+                    ...doc.data(),
+                  })
+              .toList();
+          list.sort((a, b) {
+            final aTime = a['lastUpdated'] ?? a['updatedAt'];
+            final bTime = b['lastUpdated'] ?? b['updatedAt'];
+            if (aTime == null || bTime == null) return 0;
+            return (bTime as Comparable).compareTo(aTime as Comparable);
+          });
+          return list;
+        });
+      }
     }
   }
 
-  /// جلب قماش واحد بالتفصيل
+  /// جلب قماش واحد بالتفصيل (من مجموعة التاجر الفرعية)
+  static Future<Map<String, dynamic>?> getTailorFabricById(
+      String tailorId, String fabricId) async {
+    try {
+      final doc = await _tailorFabricsRef(tailorId).doc(fabricId).get();
+      if (doc.exists && doc.data() != null) {
+        return {'id': doc.id, ...doc.data()!};
+      }
+      return null;
+    } catch (e) {
+      print('خطأ في جلب قماش التاجر: $e');
+      return null;
+    }
+  }
+
+  /// جلب قماش واحد بالتفصيل (من المجموعة العامة - للتوافق مع الشاشات القديمة)
   static Future<Map<String, dynamic>?> getFabricById(String fabricId) async {
     try {
       final doc = await FirebaseService.firestore
           .collection(_fabricsCollection)
           .doc(fabricId)
           .get();
-
       if (doc.exists) {
-        return {
-          'id': doc.id,
-          ...doc.data()!,
-        };
+        return {'id': doc.id, ...doc.data()!};
       }
       return null;
     } catch (e) {
@@ -112,87 +141,64 @@ class FabricService {
             .toList());
   }
 
-  /// البحث في أقمشة خياط محدد
+  /// البحث في أقمشة خياط محدد (من tailors/{tailorId}/fabrics)
   static Stream<List<Map<String, dynamic>>> searchTailorFabrics(
       String tailorId, String searchQuery) {
-    return FirebaseService.firestore
-        .collection(_fabricsCollection)
-        .where('tailorId', isEqualTo: tailorId)
-        .where('isAvailable', isEqualTo: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
+    final ref = _tailorFabricsRef(tailorId);
+    final lower = searchQuery.toLowerCase();
+    return ref.where('isAvailable', isEqualTo: true).snapshots().map(
+        (snapshot) => snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
             .where((fabric) =>
                 (fabric['name'] ?? '')
                     .toString()
                     .toLowerCase()
-                    .contains(searchQuery.toLowerCase()) ||
+                    .contains(lower) ||
                 (fabric['description'] ?? '')
                     .toString()
                     .toLowerCase()
-                    .contains(searchQuery.toLowerCase()) ||
-                (fabric['type'] ?? '')
-                    .toString()
-                    .toLowerCase()
-                    .contains(searchQuery.toLowerCase()))
+                    .contains(lower) ||
+                (fabric['type'] ?? '').toString().toLowerCase().contains(lower))
             .toList());
   }
 
-  /// جلب الأقمشة حسب النوع لخياط محدد
+  /// جلب الأقمشة حسب النوع لخياط محدد (من tailors/{tailorId}/fabrics)
   static Stream<List<Map<String, dynamic>>> getTailorFabricsByType(
       String tailorId, String fabricType) {
-    return FirebaseService.firestore
-        .collection(_fabricsCollection)
-        .where('tailorId', isEqualTo: tailorId)
+    final ref = _tailorFabricsRef(tailorId);
+    return ref
         .where('type', isEqualTo: fabricType)
         .where('isAvailable', isEqualTo: true)
         .orderBy('lastUpdated', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList());
   }
 
   /// جلب الأقمشة حسب الموسم لخياط محدد
   static Stream<List<Map<String, dynamic>>> getTailorFabricsBySeason(
       String tailorId, String season) {
-    return FirebaseService.firestore
-        .collection(_fabricsCollection)
-        .where('tailorId', isEqualTo: tailorId)
+    final ref = _tailorFabricsRef(tailorId);
+    return ref
         .where('season', isEqualTo: season)
         .where('isAvailable', isEqualTo: true)
         .orderBy('lastUpdated', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList());
   }
 
   /// جلب الأقمشة حسب الجودة لخياط محدد
   static Stream<List<Map<String, dynamic>>> getTailorFabricsByQuality(
       String tailorId, String quality) {
-    return FirebaseService.firestore
-        .collection(_fabricsCollection)
-        .where('tailorId', isEqualTo: tailorId)
+    final ref = _tailorFabricsRef(tailorId);
+    return ref
         .where('quality', isEqualTo: quality)
         .where('isAvailable', isEqualTo: true)
         .orderBy('lastUpdated', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {
-                  'id': doc.id,
-                  ...doc.data(),
-                })
-            .toList());
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList());
   }
 
   /// جلب الأقمشة حسب الموسم
@@ -228,14 +234,11 @@ class FabricService {
             .toList());
   }
 
-  /// تحديث كمية القماش
+  /// تحديث كمية القماش (لتاجر معين)
   static Future<bool> updateFabricQuantity(
-      String fabricId, int newQuantity) async {
+      String tailorId, String fabricId, int newQuantity) async {
     try {
-      await FirebaseService.firestore
-          .collection(_fabricsCollection)
-          .doc(fabricId)
-          .update({
+      await _tailorFabricsRef(tailorId).doc(fabricId).update({
         'quantity': newQuantity,
         'lastUpdated': FieldValue.serverTimestamp(),
       });
@@ -246,14 +249,11 @@ class FabricService {
     }
   }
 
-  /// تحديث حالة توفر القماش
+  /// تحديث حالة توفر القماش (لتاجر معين)
   static Future<bool> updateFabricAvailability(
-      String fabricId, bool isAvailable) async {
+      String tailorId, String fabricId, bool isAvailable) async {
     try {
-      await FirebaseService.firestore
-          .collection(_fabricsCollection)
-          .doc(fabricId)
-          .update({
+      await _tailorFabricsRef(tailorId).doc(fabricId).update({
         'isAvailable': isAvailable,
         'lastUpdated': FieldValue.serverTimestamp(),
       });
@@ -280,14 +280,12 @@ class FabricService {
     }
   }
 
-  /// إضافة قماش جديد لخياط محدد
+  /// إضافة قماش جديد لخياط محدد (في tailors/{tailorId}/fabrics)
   static Future<String?> addTailorFabric(
       String tailorId, Map<String, dynamic> fabricData) async {
     try {
-      final docRef =
-          await FirebaseService.firestore.collection(_fabricsCollection).add({
+      final docRef = await _tailorFabricsRef(tailorId).add({
         ...fabricData,
-        'tailorId': tailorId,
         'isAvailable': true,
         'lastUpdated': FieldValue.serverTimestamp(),
       });
@@ -298,35 +296,18 @@ class FabricService {
     }
   }
 
-  /// إضافة قماش جديد (مع tailorId تلقائياً إذا لم يكن موجوداً)
+  /// إضافة قماش جديد (في مجموعة التاجر الفرعية)
   static Future<String?> addFabricWithTailorId(
       String tailorId, Map<String, dynamic> fabricData) async {
-    try {
-      final docRef =
-          await FirebaseService.firestore.collection(_fabricsCollection).add({
-        ...fabricData,
-        'tailorId': tailorId, // إضافة tailorId تلقائياً
-        'isAvailable': true,
-        'lastUpdated': FieldValue.serverTimestamp(),
-      });
-      print('تم إضافة قماش جديد مع tailorId: ${docRef.id}');
-      return docRef.id;
-    } catch (e) {
-      print('خطأ في إضافة القماش مع tailorId: $e');
-      return null;
-    }
+    return addTailorFabric(tailorId, fabricData);
   }
 
-  /// تحديث قماش خياط محدد
+  /// تحديث قماش خياط محدد (في tailors/{tailorId}/fabrics)
   static Future<bool> updateTailorFabric(
       String tailorId, String fabricId, Map<String, dynamic> fabricData) async {
     try {
-      await FirebaseService.firestore
-          .collection(_fabricsCollection)
-          .doc(fabricId)
-          .update({
+      await _tailorFabricsRef(tailorId).doc(fabricId).update({
         ...fabricData,
-        'tailorId': tailorId,
         'lastUpdated': FieldValue.serverTimestamp(),
       });
       return true;
@@ -336,7 +317,7 @@ class FabricService {
     }
   }
 
-  /// إضافة حقل tailorId للأقمشة الموجودة (للمرحلة الانتقالية)
+  /// إضافة حقل tailorId للأقمشة الموجودة (للمرحلة الانتقالية - مجموعة عامة)
   static Future<bool> addTailorIdToExistingFabrics(
       String fabricId, String tailorId) async {
     try {
@@ -372,7 +353,22 @@ class FabricService {
     }
   }
 
-  /// حذف قماش (تعطيله)
+  /// حذف/تعطيل قماش لتاجر معين (في tailors/{tailorId}/fabrics)
+  static Future<bool> deleteTailorFabric(
+      String tailorId, String fabricId) async {
+    try {
+      await _tailorFabricsRef(tailorId).doc(fabricId).update({
+        'isAvailable': false,
+        'lastUpdated': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      print('خطأ في حذف قماش التاجر: $e');
+      return false;
+    }
+  }
+
+  /// حذف قماش (تعطيله) - من المجموعة العامة (للتوافق مع الشاشات القديمة)
   static Future<bool> deleteFabric(String fabricId) async {
     try {
       await FirebaseService.firestore

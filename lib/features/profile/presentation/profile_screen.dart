@@ -460,14 +460,14 @@ class _ProfileScreenState extends State<ProfileScreen>
           children: [
             // خلفية متدرجة احترافية
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFF1A1A2E),
-                    const Color(0xFF16213E),
-                    const Color(0xFF0F3460),
+                    Color(0xFF1A1A2E),
+                    Color(0xFF16213E),
+                    Color(0xFF0F3460),
                   ],
                 ),
               ),
@@ -549,14 +549,14 @@ class _ProfileScreenState extends State<ProfileScreen>
                             Container(
                               width: 125,
                               height: 125,
-                              decoration: BoxDecoration(
+                              decoration: const BoxDecoration(
                                 shape: BoxShape.circle,
                                 gradient: LinearGradient(
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    const Color(0xFF2D2D44),
-                                    const Color(0xFF1A1A2E),
+                                    Color(0xFF2D2D44),
+                                    Color(0xFF1A1A2E),
                                   ],
                                 ),
                               ),
@@ -572,7 +572,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                         // العنوان الرئيسي
                         ShaderMask(
-                          shaderCallback: (bounds) => LinearGradient(
+                          shaderCallback: (bounds) => const LinearGradient(
                             colors: [Colors.white, Colors.white70],
                           ).createShader(bounds),
                           child: Text(

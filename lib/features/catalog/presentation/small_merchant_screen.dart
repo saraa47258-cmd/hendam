@@ -1,9 +1,7 @@
 // lib/features/catalog/presentation/small_merchant_screen.dart
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../shops/models/shop.dart';
-import '../../shops/services/trader_service.dart';
 
 // استبدل الاستيراد:
 import 'merchant_products_screen.dart';
@@ -17,60 +15,81 @@ class SmallMerchantScreen extends StatefulWidget {
 
 class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
   final TextEditingController _search = TextEditingController();
-  final TraderService _traderService = TraderService();
 
-  // البيانات من Firebase
-  List<Shop> _all = [];
-  List<Shop> _shown = [];
-  bool _isLoading = true;
+  // بيانات تجريبية رجالية
+  final List<Shop> _all = [
+    Shop(
+      id: 'm1',
+      name: 'متجر اللمسة الرجالية',
+      category: 'مستلزمات رجالية',
+      city: 'مسقط',
+      imageUrl: 'assets/shops/3.jpg',
+      rating: 4.8,
+      reviews: 120,
+      minPrice: 9.5,
+      servicesCount: 24,
+      delivery: true,
+      isOpen: true,
+    ),
+    Shop(
+      id: 'm2',
+      name: 'بيت القماش',
+      category: 'أقمشة رجالية',
+      city: 'السيب',
+      imageUrl: 'assets/shops/4.jpg',
+      rating: 4.6,
+      reviews: 95,
+      minPrice: 10.0,
+      servicesCount: 18,
+      delivery: true,
+      isOpen: true,
+    ),
+    Shop(
+      id: 'm3',
+      name: 'أناقة رجالية',
+      category: 'تفصيل دشداشة',
+      city: 'مطرح',
+      imageUrl: 'assets/shops/5.jpg',
+      rating: 4.3,
+      reviews: 63,
+      minPrice: 8.0,
+      servicesCount: 12,
+      delivery: false,
+      isOpen: false,
+    ),
+    Shop(
+      id: 'm4',
+      name: 'أطياف ستايل',
+      category: 'أحذية وإكسسوارات',
+      city: 'العذيبة',
+      imageUrl: 'assets/shops/6.jpeg',
+      rating: 4.9,
+      reviews: 210,
+      minPrice: 12.0,
+      servicesCount: 30,
+      delivery: true,
+      isOpen: true,
+    ),
+  ];
+
+  late List<Shop> _shown = List.of(_all);
   bool _onlyOpen = false;
   bool _onlyDelivery = false;
-  
-  StreamSubscription<List<Shop>>? _subscription;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTraders();
-  }
-
-  void _loadTraders() {
-    _subscription = _traderService.getTradersStream().listen(
-      (traders) {
-        if (mounted) {
-          setState(() {
-            _all = traders;
-            _isLoading = false;
-            _applyFilters();
-          });
-        }
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-        print('خطأ في جلب التجار: $error');
-      },
-    );
-  }
 
   @override
   void dispose() {
-    _subscription?.cancel();
     _search.dispose();
     super.dispose();
   }
 
   void _applyFilters() {
-    final q = _search.text.trim().toLowerCase();
-    List<Shop> list = List.of(_all);
+    final q = _search.text.trim();
+    List<Shop> list = _all;
 
     if (q.isNotEmpty) {
       list = list
           .where((s) =>
-              s.name.toLowerCase().contains(q) || 
-              s.city.toLowerCase().contains(q) || 
-              s.category.toLowerCase().contains(q))
+      s.name.contains(q) || s.city.contains(q) || s.category.contains(q))
           .toList();
     }
     if (_onlyOpen) list = list.where((s) => s.isOpen).toList();
@@ -138,20 +157,14 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
             const SizedBox(width: 8),
           ],
         ),
-        body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFF59E0B)),
-                ),
-              )
-            : CustomScrollView(
+        body: CustomScrollView(
           slivers: [
             // العنوان الرئيسي
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
                 child: Text(
-                  'المتاجر',
+                  'محلات المستلزمات الرجالية',
                   style: TextStyle(
                     color: cs.onSurface,
                     fontWeight: FontWeight.w900,
@@ -171,7 +184,7 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                       controller: _search,
                       onChanged: (_) => _applyFilters(),
                       decoration: InputDecoration(
-                        hintText: 'ابحث عن متجر…',
+                        hintText: 'ابحث عن محل رجالي…',
                         prefixIcon: const Icon(Icons.search_rounded),
                         suffixIcon: _search.text.isEmpty
                             ? null
@@ -251,58 +264,34 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
               ),
             ),
 
-            // القائمة أو رسالة فارغة
-            if (_shown.isEmpty)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.store_outlined,
-                        size: 64,
-                        color: cs.onSurfaceVariant.withOpacity(0.5),
+            // القائمة
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, i) {
+                    final s = _shown[i];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                          bottom: i == _shown.length - 1 ? 0 : 12),
+                      child: _ShopCardModern(
+                        shop: s,
+                        // … داخل _ShopCardModern onTap:
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MerchantProductsScreen(shop: s),
+                            ),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'لا توجد متاجر',
-                        style: TextStyle(
-                          color: cs.onSurfaceVariant,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, i) {
-                      final s = _shown[i];
-                      return Padding(
-                        padding: EdgeInsets.only(
-                            bottom: i == _shown.length - 1 ? 0 : 12),
-                        child: _ShopCardModern(
-                          shop: s,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => MerchantProductsScreen(shop: s),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    childCount: _shown.length,
-                  ),
+                    );
+                  },
+                  childCount: _shown.length,
                 ),
               ),
+            ),
           ],
         ),
       ),

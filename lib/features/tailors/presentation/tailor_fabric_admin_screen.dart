@@ -405,7 +405,8 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
 
   Future<void> _deleteFabric(String fabricId) async {
     try {
-      final success = await FabricService.deleteFabric(fabricId);
+      final success =
+          await FabricService.deleteTailorFabric(widget.tailorId, fabricId);
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم حذف القماش بنجاح')),

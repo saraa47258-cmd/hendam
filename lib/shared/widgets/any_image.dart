@@ -79,7 +79,7 @@ class AnyImage extends StatelessWidget {
     // إذا لم يتم تحديد الأبعاد، نستخدم قيم افتراضية فقط إذا لم تكن infinity
     final hasWidth = width != null && width!.isFinite;
     final hasHeight = height != null && height!.isFinite;
-    
+
     final effectiveWidth = hasWidth
         ? width!
         : (context.isPhone
@@ -87,9 +87,8 @@ class AnyImage extends StatelessWidget {
             : context.isTablet
                 ? 150.0
                 : 180.0);
-    final effectiveHeight = hasHeight
-        ? height!
-        : (hasWidth ? effectiveWidth : 120.0);
+    final effectiveHeight =
+        hasHeight ? height! : (hasWidth ? effectiveWidth : 120.0);
     final effectiveBorderRadius =
         borderRadius ?? BorderRadius.circular(context.responsiveRadius());
 
@@ -110,25 +109,50 @@ class AnyImage extends StatelessWidget {
           ? (effectiveHeight * pixelRatio).round()
           : null;
 
-      imageWidget = CachedNetworkImage(
-        imageUrl: raw,
-        fit: fit,
-        alignment: alignment,
-        width: effectiveWidth.isFinite ? effectiveWidth : null,
-        height: effectiveHeight.isFinite ? effectiveHeight : null,
-        filterQuality: FilterQuality.low, // تحسين الأداء
-        memCacheWidth: cacheWidth,
-        memCacheHeight: cacheHeight,
-        placeholder: (context, url) {
-          final placeholderWidth = hasWidth ? effectiveWidth : 120.0;
-          final placeholderHeight = hasHeight ? effectiveHeight : 120.0;
-          return _buildLoadingWidget(
-              context, placeholderWidth, placeholderHeight, effectiveBorderRadius);
-        },
-        errorWidget: (context, url, error) {
-          final errorWidth = hasWidth ? effectiveWidth : 120.0;
-          final errorHeight = hasHeight ? effectiveHeight : 120.0;
-          return _fallback(cs, errorWidth, errorHeight, effectiveBorderRadius);
+      // للتمدد الكامل، نستخدم LayoutBuilder
+      imageWidget = LayoutBuilder(
+        builder: (context, constraints) {
+          // استخدام الحجم من constraints إذا كان متاحاً
+          final useWidth = hasWidth
+              ? effectiveWidth
+              : (constraints.maxWidth.isFinite ? constraints.maxWidth : null);
+          final useHeight = hasHeight
+              ? effectiveHeight
+              : (constraints.maxHeight.isFinite ? constraints.maxHeight : null);
+
+          return CachedNetworkImage(
+            imageUrl: raw,
+            fit: fit,
+            alignment: alignment,
+            width: useWidth,
+            height: useHeight,
+            filterQuality: FilterQuality.low, // تحسين الأداء
+            memCacheWidth: cacheWidth,
+            memCacheHeight: cacheHeight,
+            imageBuilder: (context, imageProvider) => Container(
+              width: useWidth,
+              height: useHeight,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: imageProvider,
+                  fit: fit,
+                  alignment: alignment,
+                ),
+              ),
+            ),
+            placeholder: (context, url) {
+              final placeholderWidth = useWidth ?? 120.0;
+              final placeholderHeight = useHeight ?? 120.0;
+              return _buildLoadingWidget(context, placeholderWidth,
+                  placeholderHeight, effectiveBorderRadius);
+            },
+            errorWidget: (context, url, error) {
+              final errorWidth = useWidth ?? 120.0;
+              final errorHeight = useHeight ?? 120.0;
+              return _fallback(
+                  cs, errorWidth, errorHeight, effectiveBorderRadius);
+            },
+          );
         },
       );
     } else if (raw.endsWith('.svg')) {
@@ -143,30 +167,33 @@ class AnyImage extends StatelessWidget {
       );
     } else {
       final candidates = _assetCandidates(raw);
-      imageWidget = _assetWithFallback(
-          context, candidates, 0, cs, 
-          hasWidth ? effectiveWidth : null, 
-          hasHeight ? effectiveHeight : null);
+      imageWidget = _assetWithFallback(context, candidates, 0, cs,
+          hasWidth ? effectiveWidth : null, hasHeight ? effectiveHeight : null);
     }
 
     // تطبيق BorderRadius إذا كان محدد
     // لا نحدد width/height إذا كانت infinity لتسمح للصورة بالتمدد
-    final container = effectiveBorderRadius != BorderRadius.zero
-        ? ClipRRect(
-            borderRadius: effectiveBorderRadius,
-            child: Container(
-              width: hasWidth ? effectiveWidth : null,
-              height: hasHeight ? effectiveHeight : null,
-              color: backgroundColor ?? cs.surfaceContainerHighest,
-              child: imageWidget,
-            ),
-          )
-        : Container(
-            width: hasWidth ? effectiveWidth : null,
-            height: hasHeight ? effectiveHeight : null,
-            color: backgroundColor ?? cs.surfaceContainerHighest,
-            child: imageWidget,
-          );
+    // عندما لا يكون هناك حجم محدد، نستخدم الحجم الكامل المتاح
+    Widget container;
+
+    if (effectiveBorderRadius != BorderRadius.zero) {
+      container = ClipRRect(
+        borderRadius: effectiveBorderRadius,
+        child: Container(
+          width: hasWidth ? effectiveWidth : double.infinity,
+          height: hasHeight ? effectiveHeight : double.infinity,
+          color: backgroundColor ?? cs.surfaceContainerHighest,
+          child: imageWidget,
+        ),
+      );
+    } else {
+      container = Container(
+        width: hasWidth ? effectiveWidth : double.infinity,
+        height: hasHeight ? effectiveHeight : double.infinity,
+        color: backgroundColor ?? cs.surfaceContainerHighest,
+        child: imageWidget,
+      );
+    }
 
     return container;
   }

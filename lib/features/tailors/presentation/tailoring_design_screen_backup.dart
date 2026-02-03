@@ -87,12 +87,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   MeasurementUnit _unit = MeasurementUnit.cm; // افتراضيًا سم
 
   // ==== إرسال الطلب الحقيقي ====
-  bool _isSubmitting = false;
-
   Future<void> _submitRealOrder() async {
-    // منع الإرسال المتكرر
-    if (_isSubmitting) return;
-
     if (!_formKey.currentState!.validate()) return;
 
     // التحقق من البيانات المطلوبة
@@ -103,38 +98,12 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       return;
     }
 
-    setState(() => _isSubmitting = true);
-
-    // حفظ المراجع قبل العمليات غير المتزامنة
-    final navigator = Navigator.of(context);
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
     // إظهار مؤشر التحميل
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => PopScope(
-        canPop: false,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(dialogContext).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  'جاري إرسال الطلب...',
-                  style: Theme.of(dialogContext).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-        ),
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
       ),
     );
 
@@ -143,9 +112,8 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       final currentUser = authProvider.currentUser;
 
       if (currentUser == null) {
-        navigator.pop(); // إغلاق مربع التحميل
-        setState(() => _isSubmitting = false);
-        scaffoldMessenger.showSnackBar(
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('يرجى تسجيل الدخول أولاً')),
         );
         return;
@@ -153,16 +121,17 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
       final order = OrderModel(
         id: '', // سيتم إنشاؤه تلقائياً
-        customerId: currentUser.uid,
-        customerName: currentUser.name,
-        customerPhone: currentUser.phoneNumber ?? '+968 00000000',
+        customerId: currentUser.uid, // معرف المستخدم الحقيقي
+        customerName: currentUser.name, // اسم المستخدم الحقيقي
+        customerPhone:
+            currentUser.phoneNumber ?? '+968 00000000', // رقم المستخدم
         tailorId: widget.tailorId,
         tailorName: widget.tailorName,
         fabricId: _selectedFabricId!,
         fabricName: _fabricType!,
         fabricType: _fabricType!,
         fabricImageUrl: _fabricThumb ?? '',
-        fabricColor: '5C6BC0',
+        fabricColor: '5C6BC0', // لون افتراضي
         fabricColorHex: '#FF5C6BC0',
         measurements: {
           'الطول': double.tryParse(_lengthCtrl.text) ?? 0.0,
@@ -189,103 +158,54 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       final orderId = await OrderService.submitOrder(order);
 
       // إخفاء مؤشر التحميل
-      navigator.pop();
-      setState(() => _isSubmitting = false);
-
-      if (!mounted) return;
+      Navigator.pop(context);
 
       if (orderId != null) {
         // إظهار رسالة النجاح
         showDialog(
           context: context,
-          barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            icon: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_circle_rounded,
-                  color: Colors.green, size: 48),
-            ),
+          builder: (context) => AlertDialog(
             title: const Text('تم إرسال الطلب بنجاح!'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildOrderInfoRow('رقم الطلب', orderId),
-                _buildOrderInfoRow('الخياط', widget.tailorName),
-                _buildOrderInfoRow(
-                    'الإجمالي', 'ر.ع ${_price.toStringAsFixed(3)}'),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline_rounded,
-                          color: Colors.blue, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'سيتم التواصل معك قريباً لتأكيد التفاصيل',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                Text('رقم الطلب: $orderId'),
+                const SizedBox(height: 8),
+                Text('الخياط: ${widget.tailorName}'),
+                const SizedBox(height: 8),
+                Text('الإجمالي: ر.ع ${_price.toStringAsFixed(3)}'),
+                const SizedBox(height: 8),
+                const Text('سيتم التواصل معك قريباً لتأكيد التفاصيل'),
               ],
             ),
             actions: [
-              FilledButton.icon(
+              TextButton(
                 onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  navigator.pop(); // العودة للشاشة السابقة
+                  Navigator.pop(context);
+                  Navigator.pop(context); // العودة للشاشة السابقة
                 },
-                icon: const Icon(Icons.done_rounded),
-                label: const Text('تم'),
+                child: const Text('موافق'),
               ),
             ],
           ),
         );
       } else {
-        scaffoldMessenger.showSnackBar(
+        // إظهار رسالة الخطأ
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('حدث خطأ في إرسال الطلب، يرجى المحاولة مرة أخرى'),
-            backgroundColor: Colors.red,
-          ),
+              content: Text('حدث خطأ في إرسال الطلب، يرجى المحاولة مرة أخرى')),
         );
       }
     } catch (e) {
       // إخفاء مؤشر التحميل
-      navigator.pop();
-      setState(() => _isSubmitting = false);
+      Navigator.pop(context);
 
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('حدث خطأ: $e'),
-          backgroundColor: Colors.red,
-        ),
+      // إظهار رسالة الخطأ
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ: $e')),
       );
     }
-  }
-
-  Widget _buildOrderInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
   }
 
   // ==== التسعير ====
@@ -363,19 +283,21 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     }
   }
 
-  /// الرجوع خطوة واحدة: داخل التصميم أو للشاشة السابقة
-  void _back() {
-    if (!mounted) return;
+  void _back() async {
+    // إخفاء لوحة المفاتيح
     FocusScope.of(context).unfocus();
 
     if (_step > 0) {
-      // الرجوع خطوة واحدة داخل التصميم
-      final newStep = _step - 1;
-      setState(() => _step = newStep);
-      _pager.jumpToPage(newStep);
+      // العودة للخطوة السابقة
+      setState(() => _step--);
+      await _pager.animateToPage(
+        _step,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOutCubic,
+      );
       HapticFeedback.lightImpact();
     } else {
-      // في الخطوة الأولى: الرجوع للشاشة السابقة (Navigator.pop)
+      // الخروج من الشاشة
       if (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
@@ -756,11 +678,11 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     final cs = Theme.of(context).colorScheme;
 
     return PopScope(
-      canPop: _step == 0, // السماح بالخروج فقط في الخطوة الأولى
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return; // تم الخروج بالفعل
-        // إذا لم يتم الخروج (أي _step > 0)، نرجع خطوة واحدة داخل التصميم
-        _back();
+      canPop: _step == 0,
+      onPopInvoked: (didPop) {
+        if (!didPop && _step > 0) {
+          _back();
+        }
       },
       child: Directionality(
         textDirection: TextDirection.rtl,
@@ -769,6 +691,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
           appBar: PremiumStoreAppBar(
             title: widget.tailorName,
             locationText: 'مسقط',
+            onBack: () => Navigator.pop(context),
           ),
           body: SafeArea(
             top: false,
@@ -810,7 +733,6 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                         formKey: _formKey,
                         unit: _unit,
                         onUnitChanged: _switchUnit,
-                        onNext: _next,
                         lengthCtrl: _lengthCtrl,
                         shoulderCtrl: _shoulderCtrl,
                         neckCtrl: _neckCtrl,
@@ -832,9 +754,6 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                         onEmbroideryChanged: (design) => setState(() {
                           _selectedEmbroidery = design;
                         }),
-                        onSubmitOrder: _submitRealOrder,
-                        totalPrice: _price,
-                        tailorName: widget.tailorName,
                       ),
                     ],
                   ),
@@ -2050,7 +1969,6 @@ class _MeasurementsAndColorStep extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final MeasurementUnit unit;
   final ValueChanged<MeasurementUnit> onUnitChanged;
-  final VoidCallback? onNext;
 
   // المقاسات الثمانية فقط
   final TextEditingController lengthCtrl,
@@ -2067,7 +1985,6 @@ class _MeasurementsAndColorStep extends StatefulWidget {
     required this.formKey,
     required this.unit,
     required this.onUnitChanged,
-    this.onNext,
     required this.lengthCtrl,
     required this.shoulderCtrl,
     required this.neckCtrl,
@@ -2114,7 +2031,7 @@ class _MeasurementsAndColorStepState extends State<_MeasurementsAndColorStep>
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 840),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
             child: Form(
               key: widget.formKey,
               child: Column(
@@ -2153,113 +2070,39 @@ class _MeasurementsAndColorStepState extends State<_MeasurementsAndColorStep>
                       );
                     },
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 20),
 
-                  // التبديل بين الوحدات — تصميم احترافي هادئ
-                  Builder(
-                    builder: (context) {
-                      final cs = Theme.of(context).colorScheme;
-                      final tt = Theme.of(context).textTheme;
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: cs.surfaceContainerLowest.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: cs.outlineVariant.withOpacity(0.4),
-                            width: 1,
+                  // التبديل بين الوحدات
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SegmentedButton<MeasurementUnit>(
+                        segments: const [
+                          ButtonSegment(
+                            value: MeasurementUnit.cm,
+                            label: Text('سنتيمتر (cm)'),
+                            icon: Icon(Icons.straighten_rounded, size: 18),
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: cs.shadow.withOpacity(0.03),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: SegmentedButton<MeasurementUnit>(
-                          segments: [
-                            ButtonSegment<MeasurementUnit>(
-                              value: MeasurementUnit.cm,
-                              label: Text(
-                                'سنتيمتر (cm)',
-                                style: tt.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              icon: Icon(
-                                Icons.straighten_rounded,
-                                size: 18,
-                                color: widget.unit == MeasurementUnit.cm
-                                    ? cs.onPrimary
-                                    : cs.onSurfaceVariant,
-                              ),
-                            ),
-                            ButtonSegment<MeasurementUnit>(
-                              value: MeasurementUnit.inch,
-                              label: Text(
-                                'إنش (in)',
-                                style: tt.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              icon: Icon(
-                                Icons.straighten_rounded,
-                                size: 18,
-                                color: widget.unit == MeasurementUnit.inch
-                                    ? cs.onPrimary
-                                    : cs.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                          selected: {widget.unit},
-                          onSelectionChanged:
-                              (Set<MeasurementUnit> newSelection) {
-                            widget.onUnitChanged(newSelection.first);
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.resolveWith(
-                              (states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return cs.primary.withOpacity(0.92);
-                                }
-                                return Colors.transparent;
-                              },
-                            ),
-                            foregroundColor: WidgetStateProperty.resolveWith(
-                              (states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return cs.onPrimary;
-                                }
-                                return cs.onSurfaceVariant;
-                              },
-                            ),
-                            padding: WidgetStateProperty.all(
-                              const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 14),
-                            ),
-                            shape: WidgetStateProperty.all(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            elevation: WidgetStateProperty.all(0),
-                            shadowColor: WidgetStateProperty.all(
-                              Colors.transparent,
-                            ),
-                            side: WidgetStateProperty.all(BorderSide.none),
+                          ButtonSegment(
+                            value: MeasurementUnit.inch,
+                            label: Text('إنش (in)'),
+                            icon: Icon(Icons.straighten_rounded, size: 18),
                           ),
-                        ),
-                      );
-                    },
+                        ],
+                        selected: {widget.unit},
+                        onSelectionChanged:
+                            (Set<MeasurementUnit> newSelection) {
+                          widget.onUnitChanged(newSelection.first);
+                        },
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 20),
 
                   // الحقول
                   ...rows.map((r) {
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 14),
                       child: _PrettyLineField(
                         label: r.label,
                         controller: r.ctrl,
@@ -2273,21 +2116,26 @@ class _MeasurementsAndColorStepState extends State<_MeasurementsAndColorStep>
                     );
                   }),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // ===== زر التالي =====
-                  if (widget.onNext != null)
-                    FilledButton.icon(
-                      onPressed: widget.onNext,
-                      icon: const Icon(Icons.arrow_forward_rounded),
-                      label: const Text('التالي - اختيار التطريز'),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
+                  // زر حفظ المقاسات الحالية
+                  _SaveMeasurementsButton(
+                    measurements: {
+                      'الطول': double.tryParse(widget.lengthCtrl.text) ?? 0,
+                      'الكتف': double.tryParse(widget.shoulderCtrl.text) ?? 0,
+                      'الرقبة': double.tryParse(widget.neckCtrl.text) ?? 0,
+                      'طول الذراع':
+                          double.tryParse(widget.armLengthCtrl.text) ?? 0,
+                      'عرض المعصم':
+                          double.tryParse(widget.wristWidthCtrl.text) ?? 0,
+                      'عرض الصدر مع الجانبيين':
+                          double.tryParse(widget.chestWidthCtrl.text) ?? 0,
+                      'الوسع السفلي':
+                          double.tryParse(widget.bottomWidthCtrl.text) ?? 0,
+                      'طول النقشة':
+                          double.tryParse(widget.patternLengthCtrl.text) ?? 0,
+                    },
+                  ),
                 ],
               ),
             ),
@@ -2536,7 +2384,7 @@ class _RowSpec {
 
 /// صف قياس بكارت أنيق: عنوان يمين + مجموعة تحكم يسار
 // معلومات الصور التوضيحية للمقاسات (صورة الدشداشة)
-const String _measurementGuideImage = 'assets/thobe/simple.jpg';
+const String _measurementGuideImage = 'assets/thobe/simple.jfif';
 const Map<String, Map<String, String>> _measurementGuides = {
   'الطول': {
     'image': _measurementGuideImage,
@@ -2631,132 +2479,190 @@ class _PrettyLineFieldState extends State<_PrettyLineField> {
         .clamp(widget.min, widget.max));
   }
 
+  // Measurement row layout: breathable, premium, uniform height
+  static const double _rowPaddingVPhone = 16;
+  static const double _rowPaddingVTablet = 18;
+  static const double _rowPaddingHPhone = 16;
+  static const double _rowPaddingHTablet = 20;
+  static const double _controlGapPhone = 12;
+  static const double _controlGapTablet = 16;
+  static const double _btnSize = 48;
+  static const double _btnIconSize = 22;
+  static const double _controlMinWidth = 0;
+  static const double _controlMaxWidth = 320;
+  static const double _tightLayoutThreshold = 200;
+  static const double _btnSizeTight = 40;
+  static const double _gapTight = 8;
+  static const double _rowRadius = 18;
+  static const double _controlRadius = 18;
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth >= 600;
+    final padH = isTablet ? _rowPaddingHTablet : _rowPaddingHPhone;
+    final padV = isTablet ? _rowPaddingVTablet : _rowPaddingVPhone;
+    final gap = isTablet ? _controlGapTablet : _controlGapPhone;
 
-    return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      constraints: BoxConstraints(minHeight: isTablet ? 76 : 72),
       decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.35)),
+        color: cs.surfaceContainerLowest.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(isTablet ? 20 : _rowRadius),
+        border: Border.all(
+          color: cs.outlineVariant.withOpacity(0.6),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: cs.shadow.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
+      padding: EdgeInsets.symmetric(horizontal: padH, vertical: padV),
+      alignment: Alignment.center,
       child: Row(
         children: [
-          // ===== صورة الدليل =====
-          if (_measurementGuides.containsKey(widget.label))
-            GestureDetector(
-              onTap: () {
-                final guide = _measurementGuides[widget.label]!;
-                showDialog(
-                  context: context,
-                  builder: (_) => _AnimatedMeasurementGuide(
-                    measurementName: widget.label,
-                    imagePath: guide['image']!,
-                    description: guide['description']!,
-                  ),
-                );
-              },
-              child: Container(
-                width: 36,
-                height: 36,
-                margin: const EdgeInsetsDirectional.only(end: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: cs.outlineVariant.withOpacity(0.3)),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: Image.asset(
-                    _measurementGuideImage,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Icon(Icons.straighten, size: 18, color: cs.primary),
-                  ),
-                ),
-              ),
-            ),
-
-          // ===== اسم المقاس =====
           Expanded(
-            child: Text(
-              widget.label,
-              style: tt.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: cs.onSurface,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-
-          // ===== عناصر التحكم =====
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Container(
-              height: 40,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: cs.outlineVariant.withOpacity(0.4)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // زر −
-                  _MiniBtn(icon: Icons.remove, onTap: _dec),
-                  // القيمة
-                  SizedBox(
-                    width: 50,
-                    child: TextFormField(
-                      controller: widget.controller,
-                      textAlign: TextAlign.center,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      style: tt.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface,
-                      ),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        hintText: '0',
-                        contentPadding: EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      onEditingComplete: () =>
-                          _set(_parse(widget.controller.text)),
-                      validator: (v) {
-                        if ((v ?? '').trim().isEmpty) return '';
-                        final val = _parse(v ?? '');
-                        if (val < widget.min || val > widget.max) return '';
-                        return null;
-                      },
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: tt.bodyMedium?.copyWith(
+                      color: cs.onSurfaceVariant.withOpacity(0.95),
+                      fontWeight: FontWeight.w500,
+                      fontSize: isTablet ? 15 : 14,
                     ),
                   ),
-                  // زر +
-                  _MiniBtn(icon: Icons.add, onTap: _inc),
-                ],
-              ),
+                ),
+                if (_measurementGuides.containsKey(widget.label))
+                  IconButton(
+                    onPressed: () {
+                      final guide = _measurementGuides[widget.label]!;
+                      showDialog(
+                        context: context,
+                        builder: (context) => _AnimatedMeasurementGuide(
+                          measurementName: widget.label,
+                          imagePath: guide['image']!,
+                          description: guide['description']!,
+                        ),
+                      );
+                    },
+                    icon: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        _measurementGuideImage,
+                        width: 28,
+                        height: 28,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Icon(
+                          Icons.help_outline_rounded,
+                          size: 20,
+                          color: cs.primary,
+                        ),
+                      ),
+                    ),
+                    tooltip: 'عرض الصورة التوضيحية',
+                  ),
+              ],
             ),
           ),
-
-          const SizedBox(width: 8),
-
-          // ===== الوحدة =====
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: cs.primaryContainer.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              widget.unitLabel,
-              style: tt.labelSmall?.copyWith(
-                color: cs.primary,
-                fontWeight: FontWeight.w600,
+          SizedBox(width: gap),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Flexible(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                    minWidth: _controlMinWidth, maxWidth: _controlMaxWidth),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final w = constraints.maxWidth;
+                    final tight = w < _tightLayoutThreshold;
+                    final btnSize = tight ? _btnSizeTight : _btnSize;
+                    final innerGap = tight ? _gapTight : gap;
+                    final innerPadH = tight ? _gapTight : gap * 0.75;
+                    return Container(
+                      padding: EdgeInsets.symmetric(
+                          horizontal: innerPadH, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: cs.surface,
+                        borderRadius: BorderRadius.circular(_controlRadius),
+                        border: Border.all(
+                            color: cs.outlineVariant.withOpacity(0.5),
+                            width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          _pillBtn(context, Icons.remove_rounded, _dec,
+                              size: btnSize),
+                          SizedBox(width: innerGap),
+                          Expanded(
+                            child: TextFormField(
+                              controller: widget.controller,
+                              textAlign: TextAlign.center,
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              style: tt.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                height: 1.25,
+                                letterSpacing: 0.15,
+                                fontSize: isTablet ? 17 : 16,
+                              ),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                border: InputBorder.none,
+                                hintText: '—',
+                                hintStyle: tt.titleMedium?.copyWith(
+                                  color: cs.onSurface.withOpacity(0.3),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 10),
+                              ),
+                              onEditingComplete: () =>
+                                  _set(_parse(widget.controller.text)),
+                              validator: (v) {
+                                final val = _parse(v ?? '');
+                                if ((v ?? '').trim().isEmpty) return 'مطلوب';
+                                if (val < widget.min || val > widget.max) {
+                                  fmt(x) => x.toStringAsFixed(widget.decimals);
+                                  return 'القيمة بين ${fmt(widget.min)} و ${fmt(widget.max)}';
+                                }
+                                return null;
+                              },
+                            ),
+                          ),
+                          SizedBox(width: innerGap),
+                          _pillBtn(context, Icons.add_rounded, _inc,
+                              size: btnSize),
+                          SizedBox(width: innerGap),
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                                horizontal: tight ? 6 : 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: cs.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              widget.unitLabel,
+                              style: tt.labelMedium?.copyWith(
+                                color: cs.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -2764,43 +2670,42 @@ class _PrettyLineFieldState extends State<_PrettyLineField> {
       ),
     );
   }
-}
 
-class _MiniBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _MiniBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _pillBtn(BuildContext context, IconData icon, VoidCallback onTap,
+      {double size = _btnSize}) {
     final cs = Theme.of(context).colorScheme;
+    final iconSize = size * (_btnIconSize / _btnSize);
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
+        splashColor: cs.primary.withOpacity(0.08),
+        highlightColor: cs.primary.withOpacity(0.05),
         child: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: cs.onSurfaceVariant),
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Center(
+            child: Icon(icon, size: iconSize, color: cs.onSurfaceVariant),
+          ),
         ),
       ),
     );
   }
 }
 
-/* ===================== خطوة التطريز (تصميم احترافي) ===================== */
-class _EmbroideryStep extends StatefulWidget {
+/* ===================== خطوة التطريز ===================== */
+class _EmbroideryStep extends StatelessWidget {
   final Color color;
   final int lines;
   final void Function(Color color, int lines) onChanged;
   final String tailorId;
   final EmbroideryDesign? selectedEmbroidery;
   final ValueChanged<EmbroideryDesign?> onEmbroideryChanged;
-  final VoidCallback? onSubmitOrder;
-  final double totalPrice;
-  final String tailorName;
 
   const _EmbroideryStep({
     required this.color,
@@ -2809,356 +2714,187 @@ class _EmbroideryStep extends StatefulWidget {
     required this.tailorId,
     required this.selectedEmbroidery,
     required this.onEmbroideryChanged,
-    this.onSubmitOrder,
-    this.totalPrice = 0.0,
-    this.tailorName = '',
   });
-
-  @override
-  State<_EmbroideryStep> createState() => _EmbroideryStepState();
-}
-
-class _EmbroideryStepState extends State<_EmbroideryStep> {
-  List<EmbroideryDesign> _designs = [];
-  List<ThreadColor> _threadColors = [];
-  bool _loadingDesigns = true;
-  bool _loadingColors = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    final service = EmbroideryService();
-    try {
-      final designs = await service.getEmbroideryDesigns(widget.tailorId);
-      final colors = await service.getThreadColors(widget.tailorId);
-      if (mounted) {
-        setState(() {
-          _designs = designs;
-          _threadColors = colors;
-          _loadingDesigns = false;
-          _loadingColors = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading embroidery data: $e');
-      if (mounted) {
-        setState(() {
-          _loadingDesigns = false;
-          _loadingColors = false;
-        });
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
+    final options = [
+      const Color(0xFF3F51B5),
+      const Color(0xFF009688),
+      const Color(0xFFFF5722),
+      const Color(0xFF795548),
+      const Color(0xFF607D8B),
+      const Color(0xFF9C27B0),
+      const Color(0xFF1B5E20),
+      const Color(0xFFB71C1C),
+    ];
+
     return SingleChildScrollView(
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 840),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ===== قسم تصميم التطريز (قائمة منسدلة) =====
-                _buildSectionCard(
-                  context,
-                  icon: Icons.auto_awesome_rounded,
-                  title: 'تصميم التطريز',
-                  subtitle: 'اختر نمط التطريز المفضل',
-                  child: _loadingDesigns
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: CircularProgressIndicator(),
+                // ========== قسم تصاميم التطريز المتاحة ==========
+                _EmbroideryDesignsSection(
+                  tailorId: tailorId,
+                  selectedEmbroidery: selectedEmbroidery,
+                  onEmbroiderySelected: onEmbroideryChanged,
+                ),
+                const SizedBox(height: 16),
+
+                // حاوية بسيطة بدون حواف رمادية لقائمة ألوان التطريز
+                Container(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text('لون خيط التطريز',
+                                style: tt.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w800)),
                           ),
-                        )
-                      : _designs.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                'لا توجد تصاميم متاحة',
-                                style: tt.bodyMedium
-                                    ?.copyWith(color: cs.onSurfaceVariant),
-                                textAlign: TextAlign.center,
+                          if (options.length > 12)
+                            TextButton.icon(
+                              onPressed: () {
+                                _showAllColors(context, options, color,
+                                    (c) => onChanged(c, lines));
+                              },
+                              icon: const Icon(Icons.palette_rounded, size: 16),
+                              label: Text('${options.length} لون'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: cs.primary,
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 8),
                               ),
-                            )
-                          : Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    // القائمة المنسدلة
-                                    Expanded(
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: cs.surfaceContainerLowest,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                              color: cs.outlineVariant
-                                                  .withOpacity(0.5)),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child:
-                                              DropdownButton<EmbroideryDesign>(
-                                            value: widget.selectedEmbroidery,
-                                            hint: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 16),
-                                              child: Text('اختر تصميم التطريز',
-                                                  style: tt.bodyMedium?.copyWith(
-                                                      color:
-                                                          cs.onSurfaceVariant)),
-                                            ),
-                                            isExpanded: true,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 4),
-                                            icon: Icon(
-                                                Icons
-                                                    .keyboard_arrow_down_rounded,
-                                                color: cs.primary),
-                                            items: _designs.map((design) {
-                                              return DropdownMenuItem<
-                                                  EmbroideryDesign>(
-                                                value: design,
-                                                child: Row(
-                                                  children: [
-                                                    ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                      child: Image.network(
-                                                        design.imageUrl,
-                                                        width: 48,
-                                                        height: 48,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder:
-                                                            (_, __, ___) =>
-                                                                Container(
-                                                          width: 48,
-                                                          height: 48,
-                                                          color: cs
-                                                              .surfaceContainerHighest,
-                                                          child: Icon(
-                                                              Icons
-                                                                  .design_services,
-                                                              color: cs
-                                                                  .onSurfaceVariant),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Text(
-                                                            design.name,
-                                                            style: tt.bodyMedium
-                                                                ?.copyWith(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600),
-                                                          ),
-                                                          if (design.price > 0)
-                                                            Text(
-                                                              '+${design.price.toStringAsFixed(3)} ر.ع',
-                                                              style: tt
-                                                                  .bodySmall
-                                                                  ?.copyWith(
-                                                                      color: cs
-                                                                          .primary),
-                                                            ),
-                                                        ],
-                                                      ),
-                                                    ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: options.length > 12 ? 110 : null,
+                        child: options.length > 12
+                            ? ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: (options.length / 6).ceil(),
+                                itemBuilder: (context, pageIndex) {
+                                  final startIndex = pageIndex * 6;
+                                  final endIndex =
+                                      (startIndex + 6).clamp(0, options.length);
+                                  final pageColors =
+                                      options.sublist(startIndex, endIndex);
+
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 16),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Wrap(
+                                          spacing: 12,
+                                          runSpacing: 12,
+                                          direction: Axis.vertical,
+                                          children: pageColors.map((c) {
+                                            final sel = c.value == color.value;
+                                            return GestureDetector(
+                                              onTap: () => onChanged(c, lines),
+                                              child: Container(
+                                                width: 44,
+                                                height: 44,
+                                                decoration: BoxDecoration(
+                                                  shape: BoxShape.circle,
+                                                  color: c,
+                                                  border: Border.all(
+                                                      color: sel
+                                                          ? cs.primary
+                                                          : Colors.white,
+                                                      width: sel ? 3 : 2),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black
+                                                          .withOpacity(.08),
+                                                      blurRadius: 10,
+                                                      offset:
+                                                          const Offset(0, 4),
+                                                    )
                                                   ],
                                                 ),
-                                              );
-                                            }).toList(),
-                                            onChanged:
-                                                widget.onEmbroideryChanged,
-                                          ),
+                                                child: sel
+                                                    ? const Icon(Icons.check,
+                                                        color: Colors.white,
+                                                        size: 20)
+                                                    : null,
+                                              ),
+                                            );
+                                          }).toList(),
                                         ),
-                                      ),
+                                      ],
                                     ),
-
-                                    // زر المعاينة
-                                    const SizedBox(width: 12),
-                                    Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: widget.selectedEmbroidery != null
-                                            ? () => _showEmbroideryPreview(
-                                                context,
-                                                widget.selectedEmbroidery!)
-                                            : null,
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Container(
-                                          width: 56,
-                                          height: 56,
-                                          decoration: BoxDecoration(
-                                            color: widget.selectedEmbroidery !=
-                                                    null
-                                                ? cs.primaryContainer
-                                                : cs.surfaceContainerHighest,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            border: Border.all(
-                                              color: widget
-                                                          .selectedEmbroidery !=
-                                                      null
-                                                  ? cs.primary.withOpacity(0.3)
-                                                  : cs.outlineVariant
-                                                      .withOpacity(0.5),
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            Icons.visibility_rounded,
-                                            color: widget.selectedEmbroidery !=
-                                                    null
-                                                ? cs.onPrimaryContainer
-                                                : cs.onSurfaceVariant
-                                                    .withOpacity(0.5),
-                                            size: 24,
-                                          ),
-                                        ),
+                                  );
+                                },
+                              )
+                            : Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: options.map((c) {
+                                  final sel = c.value == color.value;
+                                  return GestureDetector(
+                                    onTap: () => onChanged(c, lines),
+                                    child: Container(
+                                      width: 44,
+                                      height: 44,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: c,
+                                        border: Border.all(
+                                            color:
+                                                sel ? cs.primary : Colors.white,
+                                            width: sel ? 3 : 2),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color:
+                                                Colors.black.withOpacity(.08),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          )
+                                        ],
                                       ),
-                                    ),
-                                  ],
-                                ),
-
-                                // نص تلميحي
-                                if (widget.selectedEmbroidery == null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Text(
-                                      'اختر تصميماً لمعاينته',
-                                      style: tt.bodySmall?.copyWith(
-                                        color: cs.onSurfaceVariant
-                                            .withOpacity(0.7),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ===== قسم لون خيط التطريز (من Firebase) =====
-                _buildSectionCard(
-                  context,
-                  icon: Icons.palette_rounded,
-                  title: 'لون خيط التطريز',
-                  subtitle: 'اختر اللون المناسب',
-                  child: _loadingColors
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
-                      : Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: _threadColors.map((threadColor) {
-                            final isSelected =
-                                threadColor.color.value == widget.color.value;
-                            return GestureDetector(
-                              onTap: () => widget.onChanged(
-                                  threadColor.color, widget.lines),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: threadColor.color,
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? cs.primary
-                                            : cs.outlineVariant,
-                                        width: isSelected ? 3 : 1.5,
-                                      ),
-                                      boxShadow: isSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: threadColor.color
-                                                    .withOpacity(0.4),
-                                                blurRadius: 12,
-                                                offset: const Offset(0, 4),
-                                              )
-                                            ]
+                                      child: sel
+                                          ? const Icon(Icons.check,
+                                              color: Colors.white)
                                           : null,
                                     ),
-                                    child: isSelected
-                                        ? Icon(
-                                            Icons.check_rounded,
-                                            color: threadColor.color
-                                                        .computeLuminance() >
-                                                    0.5
-                                                ? Colors.black87
-                                                : Colors.white,
-                                            size: 22,
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    threadColor.name,
-                                    style: tt.labelSmall?.copyWith(
-                                      color: isSelected
-                                          ? cs.primary
-                                          : cs.onSurfaceVariant,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
+                                  );
+                                }).toList(),
                               ),
-                            );
-                          }).toList(),
-                        ),
+                      ),
+                    ],
+                  ),
                 ),
-
-                const SizedBox(height: 20),
-
-                // ===== قسم عدد الخطوط =====
-                _buildSectionCard(
-                  context,
-                  icon: Icons.format_list_numbered_rounded,
-                  title: 'عدد الخطوط الزخرفية',
-                  subtitle: '+0.250 ر.ع لكل خط إضافي',
+                const SizedBox(height: 14),
+                _ElegantFrame(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                  useBlur: false,
                   child: Row(
                     children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                                'اختر ${widget.lines == 0 ? "بدون" : widget.lines} خط',
-                                style: tt.bodyMedium
-                                    ?.copyWith(color: cs.onSurfaceVariant)),
+                            Text('عدد الخطوط الزخرفية (+0.250 ر.ع لكل خط)',
+                                style: tt.titleSmall
+                                    ?.copyWith(fontWeight: FontWeight.w800)),
                             const SizedBox(height: 8),
                             Text('(حد أقصى 3)', style: tt.bodySmall),
                           ],
@@ -3166,214 +2902,24 @@ class _EmbroideryStepState extends State<_EmbroideryStep> {
                       ),
                       _circleBtn(context, icon: Icons.remove_rounded,
                           onTap: () {
-                        final v = (widget.lines - 1).clamp(0, 3);
-                        widget.onChanged(widget.color, v);
+                        final v = (lines - 1).clamp(0, 3);
+                        onChanged(color, v);
                         HapticFeedback.selectionClick();
                       }),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('${widget.lines}',
+                        child: Text('$lines',
                             style: tt.titleLarge
                                 ?.copyWith(fontWeight: FontWeight.w900)),
                       ),
                       _circleBtn(context, icon: Icons.add_rounded, onTap: () {
-                        final v = (widget.lines + 1).clamp(0, 3);
-                        widget.onChanged(widget.color, v);
+                        final v = (lines + 1).clamp(0, 3);
+                        onChanged(color, v);
                         HapticFeedback.selectionClick();
                       }),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 28),
-
-                // ===== ملخص الطلب وزر الإرسال =====
-                if (widget.onSubmitOrder != null) ...[
-                  // ملخص السعر
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          cs.primaryContainer.withOpacity(0.4),
-                          cs.secondaryContainer.withOpacity(0.3),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: cs.primary.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.receipt_long_rounded,
-                                color: cs.primary, size: 24),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'ملخص الطلب',
-                                style: tt.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: cs.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: cs.surface,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('الخياط:',
-                                      style: tt.bodyMedium?.copyWith(
-                                          color: cs.onSurfaceVariant)),
-                                  Text(widget.tailorName,
-                                      style: tt.bodyMedium?.copyWith(
-                                          fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              if (widget.selectedEmbroidery != null) ...[
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('التطريز:',
-                                        style: tt.bodyMedium?.copyWith(
-                                            color: cs.onSurfaceVariant)),
-                                    Text(widget.selectedEmbroidery!.name,
-                                        style: tt.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600)),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              if (widget.lines > 0) ...[
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('الخطوط الزخرفية:',
-                                        style: tt.bodyMedium?.copyWith(
-                                            color: cs.onSurfaceVariant)),
-                                    Text('${widget.lines} خط',
-                                        style: tt.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600)),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              const Divider(),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('الإجمالي:',
-                                      style: tt.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: cs.primary,
-                                      )),
-                                  Text(
-                                    'ر.ع ${widget.totalPrice.toStringAsFixed(3)}',
-                                    style: tt.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: cs.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // زر إرسال الطلب
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        widget.onSubmitOrder!();
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              cs.primary,
-                              cs.primary.withBlue(
-                                  (cs.primary.blue + 30).clamp(0, 255)),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: cs.primary.withOpacity(0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.send_rounded,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'إرسال الطلب للخياط',
-                              style: tt.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  // نص تأكيدي
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.info_outline_rounded,
-                          size: 16, color: cs.onSurfaceVariant),
-                      const SizedBox(width: 6),
-                      Text(
-                        'سيتم التواصل معك لتأكيد الطلب',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),
@@ -3382,299 +2928,701 @@ class _EmbroideryStepState extends State<_EmbroideryStep> {
     );
   }
 
-  /// بناء حاوية قسم احترافية
-  Widget _buildSectionCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Widget child,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.4)),
-        boxShadow: [
-          BoxShadow(
-            color: cs.shadow.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: cs.onPrimaryContainer, size: 22),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: tt.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: tt.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          child,
-        ],
-      ),
-    );
-  }
-
   Widget _circleBtn(BuildContext context,
       {required IconData icon, required VoidCallback onTap}) {
     final cs = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        splashColor: cs.primary.withOpacity(0.1),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: cs.primaryContainer,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: cs.onPrimaryContainer, size: 22),
+    return InkResponse(
+      onTap: onTap,
+      radius: 24,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: cs.primaryContainer,
+          shape: BoxShape.circle,
+          border: Border.all(color: cs.primaryContainer),
         ),
+        child: Icon(icon, color: cs.onPrimaryContainer),
       ),
     );
   }
 
-  /// عرض معاينة التطريز المكبرة
-  void _showEmbroideryPreview(BuildContext context, EmbroideryDesign design) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    showDialog(
+  // عرض جميع الألوان في Bottom Sheet
+  static void _showAllColors(
+    BuildContext context,
+    List<Color> colors,
+    Color selectedColor,
+    ValueChanged<Color> onColorSelected,
+  ) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        final cs = Theme.of(context).colorScheme;
+        final tt = Theme.of(context).textTheme;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          height: MediaQuery.of(context).size.height * 0.7,
+          child: Column(
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.onSurfaceVariant.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // العنوان
+              Row(
+                children: [
+                  Icon(Icons.palette_rounded, color: cs.primary),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'جميع ألوان خيط التطريز (${colors.length})',
+                      style: tt.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Grid الألوان
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 6,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: colors.length,
+                  itemBuilder: (context, index) {
+                    final c = colors[index];
+                    final sel = c.value == selectedColor.value;
+
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onColorSelected(c);
+                        Navigator.pop(context);
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: c,
+                          border: Border.all(
+                            color: sel ? cs.primary : Colors.white,
+                            width: sel ? 4 : 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                            if (sel)
+                              BoxShadow(
+                                color: cs.primary.withOpacity(0.4),
+                                blurRadius: 16,
+                                spreadRadius: 2,
+                              ),
+                          ],
+                        ),
+                        child: sel
+                            ? const Icon(
+                                Icons.check_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              )
+                            : null,
+                      ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+}
+
+/* ===================== قسم تصاميم التطريز المتاحة ===================== */
+class _EmbroideryDesignsSection extends StatelessWidget {
+  final String tailorId;
+  final EmbroideryDesign? selectedEmbroidery;
+  final ValueChanged<EmbroideryDesign?> onEmbroiderySelected;
+
+  const _EmbroideryDesignsSection({
+    required this.tailorId,
+    required this.selectedEmbroidery,
+    required this.onEmbroiderySelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final embroideryService = EmbroideryService();
+
+    return FutureBuilder<List<EmbroideryDesign>>(
+      future: embroideryService.getEmbroideryDesigns(tailorId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: cs.errorContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline_rounded, color: cs.error),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'حدث خطأ في تحميل تصاميم التطريز',
+                    style: TextStyle(color: cs.onErrorContainer),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final designs = snapshot.data ?? [];
+
+        if (designs.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline_rounded, color: cs.onSurfaceVariant),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'لا توجد تصاميم تطريز متاحة حالياً',
+                    style: TextStyle(color: cs.onSurfaceVariant),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cs.primaryContainer.withOpacity(0.15),
+                cs.secondaryContainer.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cs.primary.withOpacity(0.25)),
+          ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // العنوان وزر الإغلاق
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer.withOpacity(0.3),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: cs.primary,
-                        borderRadius: BorderRadius.circular(10),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [cs.primary, cs.secondary],
                       ),
-                      child: const Icon(
-                        Icons.auto_awesome_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'معاينة التطريز',
-                            style: tt.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: cs.primary,
-                            ),
-                          ),
-                          Text(
-                            design.name,
-                            style: tt.bodySmall?.copyWith(
-                              color: cs.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon:
-                          Icon(Icons.close_rounded, color: cs.onSurfaceVariant),
-                      style: IconButton.styleFrom(
-                        backgroundColor: cs.surfaceContainerHighest,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // الصورة المكبرة
-              Flexible(
-                child: Container(
-                  margin: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: cs.outlineVariant.withOpacity(0.5),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cs.shadow.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: InteractiveViewer(
-                      minScale: 0.5,
-                      maxScale: 4.0,
-                      child: Image.network(
-                        design.imageUrl,
-                        fit: BoxFit.contain,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 300,
-                            color: cs.surfaceContainerHighest,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes !=
-                                        null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 300,
-                          color: cs.errorContainer,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.broken_image_rounded,
-                                  size: 64, color: cs.error),
-                              const SizedBox(height: 12),
-                              Text(
-                                'تعذر تحميل الصورة',
-                                style: tt.bodyMedium?.copyWith(
-                                  color: cs.onErrorContainer,
-                                ),
-                              ),
-                            ],
-                          ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: cs.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: Colors.white,
+                      size: 20,
                     ),
                   ),
-                ),
-              ),
-
-              // معلومات إضافية
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  children: [
-                    // السعر الإضافي
-                    if (design.price > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cs.primaryContainer.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_circle_outline_rounded,
-                                color: cs.primary, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${design.price.toStringAsFixed(3)} ر.ع إضافية',
-                              style: tt.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: cs.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    const SizedBox(height: 12),
-
-                    // تلميح التكبير
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.pinch_rounded,
-                            size: 16, color: cs.onSurfaceVariant),
-                        const SizedBox(width: 6),
                         Text(
-                          'استخدم إصبعين للتكبير والتصغير',
+                          'تصاميم التطريز المتاحة',
+                          style: tt.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: cs.primary,
+                          ),
+                        ),
+                        Text(
+                          'اختر تصميم التطريز المفضل لديك',
                           style: tt.bodySmall?.copyWith(
                             color: cs.onSurfaceVariant,
                           ),
                         ),
                       ],
                     ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // عرض التصاميم - PageView مع مؤشرات
+              SizedBox(
+                height: 280,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: PageView.builder(
+                        itemCount: (designs.length / 6).ceil(),
+                        onPageChanged: (page) {
+                          // يمكن إضافة state management هنا
+                        },
+                        itemBuilder: (context, pageIndex) {
+                          final startIndex = pageIndex * 6;
+                          final endIndex =
+                              (startIndex + 6).clamp(0, designs.length);
+                          final pageDesigns =
+                              designs.sublist(startIndex, endIndex);
+
+                          return GridView.builder(
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.85,
+                            ),
+                            itemCount: pageDesigns.length,
+                            itemBuilder: (context, indexInPage) {
+                              final index = startIndex + indexInPage;
+                              final design = designs[index];
+                              final isSelected =
+                                  selectedEmbroidery?.id == design.id;
+
+                              return GestureDetector(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  onEmbroiderySelected(
+                                      isSelected ? null : design);
+                                },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: cs.surface,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? cs.primary
+                                          : cs.outlineVariant,
+                                      width: isSelected ? 3 : 1,
+                                    ),
+                                    boxShadow: [
+                                      if (isSelected)
+                                        BoxShadow(
+                                          color: cs.primary.withOpacity(0.3),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                    ],
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      // الصورة
+                                      Expanded(
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              const BorderRadius.vertical(
+                                            top: Radius.circular(10),
+                                          ),
+                                          child: Stack(
+                                            fit: StackFit.expand,
+                                            children: [
+                                              CachedNetworkImage(
+                                                imageUrl: design.imageUrl,
+                                                fit: BoxFit.cover,
+                                                placeholder: (context, url) =>
+                                                    Container(
+                                                  color: cs
+                                                      .surfaceContainerHighest,
+                                                  child: const Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                            strokeWidth: 2),
+                                                  ),
+                                                ),
+                                                errorWidget:
+                                                    (context, url, error) =>
+                                                        Container(
+                                                  color: cs
+                                                      .surfaceContainerHighest,
+                                                  child: Icon(
+                                                    Icons
+                                                        .image_not_supported_rounded,
+                                                    color: cs.onSurfaceVariant,
+                                                  ),
+                                                ),
+                                              ),
+                                              if (isSelected)
+                                                Positioned(
+                                                  top: 6,
+                                                  right: 6,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.all(4),
+                                                    decoration: BoxDecoration(
+                                                      color: cs.primary,
+                                                      shape: BoxShape.circle,
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black
+                                                              .withOpacity(0.3),
+                                                          blurRadius: 8,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.check_rounded,
+                                                      color: Colors.white,
+                                                      size: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+
+                                      // المعلومات
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              design.name,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: tt.bodySmall?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: isSelected
+                                                    ? cs.primary
+                                                    : cs.onSurface,
+                                              ),
+                                            ),
+                                            if (design.price > 0) ...[
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                '+${design.price.toStringAsFixed(3)} ر.ع',
+                                                style: tt.bodySmall?.copyWith(
+                                                  color: cs.primary,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+
+                    // مؤشرات الصفحات
+                    if (designs.length > 6) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          (designs.length / 6).ceil(),
+                          (index) => Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: cs.primary.withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
+
+              // زر "عرض الكل" للتصاميم الكثيرة
+              if (designs.length > 12) ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    _showAllEmbroideryDesigns(context, designs,
+                        selectedEmbroidery, onEmbroiderySelected);
+                  },
+                  icon: const Icon(Icons.grid_view_rounded, size: 18),
+                  label: Text('عرض جميع التصاميم (${designs.length})'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: cs.primary,
+                    side: BorderSide(color: cs.primary),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                  ),
+                ),
+              ],
             ],
           ),
-        ),
+        );
+      },
+    );
+  }
+
+  // عرض جميع التصاميم في Bottom Sheet
+  static void _showAllEmbroideryDesigns(
+    BuildContext context,
+    List<EmbroideryDesign> designs,
+    EmbroideryDesign? selectedEmbroidery,
+    ValueChanged<EmbroideryDesign?> onSelected,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.9,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) {
+          final cs = Theme.of(context).colorScheme;
+          final tt = Theme.of(context).textTheme;
+
+          return Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.onSurfaceVariant.withOpacity(0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // العنوان
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, color: cs.primary),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'جميع تصاميم التطريز (${designs.length})',
+                        style: tt.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: cs.primary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close_rounded),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Grid التصاميم
+                Expanded(
+                  child: GridView.builder(
+                    controller: scrollController,
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 3,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.85,
+                    ),
+                    itemCount: designs.length,
+                    itemBuilder: (context, index) {
+                      final design = designs[index];
+                      final isSelected = selectedEmbroidery?.id == design.id;
+
+                      return GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onSelected(isSelected ? null : design);
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: cs.surface,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color:
+                                  isSelected ? cs.primary : cs.outlineVariant,
+                              width: isSelected ? 3 : 1,
+                            ),
+                            boxShadow: [
+                              if (isSelected)
+                                BoxShadow(
+                                  color: cs.primary.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(10),
+                                  ),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      CachedNetworkImage(
+                                        imageUrl: design.imageUrl,
+                                        fit: BoxFit.cover,
+                                        placeholder: (context, url) =>
+                                            Container(
+                                          color: cs.surfaceContainerHighest,
+                                          child: const Center(
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2),
+                                          ),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            Container(
+                                          color: cs.surfaceContainerHighest,
+                                          child: Icon(
+                                            Icons.image_not_supported_rounded,
+                                            color: cs.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Positioned(
+                                          top: 6,
+                                          right: 6,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(4),
+                                            decoration: BoxDecoration(
+                                              color: cs.primary,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.3),
+                                                  blurRadius: 8,
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Icon(
+                                              Icons.check_rounded,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      design.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: tt.bodySmall?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected
+                                            ? cs.primary
+                                            : cs.onSurface,
+                                      ),
+                                    ),
+                                    if (design.price > 0) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '+${design.price.toStringAsFixed(3)} ر.ع',
+                                        style: tt.bodySmall?.copyWith(
+                                          color: cs.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -3788,17 +3736,25 @@ class _SavedMeasurementsSection extends StatelessWidget {
         return Container(
           padding: EdgeInsets.all(isTablet ? 18 : 16),
           decoration: BoxDecoration(
-            color: cs.surfaceContainerLowest.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                cs.secondary.withOpacity(0.12),
+                cs.tertiary.withOpacity(0.08),
+                cs.primary.withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(isTablet ? 20 : 18),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.5),
-              width: 1,
+              color: cs.secondary.withOpacity(0.35),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
-                color: cs.shadow.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                color: cs.secondary.withOpacity(0.12),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
               ),
             ],
           ),
@@ -3807,19 +3763,21 @@ class _SavedMeasurementsSection extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(isTablet ? 12 : 10),
                 decoration: BoxDecoration(
-                  color: cs.primaryContainer,
+                  gradient: LinearGradient(
+                    colors: [cs.secondary, cs.tertiary],
+                  ),
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: cs.primary.withOpacity(0.12),
+                      color: cs.secondary.withOpacity(0.3),
                       blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Icon(
                   Icons.person_pin_circle_rounded,
-                  color: cs.onPrimaryContainer,
+                  color: Colors.white,
                   size: isTablet ? 26 : 22,
                 ),
               ),
@@ -3890,44 +3848,46 @@ class _SavedMeasurementsSection extends StatelessWidget {
                 ),
               ),
               SizedBox(width: isTablet ? 10 : 8),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => onLoadProfile(defaultProfile),
-                  borderRadius: BorderRadius.circular(14),
-                  splashColor: cs.primary.withOpacity(0.12),
-                  highlightColor: cs.primary.withOpacity(0.06),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 18 : 16,
-                      vertical: isTablet ? 12 : 10,
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [cs.primary, cs.secondary],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.primary.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
                     ),
-                    decoration: BoxDecoration(
-                      color: cs.primary,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: cs.primary.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.download_rounded,
-                            color: cs.onPrimary, size: isTablet ? 20 : 18),
-                        SizedBox(width: isTablet ? 8 : 6),
-                        Text(
-                          'تحميل',
-                          style: tt.labelLarge?.copyWith(
-                            color: cs.onPrimary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: isTablet ? 15 : 14,
+                  ],
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => onLoadProfile(defaultProfile),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 16 : 14,
+                        vertical: isTablet ? 12 : 10,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.download_rounded,
+                              color: Colors.white, size: isTablet ? 20 : 18),
+                          SizedBox(width: isTablet ? 8 : 6),
+                          Text(
+                            'تحميل',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: isTablet ? 15 : 14,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -3980,21 +3940,25 @@ class _SaveMeasurementsButton extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: validationError == null
-            ? cs.primaryContainer.withOpacity(0.4)
-            : Colors.orange.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          colors: validationError == null
+              ? [cs.primary.withOpacity(0.1), cs.secondary.withOpacity(0.05)]
+              : [
+                  Colors.orange.withOpacity(0.1),
+                  Colors.orange.withOpacity(0.05)
+                ],
+        ),
+        borderRadius: BorderRadius.circular(isTablet ? 16 : 14),
         border: Border.all(
-          color: validationError == null
-              ? cs.primary.withOpacity(0.4)
-              : Colors.orange.withOpacity(0.5),
-          width: 1,
+          color: validationError == null ? cs.primary : Colors.orange,
+          width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: cs.shadow.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: (validationError == null ? cs.primary : Colors.orange)
+                .withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -4002,11 +3966,7 @@ class _SaveMeasurementsButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => _showSaveDialog(context),
-          borderRadius: BorderRadius.circular(18),
-          splashColor: (validationError == null ? cs.primary : Colors.orange)
-              .withOpacity(0.1),
-          highlightColor: (validationError == null ? cs.primary : Colors.orange)
-              .withOpacity(0.06),
+          borderRadius: BorderRadius.circular(isTablet ? 16 : 14),
           child: Padding(
             padding: EdgeInsets.symmetric(
               vertical: isTablet ? 16 : 14,
@@ -4027,13 +3987,11 @@ class _SaveMeasurementsButton extends StatelessWidget {
                   validationError == null
                       ? 'حفظ مقاساتي للمستقبل'
                       : 'حفظ (مع تحذيرات)',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontSize: isTablet ? 17 : 15,
-                        fontWeight: FontWeight.w600,
-                        color: validationError == null
-                            ? cs.onPrimaryContainer
-                            : Colors.orange.shade800,
-                      ),
+                  style: TextStyle(
+                    fontSize: isTablet ? 17 : 15,
+                    fontWeight: FontWeight.bold,
+                    color: validationError == null ? cs.primary : Colors.orange,
+                  ),
                 ),
               ],
             ),

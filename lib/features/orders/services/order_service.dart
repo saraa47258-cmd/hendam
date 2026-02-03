@@ -77,6 +77,56 @@ class OrderService {
             snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
   }
 
+  /// جلب طلبات الهدايا للخياط
+  static Stream<List<OrderModel>> getTailorGiftOrders(String tailorId) {
+    return FirebaseService.firestore
+        .collection(_ordersCollection)
+        .where('tailorId', isEqualTo: tailorId)
+        .where('isGift', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+  }
+
+  /// جلب طلبات الهدايا للخياط حسب الحالة
+  static Stream<List<OrderModel>> getTailorGiftOrdersByStatus(
+      String tailorId, OrderStatus status) {
+    return FirebaseService.firestore
+        .collection(_ordersCollection)
+        .where('tailorId', isEqualTo: tailorId)
+        .where('isGift', isEqualTo: true)
+        .where('status', isEqualTo: status.toString().split('.').last)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+  }
+
+  /// جلب طلبات التفصيل العادية للخياط (غير الهدايا)
+  static Stream<List<OrderModel>> getTailorRegularOrders(String tailorId) {
+    return FirebaseService.firestore
+        .collection(_ordersCollection)
+        .where('tailorId', isEqualTo: tailorId)
+        .where('isGift', isEqualTo: false)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+  }
+
+  /// جلب طلبات الهدايا للعميل
+  static Stream<List<OrderModel>> getCustomerGiftOrders(String customerId) {
+    return FirebaseService.firestore
+        .collection(_ordersCollection)
+        .where('customerId', isEqualTo: customerId)
+        .where('isGift', isEqualTo: true)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+  }
+
   /// جلب طلب واحد بالتفصيل (لمرة واحدة)
   static Future<OrderModel?> getOrderById(String orderId) async {
     try {
@@ -354,7 +404,7 @@ class OrderService {
       final orderData = {
         // نوع الطلب
         'orderType': 'abaya',
-        
+
         // معلومات العميل
         'customerId': customerId,
         'customerName': customerName,
