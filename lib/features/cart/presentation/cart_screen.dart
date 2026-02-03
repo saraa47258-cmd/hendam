@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:hindam/core/state/cart_scope.dart';
 import 'package:hindam/core/error/error_handler.dart';
 import 'package:hindam/core/performance/performance_utils.dart';
-import 'package:hindam/core/widgets/performance_layouts.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -95,94 +94,252 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
 
   Widget _buildCartItem(
       dynamic item, CartState cartState, ColorScheme cs, TextTheme tt) {
+    // الحصول على تفاصيل التخصيص
+    final customization = item.customization;
+    final hasCustomization = customization?.hasCustomization ?? false;
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           children: [
-            // صورة المنتج
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: PerformanceUtils.buildOptimizedImage(
-                item.product?.image,
-                width: 60,
-                height: 60,
-                errorWidget: Container(
-                  width: 60,
-                  height: 60,
-                  color: cs.surfaceContainerHighest,
-                  child: Icon(Icons.image, color: cs.onSurfaceVariant),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-
-            // تفاصيل المنتج
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.title,
-                    style:
-                        tt.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${item.price.toStringAsFixed(2)} ر.ع',
-                    style: tt.bodyMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // أزرار الكمية - محسن باستخدام PerformanceRow لتجنب إعادة البناء
-            PerformanceRow(
-              mainAxisSize: MainAxisSize.min,
-              spacing: 8.0,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                IconButton(
-                  onPressed: () => cartState.inc(item),
-                  icon: const Icon(Icons.add),
-                  style: IconButton.styleFrom(
-                    backgroundColor: cs.primaryContainer,
-                    foregroundColor: cs.onPrimaryContainer,
+                // صورة المنتج مع مؤشر اللون
+                Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: PerformanceUtils.buildOptimizedImage(
+                        item.imageUrl ?? item.product?.image,
+                        width: 70,
+                        height: 70,
+                        errorWidget: Container(
+                          width: 70,
+                          height: 70,
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(Icons.image, color: cs.onSurfaceVariant),
+                        ),
+                      ),
+                    ),
+                    // مؤشر اللون المختار
+                    if (customization?.selectedColor != null)
+                      Positioned(
+                        bottom: 4,
+                        right: 4,
+                        child: Container(
+                          width: 18,
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: _parseColor(customization!.selectedColor!),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+
+                // تفاصيل المنتج
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: tt.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${item.price.toStringAsFixed(2)} ر.ع',
+                        style: tt.bodyMedium?.copyWith(
+                          color: cs.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      // عرض ملخص التخصيص
+                      if (hasCustomization) ...[
+                        const SizedBox(height: 8),
+                        _buildCustomizationSummary(customization, cs, tt),
+                      ],
+                    ],
                   ),
                 ),
-                Text(
-                  '${item.qty}',
-                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
+
+                // زر الحذف
                 IconButton(
-                  onPressed: () => cartState.dec(item),
-                  icon: const Icon(Icons.remove),
+                  onPressed: () => cartState.remove(item),
+                  icon: const Icon(Icons.close, size: 18),
                   style: IconButton.styleFrom(
-                    backgroundColor: cs.errorContainer,
-                    foregroundColor: cs.onErrorContainer,
+                    backgroundColor: cs.surfaceContainerHighest,
+                    foregroundColor: cs.onSurfaceVariant,
+                    padding: const EdgeInsets.all(6),
+                    minimumSize: const Size(28, 28),
                   ),
                 ),
               ],
             ),
-
-            // زر الحذف
-            IconButton(
-              onPressed: () => cartState.remove(item),
-              icon: const Icon(Icons.delete_outline),
-              style: IconButton.styleFrom(
-                backgroundColor: cs.errorContainer,
-                foregroundColor: cs.onErrorContainer,
-              ),
+            const SizedBox(height: 12),
+            // أزرار الكمية
+            Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: () => cartState.dec(item),
+                        icon: const Icon(Icons.remove, size: 18),
+                        style: IconButton.styleFrom(
+                          foregroundColor: cs.onSurfaceVariant,
+                          padding: const EdgeInsets.all(8),
+                          minimumSize: const Size(36, 36),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          '${item.qty}',
+                          style: tt.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => cartState.inc(item),
+                        icon: const Icon(Icons.add, size: 18),
+                        style: IconButton.styleFrom(
+                          foregroundColor: cs.primary,
+                          padding: const EdgeInsets.all(8),
+                          minimumSize: const Size(36, 36),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${(item.price * item.qty).toStringAsFixed(2)} ر.ع',
+                  style: tt.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: cs.primary,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// بناء ملخص التخصيص
+  Widget _buildCustomizationSummary(
+      dynamic customization, ColorScheme cs, TextTheme tt) {
+    final parts = <Widget>[];
+
+    // اللون
+    if (customization.selectedColor != null) {
+      parts.add(Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: _parseColor(customization.selectedColor),
+              shape: BoxShape.circle,
+              border: Border.all(color: cs.outline.withOpacity(0.3)),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'اللون',
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ],
+      ));
+    }
+
+    // المقاسات
+    if (customization.measurements != null) {
+      final m = customization.measurements as Map<String, double>;
+      final unit = customization.unit ?? 'in';
+      final measurementParts = <String>[];
+      if (m['length'] != null) measurementParts.add('${m['length']}$unit');
+      if (m['sleeve'] != null) measurementParts.add('${m['sleeve']}$unit');
+      if (m['width'] != null) measurementParts.add('${m['width']}$unit');
+
+      if (measurementParts.isNotEmpty) {
+        parts.add(Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.straighten, size: 12, color: cs.onSurfaceVariant),
+            const SizedBox(width: 4),
+            Text(
+              measurementParts.join(' × '),
+              style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+            ),
+          ],
+        ));
+      }
+    }
+
+    // الملاحظات
+    if (customization.notes != null && customization.notes.isNotEmpty) {
+      parts.add(Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.note, size: 12, color: cs.onSurfaceVariant),
+          const SizedBox(width: 4),
+          Text(
+            'ملاحظات',
+            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ],
+      ));
+    }
+
+    if (parts.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 4,
+      children: parts,
+    );
+  }
+
+  /// تحويل HEX string إلى Color
+  Color _parseColor(String hex) {
+    try {
+      final cleanHex = hex.replaceFirst('#', '');
+      return Color(int.parse('FF$cleanHex', radix: 16));
+    } catch (e) {
+      return Colors.grey;
+    }
   }
 
   Widget _buildCartSummary(CartState cartState, ColorScheme cs, TextTheme tt) {

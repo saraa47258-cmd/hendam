@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خارطة عملية الطلب - تطبيق هندام</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+
+        /* مراحل العملية */
+        .flow-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .flow-step {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border-right: 5px solid #667eea;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+
+        .flow-step:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -15px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .step-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 15px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .step-description {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        /* بيانات الطلب */
+        .data-section {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .data-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .data-item {
+            background: #f8f9fa;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-right: 3px solid #667eea;
+        }
+
+        .data-item strong {
+            color: #333;
+            display: inline-block;
+            min-width: 150px;
+        }
+
+        .data-item span {
+            color: #666;
+        }
+
+        /* Firebase Collections */
+        .firebase-section {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .firebase-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .collection-item {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* بيانات التاجر */
+        .trader-data {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .trader-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        /* أيقونات */
+        .icon {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 1.2em;
+        }
+
+        /* خط الاتصال */
+        .connection-line {
+            text-align: center;
+            margin: 10px 0;
+            color: #667eea;
+            font-size: 2em;
+        }
+
+        /* ملخص */
+        .summary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+
+        .summary-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .summary-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .summary-list li {
+            padding: 10px;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+        }
+
+        .summary-list li:before {
+            content: "✓ ";
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .step-title {
+                font-size: 1.2em;
+            }
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .flow-step {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .flow-step:nth-child(1) { animation-delay: 0.1s; }
+        .flow-step:nth-child(2) { animation-delay: 0.2s; }
+        .flow-step:nth-child(3) { animation-delay: 0.3s; }
+        .flow-step:nth-child(4) { animation-delay: 0.4s; }
+        .flow-step:nth-child(5) { animation-delay: 0.5s; }
+        .flow-step:nth-child(6) { animation-delay: 0.6s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗺️ خارطة عملية الطلب</h1>
+        <p class="subtitle">تطبيق هندام - دليل شامل لعملية الطلب من البداية للنهاية</p>
+
+        <div class="flow-container">
+            <!-- المرحلة 1 -->
+            <div class="flow-step">
+                <div class="step-number">1</div>
+                <div class="step-title">
+                    <span class="icon">🛒</span>
+                    إضافة المنتجات إلى السلة
+                </div>
+                <div class="step-description">
+                    المستخدم يتصفح المتاجر ويضيف المنتجات إلى السلة. كل منتج يحتوي على:
+                </div>
+                <div class="data-section">
+                    <div class="data-title">📦 بيانات المنتج في السلة:</div>
+                    <div class="data-item">
+                        <strong>productId:</strong> <span>معرف المنتج الفريد</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>serviceName:</strong> <span>اسم المنتج/الخدمة</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>imageUrl:</strong> <span>رابط صورة المنتج</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>traderId:</strong> <span>معرف التاجر (صاحب المتجر)</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>price:</strong> <span>سعر الوحدة</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>qty:</strong> <span>الكمية المطلوبة</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="connection-line">⬇️</div>
+
+            <!-- المرحلة 2 -->
+            <div class="flow-step">
+                <div class="step-number">2</div>
+                <div class="step-title">
+                    <span class="icon">✅</span>
+                    المستخدم يضغط "إتمام الطلب"
+                </div>
+                <div class="step-description">
+                    عند الضغط على زر "إتمام الطلب" في صفحة السلة، يتم:
+                </div>
+                <div class="data-section">
+                    <div class="data-title">🔍 التحقق:</div>
+                    <div class="data-item">
+                        <strong>1.</strong> <span>التحقق من تسجيل الدخول</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>2.</strong> <span>التحقق من وجود منتجات في السلة</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>3.</strong> <span>جلب العنوان الافتراضي للمستخدم</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="connection-line">⬇️</div>
+
+            <!-- المرحلة 3 -->
+            <div class="flow-step">
+                <div class="step-number">3</div>
+                <div class="step-title">
+                    <span class="icon">🆔</span>
+                    إنشاء معرف الطلب
+                </div>
+                <div class="step-description">
+                    يتم إنشاء معرف فريد للطلب باستخدام:
+                </div>
+                <div class="data-section">
+                    <div class="data-item">
+                        <strong>orderId:</strong> <span>ORD-{timestamp}</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>مثال:</strong> <span>ORD-1767704739790</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="connection-line">⬇️</div>
+
+            <!-- المرحلة 4 -->
+            <div class="flow-step">
+                <div class="step-number">4</div>
+                <div class="step-title">
+                    <span class="icon">📍</span>
+                    جلب العنوان الافتراضي
+                </div>
+                <div class="step-description">
+                    يتم جلب العنوان الافتراضي من Firebase وإعداده للشحن:
+                </div>
+                <div class="data-section">
+                    <div class="data-title">📋 بيانات العنوان:</div>
+                    <div class="data-item">
+                        <strong>label:</strong> <span>نوع العنوان (منزل، مكتب، إلخ)</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>recipientName:</strong> <span>اسم المستلم</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>phone:</strong> <span>رقم الهاتف</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>city:</strong> <span>المدينة</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>area:</strong> <span>المنطقة</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>street:</strong> <span>الشارع</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>building:</strong> <span>المبنى</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>additionalDirections:</strong> <span>تعليمات إضافية</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>fullAddress:</strong> <span>العنوان الكامل (مجمّع)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="connection-line">⬇️</div>
+
+            <!-- المرحلة 5 -->
+            <div class="flow-step">
+                <div class="step-number">5</div>
+                <div class="step-title">
+                    <span class="icon">💾</span>
+                    حفظ الطلب في Firebase
+                </div>
+                <div class="step-description">
+                    يتم حفظ الطلب في 3 أماكن في Firebase:
+                </div>
+                
+                <div class="firebase-section">
+                    <div class="firebase-title">🔥 Firebase Collections:</div>
+                    
+                    <div class="collection-item">
+                        <strong>1. orders/{orderId}</strong><br>
+                        الطلب الرئيسي (للمستخدم والتاجر)
+                    </div>
+                    
+                    <div class="collection-item">
+                        <strong>2. users/{userId}/orders/{orderId}</strong><br>
+                        نسخة المستخدم (للوصول السريع)
+                    </div>
+                    
+                    <div class="collection-item">
+                        <strong>3. traders/{traderId}/orders/{orderId}</strong><br>
+                        نسخة التاجر (لكل تاجر على حدة)
+                    </div>
+                </div>
+
+                <div class="data-section" style="margin-top: 20px;">
+                    <div class="data-title">📦 بيانات الطلب الرئيسية:</div>
+                    <div class="data-item">
+                        <strong>id:</strong> <span>ORD-{timestamp}</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>userId:</strong> <span>معرف المستخدم</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>status:</strong> <span>"قيد المعالجة"</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>createdAt:</strong> <span>Timestamp</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>totalOmr:</strong> <span>الإجمالي الكلي</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>items:</strong> <span>قائمة المنتجات</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>shippingAddress:</strong> <span>العنوان الكامل</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="connection-line">⬇️</div>
+
+            <!-- المرحلة 6 -->
+            <div class="flow-step">
+                <div class="step-number">6</div>
+                <div class="step-title">
+                    <span class="icon">👨‍💼</span>
+                    إرسال الطلب إلى التاجر
+                </div>
+                <div class="step-description">
+                    يتم تجميع المنتجات حسب التاجر وإرسال طلب منفصل لكل تاجر:
+                </div>
+                
+                <div class="trader-data">
+                    <div class="trader-title">📤 البيانات المرسلة إلى التاجر:</div>
+                    
+                    <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; margin-top: 15px;">
+                        <div class="data-item" style="background: rgba(255,255,255,0.3); color: white; border: none;">
+                            <strong>id:</strong> <span>ORD-{timestamp} (نفس معرف الطلب الرئيسي)</span>
+                        </div>
+                        <div class="data-item" style="background: rgba(255,255,255,0.3); color: white; border: none;">
+                            <strong>userId:</strong> <span>معرف المستخدم</span>
+                        </div>
+                        <div class="data-item" style="background: rgba(255,255,255,0.3); color: white; border: none;">
+                            <strong>traderId:</strong> <span>معرف التاجر</span>
+                        </div>
+                        <div class="data-item" style="background: rgba(255,255,255,0.3); color: white; border: none;">
+                            <strong>status:</strong> <span>"قيد المعالجة"</span>
+                        </div>
+                        <div class="data-item" style="background: rgba(255,255,255,0.3); color: white; border: none;">
+                            <strong>createdAt:</strong> <span>Timestamp</span>
+                        </div>
+                        <div class="data-item" style="background: rgba(255,255,255,0.3); color: white; border: none;">
+                            <strong>totalOmr:</strong> <span>إجمالي منتجات هذا التاجر فقط</span>
+                        </div>
+                        <div class="data-item" style="background: rgba(255,255,255,0.3); color: white; border: none;">
+                            <strong>items:</strong> <span>قائمة منتجات هذا التاجر فقط</span>
+                        </div>
+                        <div class="data-item" style="background: rgba(255,255,255,0.3); color: white; border: none;">
+                            <strong>shippingAddress:</strong> <span>العنوان الكامل للشحن</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-section" style="margin-top: 20px;">
+                    <div class="data-title">🔄 عملية التجميع:</div>
+                    <div class="data-item">
+                        <strong>1.</strong> <span>تجميع المنتجات حسب traderId</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>2.</strong> <span>حساب الإجمالي لكل تاجر</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>3.</strong> <span>إنشاء طلب منفصل لكل تاجر</span>
+                    </div>
+                    <div class="data-item">
+                        <strong>4.</strong> <span>حفظ في traders/{traderId}/orders/{orderId}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ملخص -->
+        <div class="summary">
+            <div class="summary-title">📊 ملخص العملية</div>
+            <ul class="summary-list">
+                <li>الطلب يتم حفظه في 3 أماكن: orders, users/{userId}/orders, traders/{traderId}/orders</li>
+                <li>كل تاجر يستلم طلب منفصل يحتوي على منتجاته فقط</li>
+                <li>العنوان الكامل يتم إرساله مع كل طلب للتاجر</li>
+                <li>حالة الطلب الافتراضية: "قيد المعالجة"</li>
+                <li>التاجر يمكنه تحديث حالة الطلب في orders/{orderId} وسيتم التحديث تلقائياً</li>
+                <li>المستخدم يمكنه تتبع الطلب في الوقت الفعلي (Real-time)</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+
+
+
+

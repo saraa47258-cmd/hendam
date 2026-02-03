@@ -25,7 +25,7 @@ class CartState extends ChangeNotifier {
   Future<void> loadData() async {
     try {
       await _initPrefs();
-      
+
       // تحميل السلة
       final cartData = _prefs!.getString('cart_items');
       if (cartData != null) {
@@ -53,7 +53,7 @@ class CartState extends ChangeNotifier {
           ErrorHandler.handleError(e, null, context: 'تحميل بيانات الطلبات');
         }
       }
-      
+
       notifyListeners();
     } catch (e) {
       ErrorHandler.handleError(e, null, context: 'تهيئة البيانات');
@@ -64,11 +64,11 @@ class CartState extends ChangeNotifier {
   Future<void> _saveData() async {
     try {
       await _initPrefs();
-      
+
       // حفظ السلة
       final cartJson = _items.map((item) => item.toJson()).toList();
       await _prefs!.setString('cart_items', json.encode(cartJson));
-      
+
       // حفظ الطلبات
       final ordersJson = _orders.map((order) => order.toJson()).toList();
       await _prefs!.setString('orders', json.encode(ordersJson));
@@ -95,59 +95,110 @@ class CartState extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// إضافة عباية للسلة
+  /// إضافة عباية للسلة مع تفاصيل التخصيص
   void addAbayaItem({
     required String id,
     required String title,
     required double price,
     String? imageUrl,
     String? subtitle,
+    String? selectedColor,
+    String? colorName,
+    Map<String, double>? measurements,
+    String? unit,
+    String? notes,
   }) {
-    // التحقق من وجود العباية في السلة بالفعل
-    // نبحث عن نفس العنوان والسعر (يمكن تحسينه لاحقاً باستخدام id فريد)
-    final idx = _items.indexWhere((i) => 
-      i.serviceName == title && 
-      i.price == price
-    );
-    
+    // إنشاء كائن التخصيص
+    CartCustomization? customization;
+    if (selectedColor != null || measurements != null || notes != null) {
+      customization = CartCustomization(
+        selectedColor: selectedColor,
+        colorName: colorName,
+        measurements: measurements,
+        unit: unit ?? 'in',
+        notes: notes,
+      );
+    }
+
+    // البحث عن نفس المنتج مع نفس التخصيص
+    final idx = _items.indexWhere((i) => i.matches(id, customization));
+
     if (idx >= 0) {
-      // إذا كانت موجودة، نزيد الكمية
+      // إذا كان موجوداً بنفس التخصيص، نزيد الكمية
       final cur = _items[idx];
       _items[idx] = cur.copyWith(qty: cur.qty + 1);
     } else {
-      // إضافة عباية جديدة
-      _items.add(CartItem(serviceName: title, price: price, qty: 1));
+      // إضافة عنصر جديد مع التخصيص
+      _items.add(CartItem(
+        productId: id,
+        serviceName: title,
+        imageUrl: imageUrl,
+        price: price,
+        qty: 1,
+        customization: customization,
+      ));
     }
     _saveData();
     notifyListeners();
   }
 
-  void inc(CartItem item) { 
-    item.qty += 1; 
-    _saveData();
-    notifyListeners(); 
+  /// إضافة عباية مع مقاسات كاملة (من شاشة المقاسات)
+  void addAbayaWithMeasurements({
+    required String id,
+    required String title,
+    required double price,
+    String? imageUrl,
+    String? selectedColor,
+    String? colorName,
+    required double length,
+    required double sleeve,
+    required double width,
+    String unit = 'in',
+    String? notes,
+  }) {
+    addAbayaItem(
+      id: id,
+      title: title,
+      price: price,
+      imageUrl: imageUrl,
+      selectedColor: selectedColor,
+      colorName: colorName,
+      measurements: {
+        'length': length,
+        'sleeve': sleeve,
+        'width': width,
+      },
+      unit: unit,
+      notes: notes,
+    );
   }
-  
-  void dec(CartItem item) { 
+
+  void inc(CartItem item) {
+    item.qty += 1;
+    _saveData();
+    notifyListeners();
+  }
+
+  void dec(CartItem item) {
     if (item.qty > 1) {
-      item.qty -= 1; 
+      item.qty -= 1;
     } else {
       _items.remove(item);
     }
     _saveData();
-    notifyListeners(); 
+    notifyListeners();
   }
-  
-  void remove(CartItem item) { 
-    _items.remove(item); 
+
+  void remove(CartItem item) {
+    _items.remove(item);
     _saveData();
-    notifyListeners(); 
+    notifyListeners();
   }
-  
-  void clear() { 
-    _items.clear(); 
+
+  void clear() {
+    _items.clear();
     _saveData();
-    notifyListeners(); 
+    notifyListeners();
   }
 
   void placeOrder() {

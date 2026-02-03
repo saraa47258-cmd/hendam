@@ -1,0 +1,122 @@
+{
+  "@@locale": "ar",
+
+  "appName": "هندام",
+
+  "home": "الرئيسية",
+  "orders": "الطلبات",
+  "cart": "السلة",
+  "profile": "الملف",
+
+  "goodMorning": "صباح الخير",
+  "goodAfternoon": "مساء الخير",
+  "goodEvening": "مساء النور",
+  "goodNight": "ليلة سعيدة",
+  "dearCustomer": "عميلنا العزيز",
+
+  "hindam": "هندام",
+  "menTailoringShopsApp": "تطبيق محلات الخياطة الرجالية",
+
+  "login": "تسجيل الدخول",
+  "createNewAccount": "إنشاء حساب جديد",
+  "continueAsGuest": "متابعة كزائر",
+  "browseAsGuest": "تصفح كزائر",
+
+  "favorites": "المفضلة",
+  "myFavorites": "مفضلاتي",
+  "favoriteProducts": "منتجات مفضلة",
+  "viewFavoriteProducts": "عرض المنتجات المفضلة",
+
+  "pleaseLoginFirst": "يرجى تسجيل الدخول أولاً",
+
+  "myAddresses": "عناويني",
+  "manageSavedAddresses": "إدارة العناوين المحفوظة",
+
+  "error": "خطأ",
+
+  "allOrders": "جميع الطلبات",
+  "pendingOrders": "قيد المعالجة",
+  "acceptedOrders": "مقبولة",
+  "inProgressOrders": "قيد التنفيذ",
+  "completedOrdersTab": "مكتملة",
+  "rejectedOrders": "مرفوضة",
+
+  "minutesAgo": "منذ {n} دقيقة",
+  "@minutesAgo": {"placeholders": {"n": {"type": "int"}}},
+
+  "hoursAgo": "منذ {n} ساعة",
+  "@hoursAgo": {"placeholders": {"n": {"type": "int"}}},
+
+  "yesterday": "أمس",
+
+  "daysAgo": "منذ {n} يوم",
+  "@daysAgo": {"placeholders": {"n": {"type": "int"}}},
+
+  "currency": "{value} ر.ع",
+  "@currency": {"placeholders": {"value": {"type": "String"}}},
+
+  "myOrders": "طلباتي",
+  "pleaseLoginToViewOrders": "يرجى تسجيل الدخول لعرض الطلبات",
+  "noOrdersYet": "لا توجد طلبات بعد",
+  "startShoppingNow": "ابدأ التسوق الآن",
+  "browseProducts": "تصفح المنتجات",
+
+  "myAccount": "حسابي",
+  "manageYourDataAndOrders": "إدارة بياناتك وطلباتك",
+  "myStatistics": "إحصائياتي",
+  "totalOrders": "إجمالي الطلبات",
+  "allOrdersMade": "كل الطلبات التي قمت بها",
+  "activeOrders": "طلبات نشطة",
+  "currentlyTracking": "قيد المتابعة حالياً",
+  "completedOrders": "طلبات مكتملة",
+  "successfullyDelivered": "تم تسليمها بنجاح",
+  "cancelledRejected": "ملغاة / مرفوضة",
+  "cancelledOrRejected": "تم إلغاؤها أو رفضها",
+
+  "personalSettings": "الإعدادات الشخصية",
+  "notifications": "الإشعارات",
+  "orderStatusAlerts": "تنبيهات حالة الطلب والعروض",
+  "offersAndDiscounts": "عروض وتخفيضات",
+  "receiveExclusiveOffers": "استقبال العروض الحصرية",
+  "language": "اللغة",
+
+  "accountManagement": "إدارة الحساب",
+  "viewAndTrackOrders": "عرض ومتابعة الطلبات",
+  "paymentMethods": "طرق الدفع",
+  "manageCardsAndPayment": "إدارة البطاقات والدفع",
+  "privacyAndSecurity": "الخصوصية والأمان",
+  "securityAndPrivacySettings": "إعدادات الأمان والخصوصية",
+
+  "helpAndSupport": "المساعدة والدعم",
+  "helpCenter": "مركز المساعدة",
+  "faqAndSupport": "الأسئلة الشائعة والدعم",
+  "aboutApp": "عن التطبيق",
+  "appVersionAndInfo": "إصدار التطبيق ومعلومات إضافية",
+
+  "account": "الحساب",
+
+  "welcomeTitle": "مرحباً بك",
+  "joinUsAndEnjoy": "انضم إلينا واستمتع بتجربة تسوق مميزة",
+
+  "fastDelivery": "توصيل سريع",
+  "toAllOman": "لجميع أنحاء عُمان",
+  "guaranteedQuality": "جودة مضمونة",
+  "originalProducts100": "منتجات أصلية 100%",
+  "continuousSupport": "دعم متواصل",
+  "customerService247": "خدمة عملاء 24/7",
+
+  "logout": "تسجيل الخروج",
+  "logoutFromAccount": "تسجيل الخروج من حسابك",
+  "logoutConfirmation": "هل أنت متأكد من تسجيل الخروج؟",
+  "logoutSuccess": "تم تسجيل الخروج بنجاح",
+  "cancel": "إلغاء",
+
+  "chooseLanguage": "اختر اللغة",
+  "automatic": "تلقائي",
+  "useDeviceLanguage": "استخدام لغة الجهاز",
+  "languageChangedToDevice": "تم تغيير اللغة إلى لغة الجهاز",
+  "arabic": "العربية",
+  "languageChangedToArabic": "تم تغيير اللغة إلى العربية",
+  "english": "English",
+  "languageChangedToEnglish": "تم تغيير اللغة إلى الإنجليزية"
+}

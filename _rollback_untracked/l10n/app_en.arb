@@ -1,0 +1,122 @@
+{
+  "@@locale": "en",
+
+  "appName": "HINDAM",
+
+  "home": "Home",
+  "orders": "Orders",
+  "cart": "Cart",
+  "profile": "Profile",
+
+  "goodMorning": "Good Morning",
+  "goodAfternoon": "Good Afternoon",
+  "goodEvening": "Good Evening",
+  "goodNight": "Good Night",
+  "dearCustomer": "Dear Customer",
+
+  "hindam": "HINDAM",
+  "menTailoringShopsApp": "Men's Tailoring Shops App",
+
+  "login": "Login",
+  "createNewAccount": "Create New Account",
+  "continueAsGuest": "Continue as Guest",
+  "browseAsGuest": "Browse as Guest",
+
+  "favorites": "Favorites",
+  "myFavorites": "My Favorites",
+  "favoriteProducts": "Favorite products",
+  "viewFavoriteProducts": "View favorite products",
+
+  "pleaseLoginFirst": "Please login first",
+
+  "myAddresses": "My Addresses",
+  "manageSavedAddresses": "Manage saved addresses",
+
+  "error": "Error",
+
+  "allOrders": "All Orders",
+  "pendingOrders": "Pending",
+  "acceptedOrders": "Accepted",
+  "inProgressOrders": "In Progress",
+  "completedOrdersTab": "Completed",
+  "rejectedOrders": "Rejected",
+
+  "minutesAgo": "{n} min ago",
+  "@minutesAgo": {"placeholders": {"n": {"type": "int"}}},
+
+  "hoursAgo": "{n} hours ago",
+  "@hoursAgo": {"placeholders": {"n": {"type": "int"}}},
+
+  "yesterday": "Yesterday",
+
+  "daysAgo": "{n} days ago",
+  "@daysAgo": {"placeholders": {"n": {"type": "int"}}},
+
+  "currency": "{value} OMR",
+  "@currency": {"placeholders": {"value": {"type": "String"}}},
+
+  "myOrders": "My Orders",
+  "pleaseLoginToViewOrders": "Please login to view orders",
+  "noOrdersYet": "No orders yet",
+  "startShoppingNow": "Start shopping now",
+  "browseProducts": "Browse products",
+
+  "myAccount": "My Account",
+  "manageYourDataAndOrders": "Manage your data and orders",
+  "myStatistics": "My Statistics",
+  "totalOrders": "Total Orders",
+  "allOrdersMade": "All orders you have made",
+  "activeOrders": "Active Orders",
+  "currentlyTracking": "Currently tracking",
+  "completedOrders": "Completed Orders",
+  "successfullyDelivered": "Successfully delivered",
+  "cancelledRejected": "Cancelled / Rejected",
+  "cancelledOrRejected": "Cancelled or rejected",
+
+  "personalSettings": "Personal Settings",
+  "notifications": "Notifications",
+  "orderStatusAlerts": "Order status and offers alerts",
+  "offersAndDiscounts": "Offers & Discounts",
+  "receiveExclusiveOffers": "Receive exclusive offers",
+  "language": "Language",
+
+  "accountManagement": "Account Management",
+  "viewAndTrackOrders": "View and track orders",
+  "paymentMethods": "Payment Methods",
+  "manageCardsAndPayment": "Manage cards and payment",
+  "privacyAndSecurity": "Privacy & Security",
+  "securityAndPrivacySettings": "Security and privacy settings",
+
+  "helpAndSupport": "Help & Support",
+  "helpCenter": "Help Center",
+  "faqAndSupport": "FAQ and support",
+  "aboutApp": "About App",
+  "appVersionAndInfo": "App version and additional info",
+
+  "account": "Account",
+
+  "welcomeTitle": "Welcome",
+  "joinUsAndEnjoy": "Join us and enjoy a unique shopping experience",
+
+  "fastDelivery": "Fast delivery",
+  "toAllOman": "To all Oman",
+  "guaranteedQuality": "Guaranteed quality",
+  "originalProducts100": "100% original products",
+  "continuousSupport": "Continuous support",
+  "customerService247": "24/7 customer service",
+
+  "logout": "Logout",
+  "logoutFromAccount": "Logout from your account",
+  "logoutConfirmation": "Are you sure you want to logout?",
+  "logoutSuccess": "Logged out successfully",
+  "cancel": "Cancel",
+
+  "chooseLanguage": "Choose Language",
+  "automatic": "Automatic",
+  "useDeviceLanguage": "Use device language",
+  "languageChangedToDevice": "Language changed to device language",
+  "arabic": "Arabic",
+  "languageChangedToArabic": "Language changed to Arabic",
+  "english": "English",
+  "languageChangedToEnglish": "Language changed to English"
+}
