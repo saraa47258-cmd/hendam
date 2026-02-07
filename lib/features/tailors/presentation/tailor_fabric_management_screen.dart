@@ -47,6 +47,13 @@ class _TailorFabricManagementScreenState
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
+          // بالعربي: الرجوع → سهم لليمين
+          leading: IconButton(
+            icon: Icon(Directionality.of(context) == TextDirection.rtl
+                ? Icons.arrow_forward_rounded
+                : Icons.arrow_back_rounded),
+            onPressed: () => Navigator.pop(context),
+          ),
           title: Text('إدارة أقمشة ${widget.tailorName}'),
           centerTitle: true,
           bottom: TabBar(

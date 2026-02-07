@@ -86,7 +86,8 @@ class FabricService {
   static Future<Map<String, dynamic>?> getTailorFabricById(
       String tailorId, String fabricId) async {
     try {
-      final doc = await _tailorFabricsRef(tailorId).doc(fabricId).get();
+      const opts = GetOptions(source: Source.serverAndCache);
+      final doc = await _tailorFabricsRef(tailorId).doc(fabricId).get(opts);
       if (doc.exists && doc.data() != null) {
         return {'id': doc.id, ...doc.data()!};
       }
@@ -100,10 +101,11 @@ class FabricService {
   /// جلب قماش واحد بالتفصيل (من المجموعة العامة - للتوافق مع الشاشات القديمة)
   static Future<Map<String, dynamic>?> getFabricById(String fabricId) async {
     try {
+      const opts = GetOptions(source: Source.serverAndCache);
       final doc = await FirebaseService.firestore
           .collection(_fabricsCollection)
           .doc(fabricId)
-          .get();
+          .get(opts);
       if (doc.exists) {
         return {'id': doc.id, ...doc.data()!};
       }

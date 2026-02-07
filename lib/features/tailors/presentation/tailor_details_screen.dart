@@ -46,7 +46,9 @@ class TailorDetailsScreen extends StatelessWidget {
               stretch: true,
               expandedHeight: 220,
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: Icon(textDirection == TextDirection.rtl
+                    ? Icons.arrow_forward_rounded
+                    : Icons.arrow_back_rounded),
                 onPressed: () => Navigator.pop(context),
               ),
               title: Text(tailorName,

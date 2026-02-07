@@ -4,6 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:hindam/l10n/app_localizations.dart';
 import 'package:hindam/features/orders/models/order_model.dart';
 
+/// ثوابت شكل موحّد لشاشة بيانات مستلم الهدية
+class _Shape {
+  static const double radius = 14.0;
+  static const double spacing = 16.0;
+  static const double paddingH = 20.0;
+  static const double inputPaddingV = 16.0;
+  static const double inputPaddingH = 16.0;
+}
+
 /// Bottom sheet لإدخال بيانات مستلم الهدية
 class GiftRecipientBottomSheet extends StatefulWidget {
   final GiftRecipientDetails? initialData;
@@ -84,11 +93,15 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
 
     final data = GiftRecipientDetails(
       recipientName: _nameCtrl.text.trim(),
-      recipientPhone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
+      recipientPhone:
+          _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
       city: _cityCtrl.text.trim().isEmpty ? null : _cityCtrl.text.trim(),
-      address: _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
-      deliveryNotes: _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
-      giftMessage: _messageCtrl.text.trim().isEmpty ? null : _messageCtrl.text.trim(),
+      address:
+          _addressCtrl.text.trim().isEmpty ? null : _addressCtrl.text.trim(),
+      deliveryNotes:
+          _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+      giftMessage:
+          _messageCtrl.text.trim().isEmpty ? null : _messageCtrl.text.trim(),
       hidePrice: _hidePrice,
     );
 
@@ -109,7 +122,8 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
       ),
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(_Shape.radius + 6)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -127,17 +141,18 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
 
           // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            padding: EdgeInsets.fromLTRB(_Shape.paddingH, _Shape.spacing,
+                _Shape.paddingH, _Shape.spacing / 2),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: cs.primaryContainer.withOpacity(0.3),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(_Shape.radius),
                   ),
                   child: Icon(Icons.card_giftcard_rounded,
-                      color: cs.primary, size: 24),
+                      color: cs.primary, size: 26),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -173,7 +188,8 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
           // Form
           Flexible(
             child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(20, 16, 20, 16 + bottomPadding),
+              padding: EdgeInsets.fromLTRB(_Shape.paddingH, _Shape.spacing,
+                  _Shape.paddingH, _Shape.spacing + bottomPadding),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -193,7 +209,7 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: _Shape.spacing),
 
                     // رقم المستلم (مطلوب)
                     _buildTextField(
@@ -215,7 +231,7 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: _Shape.spacing),
 
                     // المدينة / المحافظة (مطلوب)
                     _buildTextField(
@@ -231,7 +247,7 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: _Shape.spacing),
 
                     // العنوان الكامل (مطلوب)
                     _buildTextField(
@@ -248,7 +264,7 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: _Shape.spacing),
 
                     // ملاحظات التوصيل (اختياري)
                     _buildTextField(
@@ -259,7 +275,7 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                       required: false,
                       maxLines: 2,
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: _Shape.spacing),
 
                     // رسالة التهنئة (اختياري)
                     _buildTextField(
@@ -270,25 +286,37 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                       required: false,
                       maxLines: 3,
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: _Shape.spacing + 4),
 
                     // خيار إخفاء السعر
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(_Shape.spacing),
                       decoration: BoxDecoration(
                         color: cs.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(_Shape.radius),
                         border: Border.all(
                           color: _hidePrice
                               ? cs.primary.withOpacity(0.5)
                               : cs.outlineVariant.withOpacity(0.5),
+                          width: 1.2,
                         ),
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.visibility_off_outlined,
-                            color: _hidePrice ? cs.primary : cs.onSurfaceVariant,
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: _hidePrice
+                                  ? cs.primary.withOpacity(0.15)
+                                  : cs.outlineVariant.withOpacity(0.3),
+                              borderRadius:
+                                  BorderRadius.circular(_Shape.radius - 2),
+                            ),
+                            child: Icon(
+                              Icons.visibility_off_outlined,
+                              size: 22,
+                              color: _hidePrice ? cs.primary : cs.onSurface,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -302,30 +330,40 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                               ),
                             ),
                           ),
-                          Switch.adaptive(
+                          Switch(
                             value: _hidePrice,
                             onChanged: (v) {
                               HapticFeedback.selectionClick();
                               setState(() => _hidePrice = v);
                             },
-                            activeColor: cs.primary,
+                            activeTrackColor: cs.primary.withOpacity(0.6),
+                            inactiveTrackColor: cs.outlineVariant,
+                            activeThumbColor: Colors.white,
+                            thumbColor: WidgetStateProperty.resolveWith<Color>(
+                                (states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return Colors.white;
+                              }
+                              return cs.surface;
+                            }),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: _Shape.spacing + 8),
 
                     // زر الحفظ
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
                         onPressed: _submit,
-                        icon: const Icon(Icons.check_circle_outline),
+                        icon: const Icon(Icons.check_circle_outline, size: 22),
                         label: Text(l10n.saveRecipient),
                         style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: EdgeInsets.symmetric(
+                              vertical: _Shape.inputPaddingV),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(_Shape.radius),
                           ),
                         ),
                       ),
@@ -352,7 +390,6 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
   }) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -378,7 +415,7 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
             ],
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: _Shape.spacing / 2),
         TextFormField(
           controller: controller,
           keyboardType: keyboardType,
@@ -386,34 +423,35 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(icon, size: 20),
+            prefixIcon: Icon(icon, size: 22, color: cs.onSurfaceVariant),
             filled: true,
             fillColor: cs.surfaceContainerLow,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(_Shape.radius),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(_Shape.radius),
               borderSide: BorderSide(
-                color: cs.outlineVariant.withOpacity(0.5),
+                color: cs.outlineVariant.withOpacity(0.6),
+                width: 1.2,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(_Shape.radius),
               borderSide: BorderSide(color: cs.primary, width: 2),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: cs.error),
+              borderRadius: BorderRadius.circular(_Shape.radius),
+              borderSide: BorderSide(color: cs.error, width: 1.2),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(_Shape.radius),
               borderSide: BorderSide(color: cs.error, width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
+            contentPadding: EdgeInsets.symmetric(
+              horizontal: _Shape.inputPaddingH,
+              vertical: _Shape.inputPaddingV,
             ),
           ),
         ),
@@ -440,7 +478,7 @@ class GiftRecipientSummaryCard extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(_Shape.spacing),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -450,9 +488,10 @@ class GiftRecipientSummaryCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(_Shape.radius),
         border: Border.all(
           color: cs.primary.withOpacity(0.3),
+          width: 1.2,
         ),
       ),
       child: Column(
@@ -462,15 +501,15 @@ class GiftRecipientSummaryCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: cs.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(_Shape.radius - 2),
                 ),
                 child: Icon(
                   Icons.card_giftcard_rounded,
                   color: cs.primary,
-                  size: 20,
+                  size: 22,
                 ),
               ),
               const SizedBox(width: 10),
@@ -541,10 +580,10 @@ class GiftRecipientSummaryCard extends StatelessWidget {
               details.giftMessage!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(_Shape.spacing / 2 + 4),
               decoration: BoxDecoration(
                 color: cs.surface,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(_Shape.radius - 2),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

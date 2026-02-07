@@ -755,12 +755,14 @@ class _GiftFabricStepState extends State<_GiftFabricStep> {
             },
           ),
         ),
-        // زر المتابعة
+        // زر المتابعة — في RTL السهم لليسار (←)
         Padding(
           padding: const EdgeInsets.all(20),
           child: FilledButton.icon(
             onPressed: widget.selectedFabricId != null ? widget.onNext : null,
-            icon: const Icon(Icons.arrow_forward_rounded),
+            icon: Icon(Directionality.of(context) == TextDirection.rtl
+                ? Icons.arrow_back_rounded
+                : Icons.arrow_forward_rounded),
             label: const Text('متابعة'),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
@@ -844,10 +846,12 @@ class _GiftMeasurementsStep extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // زر المتابعة
+            // زر المتابعة — في RTL السهم لليسار (←)
             FilledButton.icon(
               onPressed: onNext,
-              icon: const Icon(Icons.arrow_forward_rounded),
+              icon: Icon(Directionality.of(context) == TextDirection.rtl
+                  ? Icons.arrow_back_rounded
+                  : Icons.arrow_forward_rounded),
               label: const Text('متابعة'),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
@@ -1113,7 +1117,9 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: _canProceed() ? widget.onNext : null,
-            icon: const Icon(Icons.arrow_forward_rounded),
+            icon: Icon(Directionality.of(context) == TextDirection.rtl
+                ? Icons.arrow_back_rounded
+                : Icons.arrow_forward_rounded),
             label: const Text('متابعة لبيانات المستلم'),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),

@@ -1,7 +1,6 @@
 // lib/features/tailors/presentation/tailor_store_screen.dart
 import 'package:flutter/material.dart';
 import 'tailor_design_loader.dart';
-import 'gift_design_screen.dart';
 import 'package:hindam/shared/widgets/any_image.dart';
 
 /// الأقسام
@@ -28,8 +27,6 @@ class TailorStoreScreen extends StatefulWidget {
 }
 
 class _TailorStoreScreenState extends State<TailorStoreScreen> {
-  _Section _selected = _Section.tailoring;
-
   // ✅ مُساعد لمسارات الأصول داخل assets/fabrics/
   String _fabric(String name) => 'assets/fabrics/$name';
 
@@ -77,7 +74,7 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final filtered = _items.where((e) => e.kind == _selected).toList();
+    final filtered = _items.where((e) => e.kind == _Section.tailoring).toList();
 
     return Directionality(
       textDirection: TextDirection.rtl,
@@ -156,7 +153,7 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: _SearchBar(
-                          hint: 'ابحث داخل ${_sectionTitle(_selected)}',
+                          hint: 'ابحث داخل الخدمات',
                           onSubmitted: (_) {},
                         ),
                       ),
@@ -183,104 +180,41 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
                 ),
               ),
 
-              // --- دوائر الأقسام الثلاثة ---
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                  child: _SectionCircles(
-                    selected: _selected,
-                    onSelect: (s) {
-                      if (s == _Section.tailoring) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => TailorDesignLoaderScreen(
-                              tailorId: widget.tailorId,
-                              tailorName: widget.tailorName,
+              // عنوان القسم (الخدمات فقط — تم إزالة أيقونتي هدية/الخدمات)
+              SliverToBoxAdapter(child: _SectionTitle(title: 'الخدمات')),
+
+              // محتوى القسم — الخدمات فقط
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 1.0, // بطاقات مربعة
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      final it = filtered[i];
+                      return _ServiceGridCard(
+                        item: it,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TailorDesignLoaderScreen(
+                                tailorId: widget.tailorId,
+                                tailorName: widget.tailorName,
+                              ),
                             ),
-                          ),
-                        );
-                      } else {
-                        setState(() => _selected = s);
-                      }
+                          );
+                        },
+                      );
                     },
+                    childCount: filtered.length,
                   ),
                 ),
               ),
-
-              // عنوان القسم
-              SliverToBoxAdapter(
-                  child: _SectionTitle(title: _sectionTitle(_selected))),
-
-              // محتوى القسم
-              if (_selected == _Section.store)
-                // ✅ هدايا - نفس تدفق التفصيل مع خطوة إضافية لبيانات المستلم
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.0,
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) {
-                        final it = filtered[i];
-                        return _GiftGridCard(
-                          item: it,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => GiftDesignScreen(
-                                  tailorId: widget.tailorId,
-                                  tailorName: widget.tailorName,
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      childCount: filtered.length,
-                    ),
-                  ),
-                )
-              else
-                // ✅ خدمات كشبكة مربعة أنيقة
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverGrid(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.0, // بطاقات مربعة
-                    ),
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) {
-                        final it = filtered[i];
-                        return _ServiceGridCard(
-                          item: it,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => TailorDesignLoaderScreen(
-                                  tailorId: widget.tailorId,
-                                  tailorName: widget.tailorName,
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                      childCount: filtered.length,
-                    ),
-                  ),
-                ),
 
               // مسافة سفليّة بسيطة (لأن الزر صار في bottomNavigationBar)
               const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -289,15 +223,6 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
         ),
       ),
     );
-  }
-
-  String _sectionTitle(_Section s) {
-    switch (s) {
-      case _Section.tailoring:
-        return 'الخدمات';
-      case _Section.store:
-        return 'هدية';
-    }
   }
 
   // ورقة إضافة منتج (قسم المتجر)
@@ -950,236 +875,6 @@ class _StoreTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _SectionCircles extends StatelessWidget {
-  final _Section selected;
-  final ValueChanged<_Section> onSelect;
-  const _SectionCircles({required this.selected, required this.onSelect});
-
-  @override
-  Widget build(BuildContext context) {
-    const items = [
-      (_Section.tailoring, Icons.checkroom_rounded, 'الخدمات'),
-      (_Section.store, Icons.card_giftcard_rounded, 'هدية'),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, c) {
-        final w = c.maxWidth;
-        final circle = w >= 360 ? 78.0 : 72.0;
-
-        return Row(
-          children: List.generate(items.length, (i) {
-            final (section, icon, label) = items[i];
-            return Expanded(
-              child: _CircleSectionButton(
-                icon: icon,
-                label: label,
-                isSelected: selected == section,
-                size: circle,
-                onTap: () => onSelect(section),
-                section: section, // إضافة معرف القسم
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
-}
-
-class _CircleSectionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final double size;
-  final VoidCallback onTap;
-  final _Section? section; // إضافة معرف القسم
-
-  const _CircleSectionButton({
-    required this.icon,
-    required this.label,
-    required this.isSelected,
-    required this.size,
-    required this.onTap,
-    this.section,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    // Hero tag خاص بكل قسم
-    final heroTag =
-        section == _Section.tailoring ? 'tailoring_button' : 'store_button';
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Hero(
-          tag: heroTag,
-          flightShuttleBuilder: (
-            BuildContext flightContext,
-            Animation<double> animation,
-            HeroFlightDirection flightDirection,
-            BuildContext fromHeroContext,
-            BuildContext toHeroContext,
-          ) {
-            final Hero toHero = toHeroContext.widget as Hero;
-            return ScaleTransition(
-              scale: animation.drive(
-                Tween<double>(begin: 0.8, end: 1.0).chain(
-                  CurveTween(curve: Curves.easeOutCubic),
-                ),
-              ),
-              child: FadeTransition(
-                opacity: animation,
-                child: RotationTransition(
-                  turns: animation.drive(
-                    Tween<double>(begin: 0.0, end: 0.25).chain(
-                      CurveTween(curve: Curves.easeOutCubic),
-                    ),
-                  ),
-                  child: toHero.child,
-                ),
-              ),
-            );
-          },
-          child: _AnimatedCircleButton(
-            icon: icon,
-            isSelected: isSelected,
-            size: size,
-            onTap: onTap,
-            cs: cs,
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: size + 12,
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: tt.labelLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// Widget متحرك للزر الدائري
-class _AnimatedCircleButton extends StatefulWidget {
-  final IconData icon;
-  final bool isSelected;
-  final double size;
-  final VoidCallback onTap;
-  final ColorScheme cs;
-
-  const _AnimatedCircleButton({
-    required this.icon,
-    required this.isSelected,
-    required this.size,
-    required this.onTap,
-    required this.cs,
-  });
-
-  @override
-  State<_AnimatedCircleButton> createState() => _AnimatedCircleButtonState();
-}
-
-class _AnimatedCircleButtonState extends State<_AnimatedCircleButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _handleTapDown(TapDownDetails details) {
-    _controller.forward();
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    _controller.reverse();
-    widget.onTap();
-  }
-
-  void _handleTapCancel() {
-    _controller.reverse();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: _handleTapDown,
-      onTapUp: _handleTapUp,
-      onTapCancel: _handleTapCancel,
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) {
-          final scale = 1.0 - (_controller.value * 0.1);
-          return Transform.scale(
-            scale: scale,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: widget.isSelected
-                    ? widget.cs.primaryContainer
-                    : widget.cs.surface,
-                border: Border.all(
-                    color: widget.isSelected
-                        ? widget.cs.primary
-                        : widget.cs.outlineVariant,
-                    width: widget.isSelected ? 2 : 1),
-                boxShadow: [
-                  if (widget.isSelected)
-                    BoxShadow(
-                        color: widget.cs.primary
-                            .withOpacity(.18 + _controller.value * 0.1),
-                        blurRadius: 16 + _controller.value * 8,
-                        offset: Offset(0, 6 + _controller.value * 3))
-                ],
-              ),
-              child: Material(
-                type: MaterialType.transparency,
-                child: InkWell(
-                  customBorder: const CircleBorder(),
-                  onTap: widget.onTap,
-                  child: Icon(
-                    widget.icon,
-                    size: widget.isSelected ? 30 : 26,
-                    color: widget.isSelected
-                        ? widget.cs.onPrimaryContainer
-                        : widget.cs.primary,
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
       ),
     );
   }

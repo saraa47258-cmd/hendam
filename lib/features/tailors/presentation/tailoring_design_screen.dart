@@ -50,6 +50,9 @@ class _DesignTokens {
   static const Color borderDefault = Color(0xFFE2E8F0);
   static const Color borderStrong = Color(0xFFCBD5E0);
 
+  /// حدود أزرار Outlined أنعم (كلون الصورة)
+  static const Color buttonBorder = Color(0xFFD7D7D7);
+
   // Semantic colors
   static const Color success = Color(0xFF38A169);
   static const Color warning = Color(0xFFD69E2E);
@@ -132,6 +135,9 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   String? _fabricType;
   String? _fabricThumb;
   String? _selectedFabricId;
+
+  /// سعر القماش الفعلي من Firebase (ليس تقديراً)
+  double? _selectedFabricPrice;
   Color _embroideryColor = const Color(0xFF4A5568);
   int _embroideryLines = 0;
   EmbroideryDesign? _selectedEmbroidery;
@@ -165,10 +171,9 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     ));
   }
 
+  /// الإجمالي الحقيقي: سعر القماش من Firebase + التطريز (لا تقدير ولا قيم مخزنة)
   double get _totalPrice {
-    double price = widget.basePriceOMR;
-    if (_fabricType == 'فاخر') price += 1.500;
-    if (_fabricType == 'شتوي') price += 0.800;
+    double price = _selectedFabricPrice ?? 0.0;
     price += (_embroideryLines * 0.250);
     if (_selectedEmbroidery != null && _selectedEmbroidery!.price > 0) {
       price += _selectedEmbroidery!.price;
@@ -525,10 +530,12 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                         tailorId: widget.tailorId,
                         selectedType: _fabricType,
                         selectedFabricId: _selectedFabricId,
-                        onFabricSelected: (type, thumb, id) => setState(() {
+                        onFabricSelected: (type, thumb, id, fabricPrice) =>
+                            setState(() {
                           _fabricType = type;
                           _fabricThumb = thumb;
                           _selectedFabricId = id;
+                          _selectedFabricPrice = fabricPrice;
                         }),
                       ),
                       _MeasurementsStep(
@@ -566,7 +573,6 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
                 // Bottom Bar
                 _BottomActionBar(
-                  price: _totalPrice,
                   step: _currentStep,
                   onBack: _goToPreviousStep,
                   onNext: _goToNextStep,
@@ -615,10 +621,11 @@ class _AppBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Back button
+          // الرجوع: سهم لليمين (→) — منع انعكاس RTL بعرض الأيقونة في LTR
           _IconButton(
             icon: Icons.arrow_forward_rounded,
             onTap: onBack,
+            forceLtrIcon: true,
           ),
           const SizedBox(width: _DesignTokens.spaceMD),
 
@@ -784,13 +791,11 @@ class _ProgressIndicator extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _BottomActionBar extends StatelessWidget {
-  final double price;
   final int step;
   final VoidCallback onBack;
   final VoidCallback onNext;
 
   const _BottomActionBar({
-    required this.price,
     required this.step,
     required this.onBack,
     required this.onNext,
@@ -814,42 +819,14 @@ class _BottomActionBar extends StatelessWidget {
         border: Border(
           top: BorderSide(
             color: isDark
-                ? cs.outlineVariant.withOpacity(0.15)
+                ? Theme.of(context).colorScheme.outlineVariant.withOpacity(0.15)
                 : _DesignTokens.borderLight,
           ),
         ),
       ),
       child: Row(
         children: [
-          // Price
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'التكلفة التقديرية',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: isDark
-                        ? cs.onSurfaceVariant
-                        : _DesignTokens.textTertiary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'ر.ع ${price.toStringAsFixed(3)}',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
-                    letterSpacing: -0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
+          const Spacer(),
           // Back button
           _OutlinedButton(
             label: step == 0 ? 'رجوع' : 'السابق',
@@ -857,11 +834,12 @@ class _BottomActionBar extends StatelessWidget {
           ),
           const SizedBox(width: _DesignTokens.spaceMD),
 
-          // Next button
+          // التالي: سهم لليسار (←) — منع انعكاس RTL بعرض الأيقونة في LTR
           _FilledButton(
             label: step == 2 ? 'إرسال الطلب' : 'التالي',
             icon: step == 2 ? Icons.check_rounded : Icons.arrow_back_rounded,
             onTap: onNext,
+            forceLtrIcon: step != 2,
           ),
         ],
       ),
@@ -877,7 +855,9 @@ class _FabricSelectionStep extends StatelessWidget {
   final String tailorId;
   final String? selectedType;
   final String? selectedFabricId;
-  final void Function(String? type, String? thumb, String? id) onFabricSelected;
+  final void Function(
+          String? type, String? thumb, String? id, double? fabricPrice)
+      onFabricSelected;
 
   const _FabricSelectionStep({
     required this.tailorId,
@@ -1060,8 +1040,8 @@ class _FabricSelectionStep extends StatelessWidget {
               isDark ? cs.surfaceContainerHighest : _DesignTokens.surfacePure,
           borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
           child: InkWell(
-            onTap: () => onFabricSelected(
-                fabric['name'], fabric['imageUrl'], fabric['id']),
+            onTap: () => onFabricSelected(fabric['name'], fabric['imageUrl'],
+                fabric['id'], (fabric['pricePerMeter'] as num?)?.toDouble()),
             borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
             child: Container(
               decoration: BoxDecoration(
@@ -1241,7 +1221,7 @@ class _FabricSelectionStep extends StatelessWidget {
                 ),
                 _OutlinedButton(
                   label: 'تغيير',
-                  onTap: () => onFabricSelected(null, null, null),
+                  onTap: () => onFabricSelected(null, null, null, null),
                 ),
               ],
             ),
@@ -2137,12 +2117,25 @@ class _IconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _IconButton({required this.icon, required this.onTap});
+  /// عرض الأيقونة في سياق LTR لعدم انعكاسها في RTL (سهم الرجوع → يمين)
+  final bool forceLtrIcon;
+
+  const _IconButton({
+    required this.icon,
+    required this.onTap,
+    this.forceLtrIcon = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
+
+    final iconWidget = Icon(
+      icon,
+      size: 20,
+      color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+    );
 
     return Material(
       color: isDark ? cs.surfaceContainerHighest : _DesignTokens.surfaceMuted,
@@ -2153,11 +2146,12 @@ class _IconButton extends StatelessWidget {
         child: SizedBox(
           width: 44,
           height: 44,
-          child: Icon(
-            icon,
-            size: 20,
-            color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
-          ),
+          child: forceLtrIcon
+              ? Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: iconWidget,
+                )
+              : iconWidget,
         ),
       ),
     );
@@ -2169,23 +2163,47 @@ class _FilledButton extends StatelessWidget {
   final IconData? icon;
   final VoidCallback onTap;
 
-  const _FilledButton({required this.label, this.icon, required this.onTap});
+  /// عرض الأيقونة في LTR لعدم انعكاسها (سهم التالي ← يسار)
+  final bool forceLtrIcon;
+
+  const _FilledButton({
+    required this.label,
+    this.icon,
+    required this.onTap,
+    this.forceLtrIcon = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
 
+    final iconWidget = icon != null
+        ? Icon(icon!, size: 20, color: isDark ? cs.onPrimary : Colors.white)
+        : null;
+
     return Material(
-      color: isDark ? cs.primary : _DesignTokens.primary,
-      borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
         child: Container(
-          height: 48,
-          padding:
-              const EdgeInsets.symmetric(horizontal: _DesignTokens.spaceLG),
+          height: 50,
+          padding: const EdgeInsets.symmetric(
+            horizontal: _DesignTokens.spaceLG + 4,
+            vertical: _DesignTokens.spaceSM,
+          ),
+          decoration: BoxDecoration(
+            color: isDark ? cs.primary : const Color(0xFF2B4468),
+            borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -2193,15 +2211,20 @@ class _FilledButton extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: FontWeight.w600,
                   color: isDark ? cs.onPrimary : Colors.white,
+                  letterSpacing: -0.2,
                 ),
               ),
-              if (icon != null) ...[
+              if (iconWidget != null) ...[
                 const SizedBox(width: _DesignTokens.spaceSM),
-                Icon(icon,
-                    size: 18, color: isDark ? cs.onPrimary : Colors.white),
+                forceLtrIcon
+                    ? Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: iconWidget,
+                      )
+                    : iconWidget,
               ],
             ],
           ),
@@ -2224,28 +2247,31 @@ class _OutlinedButton extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
         child: Container(
-          height: 48,
-          padding:
-              const EdgeInsets.symmetric(horizontal: _DesignTokens.spaceLG),
+          height: 50,
+          padding: const EdgeInsets.symmetric(
+            horizontal: _DesignTokens.spaceLG + 4,
+            vertical: _DesignTokens.spaceSM,
+          ),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+            color: isDark ? cs.surface : _DesignTokens.surfacePure,
+            borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
             border: Border.all(
-              color: isDark ? cs.outlineVariant : _DesignTokens.borderDefault,
-              width: 1.5,
+              color: isDark ? cs.outlineVariant : _DesignTokens.buttonBorder,
+              width: 1.2,
             ),
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDark ? cs.onSurface : const Color(0xFF4A5568),
+                letterSpacing: -0.2,
               ),
             ),
           ),
@@ -2583,15 +2609,15 @@ class _OrderReviewSheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gift toggle
+          // Gift toggle — أيقونة وتفعيل أوضح
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
               gradient: isGift
                   ? LinearGradient(
                       colors: [
-                        _DesignTokens.accent.withOpacity(0.1),
-                        _DesignTokens.accentLight.withOpacity(0.05),
+                        _DesignTokens.accent.withOpacity(0.15),
+                        _DesignTokens.accentLight.withOpacity(0.08),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -2599,34 +2625,71 @@ class _OrderReviewSheet extends StatelessWidget {
                   : null,
               color: isGift
                   ? null
-                  : (isDark ? cs.surfaceContainerLow : _DesignTokens.surfaceMuted),
+                  : (isDark
+                      ? cs.surfaceContainerLow
+                      : _DesignTokens.surfaceMuted),
               borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
               border: Border.all(
                 color: isGift
-                    ? _DesignTokens.accent.withOpacity(0.5)
-                    : (isDark ? cs.outlineVariant : _DesignTokens.borderDefault),
-                width: isGift ? 2 : 1,
+                    ? _DesignTokens.accent
+                    : (isDark
+                        ? cs.outlineVariant
+                        : _DesignTokens.borderDefault),
+                width: isGift ? 2 : 1.5,
               ),
+              boxShadow: isGift
+                  ? [
+                      BoxShadow(
+                        color: _DesignTokens.accent.withOpacity(0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null,
             ),
             child: Row(
               children: [
+                // أيقونة الهدية — أكبر وأوضح مع إطار واضح
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isGift
-                        ? _DesignTokens.accent.withOpacity(0.2)
-                        : (isDark ? cs.surfaceContainerHigh : _DesignTokens.surfaceDim),
-                    borderRadius: BorderRadius.circular(12),
+                        ? _DesignTokens.accent.withOpacity(0.25)
+                        : (isDark ? cs.surfaceContainerHigh : Colors.white),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isGift
+                          ? _DesignTokens.accent
+                          : (isDark
+                              ? cs.outlineVariant
+                              : const Color(0xFFE2E8F0)),
+                      width: isGift ? 1.5 : 1,
+                    ),
+                    boxShadow: isGift
+                        ? [
+                            BoxShadow(
+                              color: _DesignTokens.accent.withOpacity(0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.06),
+                              blurRadius: 6,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
                   ),
                   child: Icon(
                     Icons.card_giftcard_rounded,
                     color: isGift
                         ? _DesignTokens.accent
-                        : (isDark ? cs.onSurfaceVariant : _DesignTokens.textTertiary),
-                    size: 24,
+                        : (isDark ? cs.onSurface : _DesignTokens.textSecondary),
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -2634,28 +2697,44 @@ class _OrderReviewSheet extends StatelessWidget {
                       Text(
                         l10n?.sendAsGift ?? 'إرسال كهدية',
                         style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
                           color: isGift
                               ? _DesignTokens.accent
-                              : (isDark ? cs.onSurface : _DesignTokens.textPrimary),
+                              : (isDark
+                                  ? cs.onSurface
+                                  : _DesignTokens.textPrimary),
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         l10n?.thisOrderIsAGift ?? 'هذا الطلب هدية',
                         style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? cs.onSurfaceVariant : _DesignTokens.textTertiary,
+                          fontSize: 13,
+                          color: isGift
+                              ? _DesignTokens.accent.withOpacity(0.9)
+                              : (isDark
+                                  ? cs.onSurfaceVariant
+                                  : _DesignTokens.textSecondary),
                         ),
                       ),
                     ],
                   ),
                 ),
-                Switch.adaptive(
+                // سويتش أوضح: تباين أعلى عند الإيقاف والتشغيل
+                Switch(
                   value: isGift,
                   onChanged: onGiftToggle,
-                  activeColor: _DesignTokens.accent,
+                  activeTrackColor: _DesignTokens.accent.withOpacity(0.6),
+                  inactiveTrackColor:
+                      isDark ? cs.outlineVariant : const Color(0xFFCBD5E0),
+                  activeThumbColor: Colors.white,
+                  thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
+                    if (states.contains(WidgetState.selected)) {
+                      return Colors.white;
+                    }
+                    return isDark ? cs.surface : const Color(0xFF64748B);
+                  }),
                 ),
               ],
             ),
