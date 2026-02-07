@@ -232,3 +232,302 @@ class OrderSkeletonCard extends StatelessWidget {
     );
   }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Product & Catalog Skeletons
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// هيكل تحميل لصفحة معاينة المنتج (صورة كبيرة + عنوان + سعر).
+class ProductPreviewSkeleton extends StatelessWidget {
+  const ProductPreviewSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    return SafeArea(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SkeletonBlock(
+              width: width,
+              height: width,
+              borderRadius: BorderRadius.zero,
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonLine(width: width * 0.7, height: 22),
+                  const SizedBox(height: 8),
+                  SkeletonLine(width: width * 0.5, height: 16),
+                  const SizedBox(height: 16),
+                  SkeletonLine(width: width * 0.35, height: 24),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      SkeletonBlock(width: 48, height: 48),
+                      const SizedBox(width: 12),
+                      SkeletonBlock(width: 48, height: 48),
+                      const SizedBox(width: 12),
+                      SkeletonLine(width: 80, height: 16),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  SkeletonLine(width: double.infinity, height: 14),
+                  const SizedBox(height: 8),
+                  SkeletonLine(width: double.infinity, height: 14),
+                  const SizedBox(height: 8),
+                  SkeletonLine(width: width * 0.6, height: 14),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// بطاقة هيكل واحدة لمنتج في شبكة.
+class ProductCardSkeleton extends StatelessWidget {
+  const ProductCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final width = (MediaQuery.sizeOf(context).width - 16 * 2 - 14) / 2;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SkeletonBlock(
+          width: width,
+          height: width,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        const SizedBox(height: 8),
+        SkeletonLine(width: width * 0.85, height: 12),
+        const SizedBox(height: 4),
+        SkeletonLine(width: width * 0.5, height: 10),
+        const SizedBox(height: 6),
+        SkeletonLine(width: width * 0.4, height: 14),
+      ],
+    );
+  }
+}
+
+/// شبكة هيكل لمنتجات (قائمة/كتالوج).
+class ProductGridSkeleton extends StatelessWidget {
+  final int crossAxisCount;
+  final int itemCount;
+
+  const ProductGridSkeleton({
+    super.key,
+    this.crossAxisCount = 2,
+    this.itemCount = 6,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: 14,
+        crossAxisSpacing: 14,
+        childAspectRatio: 0.62,
+      ),
+      itemCount: itemCount,
+      itemBuilder: (_, __) => const ProductCardSkeleton(),
+    );
+  }
+}
+
+/// هيكل قائمة محلات (صورة + اسم + وصف).
+class ShopCardSkeleton extends StatelessWidget {
+  const ShopCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxWidth = MediaQuery.sizeOf(context).width;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkeletonBlock(
+            width: 88,
+            height: 88,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonLine(width: maxWidth * 0.4, height: 16),
+                const SizedBox(height: 6),
+                SkeletonLine(width: maxWidth * 0.25, height: 12),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    SkeletonLine(width: 60, height: 20),
+                    const SizedBox(width: 8),
+                    SkeletonLine(width: 50, height: 20),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// قائمة هيكل لمحلات.
+class ShopListSkeleton extends StatelessWidget {
+  final int count;
+
+  const ShopListSkeleton({super.key, this.count = 5});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+      itemCount: count,
+      itemBuilder: (_, __) => const ShopCardSkeleton(),
+    );
+  }
+}
+
+/// هيكل شاشة عبايات: هيدر + شريط رقائق + شبكة منتجات.
+class AbayaServicesSkeleton extends StatelessWidget {
+  const AbayaServicesSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    return CustomScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+            child: Row(
+              children: [
+                SkeletonBlock(
+                    width: 40,
+                    height: 40,
+                    borderRadius: BorderRadius.circular(12)),
+                const Spacer(),
+                SkeletonBlock(
+                    width: 40,
+                    height: 40,
+                    borderRadius: BorderRadius.circular(12)),
+              ],
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: List.generate(
+                  5,
+                  (_) => Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: SkeletonLine(width: 72, height: 36),
+                      )),
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonLine(width: width * 0.5, height: 28),
+                const SizedBox(height: 4),
+                SkeletonLine(width: 120, height: 16),
+              ],
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: ProductGridSkeleton(itemCount: 6),
+        ),
+      ],
+    );
+  }
+}
+
+/// هيكل شاشة منتجات تاجر: هيدر المحل + شبكة منتجات.
+class MerchantProductsSkeleton extends StatelessWidget {
+  const MerchantProductsSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SkeletonBlock(
+                  width: 120,
+                  height: 96,
+                  borderRadius:
+                      const BorderRadius.horizontal(left: Radius.circular(16)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SkeletonLine(width: 140, height: 18),
+                      const SizedBox(height: 6),
+                      SkeletonLine(width: 100, height: 14),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          SkeletonLine(width: 56, height: 24),
+                          const SizedBox(width: 8),
+                          SkeletonLine(width: 56, height: 24),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: List.generate(
+                  4,
+                  (_) => Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: SkeletonLine(width: 64, height: 32),
+                      )),
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(
+          child: ProductGridSkeleton(itemCount: 6),
+        ),
+      ],
+    );
+  }
+}

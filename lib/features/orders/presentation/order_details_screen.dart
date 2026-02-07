@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hindam/core/state/cart_scope.dart';
 import 'package:hindam/features/orders/models/order.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 class OrderDetailsScreen extends StatelessWidget {
   final String orderId;
@@ -14,12 +15,13 @@ class OrderDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cartState = CartScope.of(context);
     final order = cartState.orders.firstWhere(
       (o) => o.id == orderId,
       orElse: () => Order(
         id: orderId,
-        status: 'غير موجود',
+        status: l10n.orderNotFound,
         createdAt: DateTime.now(),
         totalOmr: 0,
         items: [],
@@ -28,13 +30,14 @@ class OrderDetailsScreen extends StatelessWidget {
 
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final statusLabel = _localizeStatus(order.status, l10n);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
-          title: Text('طلب #${order.id}'),
+          title: Text('${l10n.order} #${order.id}'),
           centerTitle: true,
         ),
         body: SingleChildScrollView(
@@ -49,7 +52,7 @@ class OrderDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'حالة الطلب',
+                        l10n.orderStatus,
                         style: tt.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -63,7 +66,7 @@ class OrderDetailsScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            order.status,
+                            statusLabel,
                             style: tt.bodyLarge?.copyWith(
                               color: _getStatusColor(order.status),
                               fontWeight: FontWeight.w600,
@@ -73,7 +76,7 @@ class OrderDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'تاريخ الطلب: ${_formatDate(order.createdAt)}',
+                        '${l10n.orderDate}: ${_formatDate(order.createdAt)}',
                         style: tt.bodyMedium?.copyWith(
                           color: cs.onSurfaceVariant,
                         ),
@@ -90,7 +93,7 @@ class OrderDetailsScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'تفاصيل الطلب',
+                        l10n.orderDetails,
                         style: tt.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -129,13 +132,13 @@ class OrderDetailsScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'الإجمالي',
+                            l10n.totalLabel,
                             style: tt.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            '${order.totalOmr.toStringAsFixed(2)} ر.ع',
+                            '${order.totalOmr.toStringAsFixed(2)} Ø±.Ø¹',
                             style: tt.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: cs.primary,
@@ -154,12 +157,10 @@ class OrderDetailsScreen extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('سيتم إضافة هذه الميزة قريباً'),
-                          ),
+                          SnackBar(content: Text(l10n.featureComingSoon)),
                         );
                       },
-                      child: const Text('إعادة الطلب'),
+                      child: Text(l10n.reorder),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -168,7 +169,7 @@ class OrderDetailsScreen extends StatelessWidget {
                       onPressed: () {
                         context.push('/app/order/${order.id}/tracking');
                       },
-                      child: const Text('تتبع الطلب'),
+                      child: Text(l10n.trackOrder),
                     ),
                   ),
                 ],
@@ -184,12 +185,16 @@ class OrderDetailsScreen extends StatelessWidget {
 IconData _getStatusIcon(String status) {
   switch (status) {
     case 'قيد المعالجة':
+    case 'Processing':
       return Icons.hourglass_empty;
     case 'قيد الشحن':
+    case 'Shipping':
       return Icons.local_shipping;
     case 'تم التسليم':
+    case 'Delivered':
       return Icons.check_circle;
     case 'ملغي':
+    case 'Cancelled':
       return Icons.cancel;
     default:
       return Icons.help_outline;
@@ -199,12 +204,16 @@ IconData _getStatusIcon(String status) {
 Color _getStatusColor(String status) {
   switch (status) {
     case 'قيد المعالجة':
+    case 'Processing':
       return Colors.orange;
     case 'قيد الشحن':
+    case 'Shipping':
       return Colors.blue;
     case 'تم التسليم':
+    case 'Delivered':
       return Colors.green;
     case 'ملغي':
+    case 'Cancelled':
       return Colors.red;
     default:
       return Colors.grey;
@@ -213,5 +222,24 @@ Color _getStatusColor(String status) {
 
 String _formatDate(DateTime date) {
   return '${date.day}/${date.month}/${date.year}';
+}
+
+String _localizeStatus(String status, AppLocalizations l10n) {
+  switch (status) {
+    case 'قيد المعالجة':
+    case 'Processing':
+      return l10n.processingStatus;
+    case 'قيد الشحن':
+    case 'Shipping':
+      return l10n.shippingStatus;
+    case 'تم التسليم':
+    case 'Delivered':
+      return l10n.deliveredStatus;
+    case 'ملغي':
+    case 'Cancelled':
+      return l10n.cancelled;
+    default:
+      return status;
+  }
 }
 

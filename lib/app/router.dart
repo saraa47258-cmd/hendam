@@ -18,6 +18,12 @@ import 'package:hindam/features/auth/presentation/edit_profile_screen.dart';
 import 'package:hindam/features/favorites/presentation/my_favorites_screen.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
 import 'package:hindam/features/address/presentation/addresses_screen.dart';
+import 'package:hindam/features/profile/presentation/screens/settings_screen.dart';
+import 'package:hindam/features/profile/presentation/screens/language_screen.dart';
+import 'package:hindam/features/profile/presentation/screens/help_support_screen.dart';
+import 'package:hindam/features/profile/presentation/screens/about_app_screen.dart';
+import 'package:hindam/features/profile/presentation/screens/payment_methods_screen.dart';
+import 'package:hindam/features/profile/presentation/screens/privacy_security_screen.dart';
 import 'package:provider/provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -26,6 +32,35 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // توجيه ذكي: منع العودة من الرئيسية لتسجيل الدخول
+  // ═══════════════════════════════════════════════════════════════════════════
+  redirect: (context, state) {
+    final authProvider = context.read<AuthProvider>();
+    final isAuthenticated = authProvider.isAuthenticated;
+    final location = state.matchedLocation;
+
+    // الصفحات التي لا تحتاج حماية (يمكن الوصول إليها دون تسجيل دخول)
+    final publicRoutes = [
+      '/',
+      '/welcome',
+      '/login',
+      '/signup',
+      '/forgot-password'
+    ];
+    final isPublicRoute = publicRoutes.contains(location);
+
+    // إذا كان المستخدم مسجلاً ويحاول الوصول لصفحات التسجيل/الترحيب
+    // → إعادة توجيهه للشاشة الرئيسية
+    if (isAuthenticated && isPublicRoute && location != '/') {
+      return '/app';
+    }
+
+    // لا حاجة لتوجيه
+    return null;
+  },
+
   routes: <RouteBase>[
     GoRoute(
       path: '/',
@@ -159,6 +194,38 @@ final GoRouter appRouter = GoRouter(
           path: 'addresses',
           name: 'addresses',
           builder: (context, state) => const AddressesScreen(),
+        ),
+
+        // صفحات الملف الشخصي
+        GoRoute(
+          path: 'settings',
+          name: 'settings',
+          builder: (context, state) => const SettingsScreen(),
+        ),
+        GoRoute(
+          path: 'language',
+          name: 'language',
+          builder: (context, state) => const LanguageScreen(),
+        ),
+        GoRoute(
+          path: 'help-support',
+          name: 'help-support',
+          builder: (context, state) => const HelpSupportScreen(),
+        ),
+        GoRoute(
+          path: 'about',
+          name: 'about',
+          builder: (context, state) => const AboutAppScreen(),
+        ),
+        GoRoute(
+          path: 'payment-methods',
+          name: 'payment-methods',
+          builder: (context, state) => const PaymentMethodsScreen(),
+        ),
+        GoRoute(
+          path: 'privacy-security',
+          name: 'privacy-security',
+          builder: (context, state) => const PrivacySecurityScreen(),
         ),
 
         // اختبار Firebase

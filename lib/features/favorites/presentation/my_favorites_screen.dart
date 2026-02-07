@@ -8,6 +8,8 @@ import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/any_image.dart';
 import '../../../shared/widgets/skeletons.dart';
 import '../../../core/services/firebase_service.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class MyFavoritesScreen extends StatelessWidget {
   const MyFavoritesScreen({super.key});
@@ -17,40 +19,48 @@ class MyFavoritesScreen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final authProvider = Provider.of<AuthProvider>(context, listen: true);
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final textDirection =
+        localeProvider.isRtl ? TextDirection.rtl : TextDirection.ltr;
 
     // إذا لم يكن مسجل دخول
     if (!authProvider.isAuthenticated) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('المفضلة')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.favorite_border, size: 64, color: cs.onSurfaceVariant),
-              const SizedBox(height: 16),
-              Text(
-                'يرجى تسجيل الدخول',
-                style: tt.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'عرض المنتجات المفضلة لديك',
-                style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-              const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: () => context.push('/login'),
-                icon: const Icon(Icons.login),
-                label: const Text('تسجيل الدخول'),
-              ),
-            ],
+      return Directionality(
+        textDirection: textDirection,
+        child: Scaffold(
+          appBar: AppBar(title: Text(l10n.favorites)),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.favorite_border,
+                    size: 64, color: cs.onSurfaceVariant),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.pleaseLoginFirst,
+                  style: tt.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.browseAndKeepFavorites,
+                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => context.push('/login'),
+                  icon: const Icon(Icons.login),
+                  label: Text(l10n.login),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: PreferredSize(
@@ -109,7 +119,7 @@ class MyFavoritesScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'مفضلتي',
+                            l10n.myFavoritesTitle,
                             style: tt.headlineSmall?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -118,7 +128,7 @@ class MyFavoritesScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'تصفح وحافظ على عناصر تحبها',
+                            l10n.browseAndKeepFavorites,
                             style: tt.bodySmall?.copyWith(
                               color: Colors.white70,
                             ),
@@ -177,7 +187,7 @@ class MyFavoritesScreen extends StatelessWidget {
                   children: [
                     Icon(Icons.error_outline, size: 64, color: cs.error),
                     const SizedBox(height: 16),
-                    Text('حدث خطأ في تحميل المفضلات', style: tt.titleMedium),
+                    Text(l10n.errorLoadingFavorites, style: tt.titleMedium),
                     const SizedBox(height: 8),
                     Text(snapshot.error.toString(), style: tt.bodySmall),
                   ],
@@ -196,13 +206,13 @@ class MyFavoritesScreen extends StatelessWidget {
                         size: 80, color: cs.onSurfaceVariant),
                     const SizedBox(height: 24),
                     Text(
-                      'لا توجد مفضلات حالياً',
+                      l10n.noFavoritesCurrently,
                       style:
                           tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'ابدأ بإضافة منتجات للمفضلة',
+                      l10n.startAddingFavorites,
                       style:
                           tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                     ),
@@ -218,6 +228,7 @@ class MyFavoritesScreen extends StatelessWidget {
                 final favorite = favorites[index];
                 return _FavoriteItemCard(
                   favorite: favorite,
+                  l10n: l10n,
                   onRemove: () async {
                     final removed = await FavoriteService().removeFromFavorites(
                       productId: favorite['productId'],
@@ -225,8 +236,8 @@ class MyFavoritesScreen extends StatelessWidget {
                     );
                     if (removed && context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('تم إزالة من المفضلة'),
+                        SnackBar(
+                          content: Text(l10n.removedFromFavorites),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -313,10 +324,12 @@ class _FavoriteSkeletonCard extends StatelessWidget {
 class _FavoriteItemCard extends StatelessWidget {
   final Map<String, dynamic> favorite;
   final VoidCallback onRemove;
+  final AppLocalizations l10n;
 
   const _FavoriteItemCard({
     required this.favorite,
     required this.onRemove,
+    required this.l10n,
   });
 
   bool get _isTailor => favorite['productType'] == 'tailor';
@@ -414,10 +427,10 @@ class _FavoriteItemCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Text(
                               favorite['productType'] == 'tailor'
-                                  ? 'خياط'
+                                  ? l10n.tailorType
                                   : favorite['productType'] == 'abaya'
-                                      ? 'عباية'
-                                      : 'مفضل',
+                                      ? l10n.abayaType
+                                      : l10n.favoriteType,
                               style: tt.labelSmall?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
@@ -439,9 +452,9 @@ class _FavoriteItemCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            productData['name'] ?? 
-                            productData['title'] ?? 
-                            'عنصر',
+                            productData['name'] ??
+                                productData['title'] ??
+                                l10n.item,
                             style: tt.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: cs.onSurface,
@@ -461,7 +474,7 @@ class _FavoriteItemCard extends StatelessWidget {
                             Icons.favorite_rounded,
                             color: Colors.red.shade400,
                           ),
-                          tooltip: 'إزالة من المفضلة',
+                          tooltip: l10n.removeFromFavorites,
                         ),
                       ],
                     ),
@@ -529,7 +542,7 @@ class _FavoriteItemCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'تقييم',
+                            l10n.ratingLabel,
                             style: tt.bodySmall?.copyWith(
                               color: cs.onSurfaceVariant,
                             ),
@@ -549,7 +562,7 @@ class _FavoriteItemCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          'ر.ع ${price.toStringAsFixed(3)}',
+                          '${l10n.omr} ${price.toStringAsFixed(3)}',
                           style: tt.titleSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: cs.primary,

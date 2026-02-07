@@ -5,22 +5,31 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class GiftRecipientDetails {
   final String recipientName;
   final String? recipientPhone;
+  final String? city;
+  final String? address;
   final String? giftMessage;
   final String? deliveryNotes;
+  final bool hidePrice;
 
   GiftRecipientDetails({
     required this.recipientName,
     this.recipientPhone,
+    this.city,
+    this.address,
     this.giftMessage,
     this.deliveryNotes,
+    this.hidePrice = false,
   });
 
   factory GiftRecipientDetails.fromMap(Map<String, dynamic> map) {
     return GiftRecipientDetails(
       recipientName: map['recipientName'] ?? '',
       recipientPhone: map['recipientPhone'],
+      city: map['city'],
+      address: map['address'],
       giftMessage: map['giftMessage'],
       deliveryNotes: map['deliveryNotes'],
+      hidePrice: map['hidePrice'] ?? false,
     );
   }
 
@@ -28,8 +37,11 @@ class GiftRecipientDetails {
     return {
       'recipientName': recipientName,
       'recipientPhone': recipientPhone,
+      'city': city,
+      'address': address,
       'giftMessage': giftMessage,
       'deliveryNotes': deliveryNotes,
+      'hidePrice': hidePrice,
     };
   }
 }
@@ -66,6 +78,16 @@ class OrderModel {
   final bool isGift;
   final GiftRecipientDetails? giftRecipientDetails;
 
+  // معلومات منتجات المتاجر (merchant products)
+  final String? orderType; // 'tailoring', 'abaya', 'merchant_product'
+  final String? productId;
+  final String? productName;
+  final String? productSubtitle;
+  final String? productImageUrl;
+  final String? selectedColor;
+  final String? traderId;
+  final String? traderName;
+
   final double totalPrice;
   final OrderStatus status;
   final DateTime createdAt;
@@ -97,6 +119,14 @@ class OrderModel {
     this.threadCount,
     this.isGift = false,
     this.giftRecipientDetails,
+    this.orderType,
+    this.productId,
+    this.productName,
+    this.productSubtitle,
+    this.productImageUrl,
+    this.selectedColor,
+    this.traderId,
+    this.traderName,
     required this.totalPrice,
     required this.status,
     required this.createdAt,
@@ -140,6 +170,15 @@ class OrderModel {
           ? GiftRecipientDetails.fromMap(
               Map<String, dynamic>.from(data['giftRecipientDetails']))
           : null,
+      // معلومات منتجات المتاجر
+      orderType: data['orderType'],
+      productId: data['productId'],
+      productName: data['productName'],
+      productSubtitle: data['productSubtitle'],
+      productImageUrl: data['productImageUrl'],
+      selectedColor: data['selectedColor'],
+      traderId: data['traderId'],
+      traderName: data['traderName'],
       totalPrice: (data['totalPrice'] as num?)?.toDouble() ?? 0.0,
       status: OrderStatus.values.firstWhere(
         (e) => e.toString() == 'OrderStatus.${data['status']}',
@@ -242,6 +281,14 @@ class OrderModel {
     int? threadCount,
     bool? isGift,
     GiftRecipientDetails? giftRecipientDetails,
+    String? orderType,
+    String? productId,
+    String? productName,
+    String? productSubtitle,
+    String? productImageUrl,
+    String? selectedColor,
+    String? traderId,
+    String? traderName,
     double? totalPrice,
     OrderStatus? status,
     DateTime? createdAt,
@@ -275,6 +322,14 @@ class OrderModel {
       threadCount: threadCount ?? this.threadCount,
       isGift: isGift ?? this.isGift,
       giftRecipientDetails: giftRecipientDetails ?? this.giftRecipientDetails,
+      orderType: orderType ?? this.orderType,
+      productId: productId ?? this.productId,
+      productName: productName ?? this.productName,
+      productSubtitle: productSubtitle ?? this.productSubtitle,
+      productImageUrl: productImageUrl ?? this.productImageUrl,
+      selectedColor: selectedColor ?? this.selectedColor,
+      traderId: traderId ?? this.traderId,
+      traderName: traderName ?? this.traderName,
       totalPrice: totalPrice ?? this.totalPrice,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
@@ -283,6 +338,42 @@ class OrderModel {
       rejectionReason: rejectionReason ?? this.rejectionReason,
     );
   }
+
+  /// الحصول على صورة الطلب الصحيحة (منتج أو قماش)
+  String get displayImageUrl {
+    if (orderType == 'merchant_product' ||
+        orderType == 'abaya' ||
+        orderType == 'cart_order') {
+      return productImageUrl ?? '';
+    }
+    return fabricImageUrl;
+  }
+
+  /// الحصول على اسم الطلب الصحيح
+  String get displayName {
+    if (orderType == 'merchant_product' ||
+        orderType == 'abaya' ||
+        orderType == 'cart_order') {
+      return productName ?? '';
+    }
+    return fabricName;
+  }
+
+  /// الحصول على اسم المتجر/الخياط
+  String get displaySellerName {
+    if (orderType == 'merchant_product' ||
+        orderType == 'abaya' ||
+        orderType == 'cart_order') {
+      return traderName ?? tailorName;
+    }
+    return tailorName;
+  }
+
+  /// هل هذا طلب منتج من متجر؟
+  bool get isMerchantProduct =>
+      orderType == 'merchant_product' ||
+      orderType == 'abaya' ||
+      orderType == 'cart_order';
 }
 
 /// حالات الطلب

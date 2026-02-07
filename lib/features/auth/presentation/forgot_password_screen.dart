@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
+import 'package:hindam/l10n/app_localizations.dart';
+import 'package:hindam/core/providers/locale_provider.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -40,18 +42,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _emailSent = success;
       });
 
+      final l10n = AppLocalizations.of(context)!;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-                'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني'),
+          SnackBar(
+            content: Text(l10n.resetLinkSent),
             backgroundColor: Colors.green,
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authProvider.error ?? 'فشل إرسال البريد'),
+            content: Text(authProvider.error ?? l10n.emailSendFailed),
             backgroundColor: Colors.red,
           ),
         );
@@ -62,162 +64,168 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = localeProvider.isRtl;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('إعادة تعيين كلمة المرور'),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 32),
+    return Directionality(
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.resetPassword),
+          centerTitle: true,
+        ),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 32),
 
-                // الأيقونة
-                Icon(
-                  _emailSent
-                      ? Icons.mark_email_read_outlined
-                      : Icons.lock_reset_outlined,
-                  size: 80,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(height: 24),
-
-                // العنوان
-                Text(
-                  _emailSent ? 'تم إرسال البريد!' : 'نسيت كلمة المرور؟',
-                  style: GoogleFonts.cairo(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-
-                // الوصف
-                Text(
-                  _emailSent
-                      ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من صندوق البريد الوارد.'
-                      : 'أدخل بريدك الإلكتروني وسنرسل لك رابط لإعادة تعيين كلمة المرور',
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 48),
-
-                if (!_emailSent) ...[
-                  // حقل البريد الإلكتروني
-                  TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    textDirection: TextDirection.ltr,
-                    decoration: InputDecoration(
-                      labelText: 'البريد الإلكتروني',
-                      hintText: 'example@email.com',
-                      prefixIcon: const Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'يرجى إدخال البريد الإلكتروني';
-                      }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                          .hasMatch(value)) {
-                        return 'البريد الإلكتروني غير صحيح';
-                      }
-                      return null;
-                    },
+                  // الأيقونة
+                  Icon(
+                    _emailSent
+                        ? Icons.mark_email_read_outlined
+                        : Icons.lock_reset_outlined,
+                    size: 80,
+                    color: theme.colorScheme.primary,
                   ),
                   const SizedBox(height: 24),
 
-                  // زر إرسال
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _handleResetPassword,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  // العنوان
+                  Text(
+                    _emailSent ? l10n.emailSent : l10n.forgotPassword,
+                    style: GoogleFonts.cairo(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text(
-                            'إرسال رابط إعادة التعيين',
-                            style: GoogleFonts.cairo(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ] else ...[
-                  // زر العودة لتسجيل الدخول
-                  ElevatedButton(
-                    onPressed: () => context.pop(),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: Text(
-                      'العودة لتسجيل الدخول',
-                      style: GoogleFonts.cairo(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
 
-                  // زر إعادة الإرسال
-                  OutlinedButton(
-                    onPressed: () {
-                      setState(() => _emailSent = false);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                  // الوصف
+                  Text(
+                    _emailSent
+                        ? l10n.resetLinkSentDescription
+                        : l10n.enterEmailForReset,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurface.withOpacity(0.6),
                     ),
-                    child: Text(
-                      'إعادة الإرسال',
-                      style: GoogleFonts.cairo(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 48),
+
+                  if (!_emailSent) ...[
+                    // حقل البريد الإلكتروني
+                    TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      textDirection: TextDirection.ltr,
+                      decoration: InputDecoration(
+                        labelText: l10n.email,
+                        hintText: 'example@email.com',
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return l10n.pleaseEnterValidEmail;
+                        }
+                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                            .hasMatch(value)) {
+                          return l10n.invalidEmail;
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // زر إرسال
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _handleResetPassword,
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Text(
+                              l10n.sendResetLinkButton,
+                              style: GoogleFonts.cairo(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ] else ...[
+                    // زر العودة لتسجيل الدخول
+                    ElevatedButton(
+                      onPressed: () => context.pop(),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.backToLogin,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // زر إعادة الإرسال
+                    OutlinedButton(
+                      onPressed: () {
+                        setState(() => _emailSent = false);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.resend,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // العودة لتسجيل الدخول
+                  if (!_emailSent)
+                    TextButton(
+                      onPressed: () => context.pop(),
+                      child: Text(
+                        l10n.backToLogin,
+                        style: GoogleFonts.cairo(),
+                      ),
+                    ),
                 ],
-
-                const SizedBox(height: 24),
-
-                // العودة لتسجيل الدخول
-                if (!_emailSent)
-                  TextButton(
-                    onPressed: () => context.pop(),
-                    child: Text(
-                      'العودة لتسجيل الدخول',
-                      style: GoogleFonts.cairo(),
-                    ),
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -225,4 +233,3 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     );
   }
 }
-

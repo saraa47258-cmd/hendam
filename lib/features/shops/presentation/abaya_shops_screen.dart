@@ -7,6 +7,7 @@ import '../models/shop.dart';
 import '../services/abaya_traders_service.dart';
 import '../../catalog/presentation/abaya_services_screen.dart';
 import '../../../shared/widgets/skeletons.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// شاشة محلات العبايات — صور من assets/abaya/
 class AbayaShopsScreen extends StatefulWidget {
@@ -78,244 +79,246 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
     setState(() => _shown = list);
   }
 
-  String _price(double v) =>
-      '${v == v.truncateToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)} ر.ع';
+  String _price(double v, AppLocalizations l10n) =>
+      '${v == v.truncateToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)} ${l10n.omr}';
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: cs.surface,
         body: _isLoading
-            ? const Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Color(0xFFE91E63),
-                  ),
-                ),
-              )
+            ? const ShopListSkeleton(count: 6)
             : CustomScrollView(
-          slivers: [
-            // AppBar بنمط iOS ولون بناتي
-            SliverAppBar(
-              pinned: true,
-              floating: true,
-              expandedHeight: 100,
-              collapsedHeight: kToolbarHeight,
-              elevation: 0,
-              backgroundColor: const Color(0xFFE91E63), // لون بناتي جميل
-              surfaceTintColor: Colors.transparent,
-              shadowColor: Colors.transparent,
-              scrolledUnderElevation: 0,
-              leading: CupertinoButton(
-                padding: EdgeInsets.zero,
-                minSize: 0,
-                onPressed: () => Navigator.maybePop(context),
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.back,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                ),
-              ),
-              leadingWidth: 56,
-              flexibleSpace: const FlexibleSpaceBar(
-                expandedTitleScale: 1.1,
-                titlePadding:
-                    EdgeInsetsDirectional.only(start: 16, bottom: 16),
-                centerTitle: false,
-                title: Text(
-                  'محلات العبايات',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 0.2,
-                    fontSize: 24,
-                  ),
-                ),
-              ),
-              actions: [
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  minSize: 0,
-                  onPressed: () {},
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      CupertinoIcons.slider_horizontal_3,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-
-            // البحث + فلاتر
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: _search,
-                      onChanged: (_) => _applyFilters(),
-                      decoration: InputDecoration(
-                        hintText: 'ابحث عن محل…',
-                        prefixIcon: const Icon(Icons.search_rounded),
-                        suffixIcon: _search.text.isEmpty
-                            ? null
-                            : IconButton(
-                                icon: const Icon(Icons.close_rounded),
-                                onPressed: () {
-                                  _search.clear();
-                                  _applyFilters();
-                                },
-                              ),
-                        filled: true,
-                        fillColor: cs.surfaceContainerHighest.withOpacity(.8),
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
-                          borderRadius: BorderRadius.circular(16),
+                slivers: [
+                  // AppBar بنمط iOS ولون بناتي
+                  SliverAppBar(
+                    pinned: true,
+                    floating: true,
+                    expandedHeight: 100,
+                    collapsedHeight: kToolbarHeight,
+                    elevation: 0,
+                    backgroundColor: const Color(0xFFE91E63), // لون بناتي جميل
+                    surfaceTintColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    scrolledUnderElevation: 0,
+                    leading: CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      minSize: 0,
+                      onPressed: () => Navigator.maybePop(context),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: cs.outlineVariant.withOpacity(0.5)),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: cs.primary, width: 2.0),
-                          borderRadius: BorderRadius.circular(16),
+                        child: const Icon(
+                          CupertinoIcons.back,
+                          color: Colors.white,
+                          size: 28,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        FilterChip(
-                          label: const Text('مفتوح الآن'),
-                          selected: _onlyOpen,
-                          onSelected: (v) {
-                            setState(() => _onlyOpen = v);
-                            _applyFilters();
-                          },
-                          selectedColor: const Color(0xFFE7F6EC),
-                          checkmarkColor: const Color(0xFF1B5E20),
-                          avatar: const Icon(Icons.schedule_rounded, size: 18),
+                    leadingWidth: 56,
+                    flexibleSpace: FlexibleSpaceBar(
+                      expandedTitleScale: 1.1,
+                      titlePadding: const EdgeInsetsDirectional.only(
+                          start: 16, bottom: 16),
+                      centerTitle: false,
+                      title: Text(
+                        l10n.abayaShopsTitle,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.2,
+                          fontSize: 24,
                         ),
-                        const SizedBox(width: 8),
-                        FilterChip(
-                          label: const Text('توصيل'),
-                          selected: _onlyDelivery,
-                          onSelected: (v) {
-                            setState(() => _onlyDelivery = v);
-                            _applyFilters();
-                          },
-                          selectedColor: const Color(0xFFE7F6EC),
-                          checkmarkColor: const Color(0xFF1B5E20),
-                          avatar: const Icon(Icons.local_shipping_outlined,
-                              size: 18),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 8),
+                      ),
+                    ),
+                    actions: [
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        minSize: 0,
+                        onPressed: () {},
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: cs.surfaceContainerHighest.withOpacity(.6),
+                            color: Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
-                            '${_shown.length} نتيجة',
-                            style: TextStyle(
-                              color: cs.onSurfaceVariant,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          child: const Icon(
+                            CupertinoIcons.slider_horizontal_3,
+                            color: Colors.white,
+                            size: 24,
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
+                  ),
 
-            // قائمة المحلات
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              sliver: _shown.isEmpty
-                  ? SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.store_outlined,
-                              size: 64,
-                              color: cs.onSurfaceVariant.withOpacity(0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'لا توجد محلات',
-                              style: TextStyle(
-                                color: cs.onSurfaceVariant,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
+                  // البحث + فلاتر
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Column(
+                        children: [
+                          TextField(
+                            controller: _search,
+                            onChanged: (_) => _applyFilters(),
+                            decoration: InputDecoration(
+                              hintText: l10n.searchForShop,
+                              prefixIcon: const Icon(Icons.search_rounded),
+                              suffixIcon: _search.text.isEmpty
+                                  ? null
+                                  : IconButton(
+                                      icon: const Icon(Icons.close_rounded),
+                                      onPressed: () {
+                                        _search.clear();
+                                        _applyFilters();
+                                      },
+                                    ),
+                              filled: true,
+                              fillColor:
+                                  cs.surfaceContainerHighest.withOpacity(.8),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 14, horizontal: 16),
+                              border: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: cs.outlineVariant.withOpacity(0.5)),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: BorderSide(
+                                    color: cs.outlineVariant.withOpacity(0.5)),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide:
+                                    BorderSide(color: cs.primary, width: 2.0),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              FilterChip(
+                                label: Text(l10n.openNow),
+                                selected: _onlyOpen,
+                                onSelected: (v) {
+                                  setState(() => _onlyOpen = v);
+                                  _applyFilters();
+                                },
+                                selectedColor: const Color(0xFFE7F6EC),
+                                checkmarkColor: const Color(0xFF1B5E20),
+                                avatar: const Icon(Icons.schedule_rounded,
+                                    size: 18),
+                              ),
+                              const SizedBox(width: 8),
+                              FilterChip(
+                                label: Text(l10n.delivery),
+                                selected: _onlyDelivery,
+                                onSelected: (v) {
+                                  setState(() => _onlyDelivery = v);
+                                  _applyFilters();
+                                },
+                                selectedColor: const Color(0xFFE7F6EC),
+                                checkmarkColor: const Color(0xFF1B5E20),
+                                avatar: const Icon(
+                                    Icons.local_shipping_outlined,
+                                    size: 18),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: cs.surfaceContainerHighest
+                                      .withOpacity(.6),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${_shown.length} ${l10n.results}',
+                                  style: TextStyle(
+                                    color: cs.onSurfaceVariant,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    )
-                  : SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, i) {
-                          final s = _shown[i];
-                          return Padding(
-                            padding: EdgeInsets.only(
-                                bottom: i == _shown.length - 1 ? 0 : 16),
-                            child: _ShopCardModern(
-                              shop: s,
-                              priceText: _price(s.minPrice),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => AbayaServicesScreen(
-                                      shopName: s.name,
-                                      traderId: s.id, // تمرير معرف التاجر
+                    ),
+                  ),
+
+                  // قائمة المحلات
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                    sliver: _shown.isEmpty
+                        ? SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.store_outlined,
+                                    size: 64,
+                                    color: cs.onSurfaceVariant.withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    l10n.noShopsAvailable,
+                                    style: TextStyle(
+                                      color: cs.onSurfaceVariant,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
                                     ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, i) {
+                                final s = _shown[i];
+                                return Padding(
+                                  padding: EdgeInsets.only(
+                                      bottom: i == _shown.length - 1 ? 0 : 16),
+                                  child: _ShopCardModern(
+                                    shop: s,
+                                    priceText: _price(s.minPrice, l10n),
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => AbayaServicesScreen(
+                                            shopName: s.name,
+                                            traderId: s.id, // تمرير معرف التاجر
+                                          ),
+                                        ),
+                                      );
+                                    },
                                   ),
                                 );
                               },
+                              childCount: _shown.length,
                             ),
-                          );
-                        },
-                        childCount: _shown.length,
-                      ),
-                    ),
-            ),
-          ],
-        ),
+                          ),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -339,6 +342,7 @@ class _ShopCardModern extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     // نجهّز ويدجت الصورة: شبكة أو أصول مع تحميل ذكي
     Widget buildShopImage(String src) {
@@ -418,7 +422,7 @@ class _ShopCardModern extends StatelessWidget {
                       top: 8,
                       start: 8,
                       child: _Pill(
-                        text: shop.isOpen ? 'مفتوح' : 'مغلق',
+                        text: shop.isOpen ? l10n.open : l10n.closed,
                         bg: shop.isOpen
                             ? const Color(0xFFE7F6EC)
                             : const Color(0xFFFDECEC),
@@ -480,8 +484,8 @@ class _ShopCardModern extends StatelessWidget {
                               children: [
                                 _Pill(
                                   text: shop.delivery
-                                      ? 'توصيل متاح'
-                                      : 'لا يوجد توصيل',
+                                      ? l10n.deliveryAvailable
+                                      : l10n.noDelivery,
                                   bg: shop.delivery
                                       ? const Color(0xFFE7F6EC)
                                       : const Color(0xFFF0F0F0),
@@ -491,7 +495,7 @@ class _ShopCardModern extends StatelessWidget {
                                 ),
                                 _MiniIconText(
                                   icon: Icons.design_services_outlined,
-                                  text: '${shop.servicesCount} خدمة',
+                                  text: l10n.servicesCount(shop.servicesCount),
                                 ),
                               ],
                             ),
@@ -629,4 +633,3 @@ class _MiniIconText extends StatelessWidget {
     );
   }
 }
-

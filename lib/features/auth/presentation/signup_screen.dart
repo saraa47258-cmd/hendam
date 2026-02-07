@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
 import 'package:hindam/features/auth/models/user_model.dart';
+import 'package:hindam/l10n/app_localizations.dart';
+import 'package:hindam/core/providers/locale_provider.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -85,14 +87,15 @@ class _SignUpScreenState extends State<SignUpScreen>
     if (mounted) {
       setState(() => _isLoading = false);
 
+      final l10n = AppLocalizations.of(context)!;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('✅ تم إنشاء الحساب بنجاح!'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('✅ ${l10n.accountCreatedSuccessfully}'),
               ],
             ),
             backgroundColor: Colors.green,
@@ -111,8 +114,8 @@ class _SignUpScreenState extends State<SignUpScreen>
                 const Icon(Icons.error, color: Colors.white),
                 const SizedBox(width: 8),
                 Expanded(
-                    child:
-                        Text('❌ ${authProvider.error ?? 'فشل إنشاء الحساب'}')),
+                    child: Text(
+                        '❌ ${authProvider.error ?? l10n.accountCreationFailed}')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -129,9 +132,12 @@ class _SignUpScreenState extends State<SignUpScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = localeProvider.isRtl;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
@@ -163,27 +169,27 @@ class _SignUpScreenState extends State<SignUpScreen>
                       const SizedBox(height: 30),
 
                       // العنوان الرئيسي
-                      _buildTitle(theme),
+                      _buildTitle(theme, l10n),
 
                       const SizedBox(height: 8),
 
                       // العنوان الفرعي
-                      _buildSubtitle(theme),
+                      _buildSubtitle(theme, l10n),
 
                       const SizedBox(height: 40),
 
                       // نموذج التسجيل
-                      _buildSignUpForm(theme),
+                      _buildSignUpForm(theme, l10n),
 
                       const SizedBox(height: 24),
 
                       // زر إنشاء الحساب
-                      _buildSignUpButton(theme),
+                      _buildSignUpButton(theme, l10n),
 
                       const SizedBox(height: 32),
 
                       // رابط تسجيل الدخول
-                      _buildLoginLink(theme),
+                      _buildLoginLink(theme, l10n),
 
                       const SizedBox(height: 20),
                     ],
@@ -230,13 +236,13 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildTitle(ThemeData theme) {
+  Widget _buildTitle(ThemeData theme, AppLocalizations l10n) {
     return Hero(
       tag: 'login_title',
       child: Material(
         color: Colors.transparent,
         child: Text(
-          'انضم إلى هندام!',
+          l10n.joinHindam,
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onSurface,
@@ -247,9 +253,9 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildSubtitle(ThemeData theme) {
+  Widget _buildSubtitle(ThemeData theme, AppLocalizations l10n) {
     return Text(
-      'أنشئ حسابك الجديد واستمتع بتجربة تسوق مميزة',
+      l10n.createAccountAndEnjoy,
       style: theme.textTheme.bodyLarge?.copyWith(
         color: theme.colorScheme.onSurface.withOpacity(0.7),
       ),
@@ -257,39 +263,39 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildSignUpForm(ThemeData theme) {
+  Widget _buildSignUpForm(ThemeData theme, AppLocalizations l10n) {
     return Form(
       key: _formKey,
       child: Column(
         children: [
           // حقل الاسم الكامل
-          _buildNameField(theme),
+          _buildNameField(theme, l10n),
 
           const SizedBox(height: 16),
 
           // حقل البريد الإلكتروني
-          _buildEmailField(theme),
+          _buildEmailField(theme, l10n),
 
           const SizedBox(height: 16),
 
           // حقل رقم الهاتف
-          _buildPhoneField(theme),
+          _buildPhoneField(theme, l10n),
 
           const SizedBox(height: 16),
 
           // حقل كلمة المرور
-          _buildPasswordField(theme),
+          _buildPasswordField(theme, l10n),
 
           const SizedBox(height: 16),
 
           // حقل تأكيد كلمة المرور
-          _buildConfirmPasswordField(theme),
+          _buildConfirmPasswordField(theme, l10n),
         ],
       ),
     );
   }
 
-  Widget _buildNameField(ThemeData theme) {
+  Widget _buildNameField(ThemeData theme, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -304,8 +310,8 @@ class _SignUpScreenState extends State<SignUpScreen>
       child: TextFormField(
         controller: _nameController,
         decoration: InputDecoration(
-          labelText: 'الاسم الكامل',
-          hintText: 'أدخل اسمك الكامل',
+          labelText: l10n.fullName,
+          hintText: l10n.enterFullName,
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -330,7 +336,7 @@ class _SignUpScreenState extends State<SignUpScreen>
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'الرجاء إدخال الاسم الكامل';
+            return l10n.pleaseEnterFullName;
           }
           return null;
         },
@@ -338,7 +344,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildEmailField(ThemeData theme) {
+  Widget _buildEmailField(ThemeData theme, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -355,8 +361,8 @@ class _SignUpScreenState extends State<SignUpScreen>
         keyboardType: TextInputType.emailAddress,
         textDirection: TextDirection.ltr,
         decoration: InputDecoration(
-          labelText: 'البريد الإلكتروني',
-          hintText: 'أدخل بريدك الإلكتروني',
+          labelText: l10n.email,
+          hintText: l10n.enterYourEmail,
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -381,10 +387,10 @@ class _SignUpScreenState extends State<SignUpScreen>
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'الرجاء إدخال البريد الإلكتروني';
+            return l10n.pleaseEnterValidEmail;
           }
           if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-            return 'الرجاء إدخال بريد إلكتروني صحيح';
+            return l10n.invalidEmail;
           }
           return null;
         },
@@ -392,7 +398,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildPhoneField(ThemeData theme) {
+  Widget _buildPhoneField(ThemeData theme, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -409,7 +415,7 @@ class _SignUpScreenState extends State<SignUpScreen>
         keyboardType: TextInputType.phone,
         textDirection: TextDirection.ltr,
         decoration: InputDecoration(
-          labelText: 'رقم الهاتف (اختياري)',
+          labelText: l10n.phoneOptional,
           hintText: '+968 12345678',
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
@@ -437,7 +443,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildPasswordField(ThemeData theme) {
+  Widget _buildPasswordField(ThemeData theme, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -454,8 +460,8 @@ class _SignUpScreenState extends State<SignUpScreen>
         obscureText: _obscurePassword,
         textDirection: TextDirection.ltr,
         decoration: InputDecoration(
-          labelText: 'كلمة المرور',
-          hintText: 'أدخل كلمة المرور',
+          labelText: l10n.password,
+          hintText: l10n.enterYourPassword,
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -493,10 +499,10 @@ class _SignUpScreenState extends State<SignUpScreen>
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'الرجاء إدخال كلمة المرور';
+            return l10n.pleaseEnterValidPassword;
           }
           if (value.length < 6) {
-            return 'يجب أن تكون كلمة المرور 6 أحرف على الأقل';
+            return l10n.passwordMinLength;
           }
           return null;
         },
@@ -504,7 +510,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildConfirmPasswordField(ThemeData theme) {
+  Widget _buildConfirmPasswordField(ThemeData theme, AppLocalizations l10n) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
@@ -521,8 +527,8 @@ class _SignUpScreenState extends State<SignUpScreen>
         obscureText: _obscureConfirmPassword,
         textDirection: TextDirection.ltr,
         decoration: InputDecoration(
-          labelText: 'تأكيد كلمة المرور',
-          hintText: 'أعد إدخال كلمة المرور',
+          labelText: l10n.confirmPassword,
+          hintText: l10n.reEnterPassword,
           prefixIcon: Container(
             margin: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -560,10 +566,10 @@ class _SignUpScreenState extends State<SignUpScreen>
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'الرجاء تأكيد كلمة المرور';
+            return l10n.pleaseConfirmPassword;
           }
           if (value != _passwordController.text) {
-            return 'كلمة المرور غير متطابقة';
+            return l10n.passwordsDontMatch;
           }
           return null;
         },
@@ -571,7 +577,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildSignUpButton(ThemeData theme) {
+  Widget _buildSignUpButton(ThemeData theme, AppLocalizations l10n) {
     return Hero(
       tag: 'login_button',
       child: Container(
@@ -612,9 +618,9 @@ class _SignUpScreenState extends State<SignUpScreen>
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
-              : const Text(
-                  'إنشاء حساب',
-                  style: TextStyle(
+              : Text(
+                  l10n.signup,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -625,7 +631,7 @@ class _SignUpScreenState extends State<SignUpScreen>
     );
   }
 
-  Widget _buildLoginLink(ThemeData theme) {
+  Widget _buildLoginLink(ThemeData theme, AppLocalizations l10n) {
     return Hero(
       tag: 'login_signup_link',
       child: Material(
@@ -647,7 +653,7 @@ class _SignUpScreenState extends State<SignUpScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'لديك حساب بالفعل؟ ',
+                '${l10n.alreadyHaveAccount} ',
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
@@ -655,7 +661,7 @@ class _SignUpScreenState extends State<SignUpScreen>
               TextButton(
                 onPressed: () => context.push('/login'),
                 child: Text(
-                  'تسجيل الدخول',
+                  l10n.login,
                   style: TextStyle(
                     color: theme.colorScheme.secondary,
                     fontWeight: FontWeight.bold,

@@ -59,11 +59,15 @@ class _FirebaseTestPageState extends State<FirebaseTestPage> {
 
       // 6. فحص Firebase Analytics
       final analytics = FirebaseService.analytics;
-      await analytics.logEvent(
-        name: 'connection_test',
-        parameters: {'test_time': DateTime.now().toString()},
-      );
-      _addCheck('✅ Firebase Analytics متصل');
+      if (analytics != null) {
+        await analytics.logEvent(
+          name: 'connection_test',
+          parameters: {'test_time': DateTime.now().toString()},
+        );
+        _addCheck('✅ Firebase Analytics متصل');
+      } else {
+        _addCheck('⏭️ Firebase Analytics مؤجل (للتحسين في Debug)');
+      }
 
       setState(() {
         _status = '🎉 جميع خدمات Firebase تعمل بشكل صحيح!';

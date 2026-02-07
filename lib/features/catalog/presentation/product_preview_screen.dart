@@ -11,6 +11,7 @@ import '../../../measurements/presentation/abaya_measure_screen.dart';
 import '../../../shared/widgets/any_image.dart';
 import '../../favorites/services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../shared/widgets/skeletons.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Design System
@@ -218,29 +219,11 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
   }
 
   Widget _buildLoadingState() {
-    return Directionality(
+    return const Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: _DS.background,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(_DS.primaryBrown),
-                strokeWidth: 2,
-              ),
-              const SizedBox(height: _DS.lg),
-              Text(
-                'جاري التحميل...',
-                style: TextStyle(
-                  color: _DS.mediumText,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
+        body: ProductPreviewSkeleton(),
       ),
     );
   }

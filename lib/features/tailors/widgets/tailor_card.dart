@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hindam/core/services/firebase_service.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../models/tailor.dart';
 import '../presentation/tailor_details_screen.dart';
 import 'package:hindam/features/favorites/widgets/favorite_button.dart';
@@ -251,6 +252,7 @@ class _FiltersBarTailor extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     Widget chip(String label, {IconData? icon}) {
       return OutlinedButton.icon(
@@ -273,11 +275,11 @@ class _FiltersBarTailor extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          chip('4.0+ تقييم', icon: Icons.star_rate_rounded),
+          chip(l10n.ratingFilterLabel, icon: Icons.star_rate_rounded),
           const SizedBox(width: 8),
-          chip('الأقسام'), // رجالي، عبايات، أطفال، تعديلات…
+          chip(l10n.categories), // رجالي، عبايات، أطفال، تعديلات…
           const SizedBox(width: 8),
-          chip('رتّب حسب'),
+          chip(l10n.sortBy),
           const SizedBox(width: 8),
           // زر التحديث اليدوي
           if (onRefresh != null)
@@ -291,7 +293,7 @@ class _FiltersBarTailor extends StatelessWidget {
                     )
                   : const Icon(Icons.refresh, size: 18),
               label: Text(
-                isRefreshing ? 'جاري التحديث...' : 'تحديث',
+                isRefreshing ? l10n.refreshing : l10n.refresh,
                 style: tt.labelLarge?.copyWith(color: cs.onSurface),
               ),
               style: OutlinedButton.styleFrom(

@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 /// نموذج لتصميم التطريز
 class EmbroideryDesign {
   final String id;
@@ -31,14 +33,37 @@ class EmbroideryDesign {
   });
 
   factory EmbroideryDesign.fromMap(Map<String, dynamic> map, String id) {
+    // محاولة جلب رابط الصورة من عدة حقول محتملة
+    final imageUrl = map['imageUrl'] as String? ??
+        map['image_url'] as String? ??
+        map['url'] as String? ??
+        map['downloadUrl'] as String? ??
+        map['downloadURL'] as String? ??
+        map['image'] as String? ??
+        '';
+    
+    // محاولة جلب الاسم من title أو name
+    final name = map['title'] as String? ??
+        map['name'] as String? ??
+        'تطريز ${id.substring(0, 8)}';
+    
+    // معالجة uploadedAt (قد يكون Timestamp أو int)
+    DateTime uploadedAt;
+    final rawUploaded = map['uploadedAt'];
+    if (rawUploaded is Timestamp) {
+      uploadedAt = rawUploaded.toDate();
+    } else if (rawUploaded is int) {
+      uploadedAt = DateTime.fromMillisecondsSinceEpoch(rawUploaded);
+    } else {
+      uploadedAt = DateTime.now();
+    }
+    
     return EmbroideryDesign(
       id: id,
-      imageUrl: map['imageUrl'] as String? ?? '',
-      name: map['name'] as String? ?? 'تطريز ${id.substring(0, 8)}',
+      imageUrl: imageUrl,
+      name: name,
       price: (map['price'] as num?)?.toDouble() ?? 0.0,
-      uploadedAt: map['uploadedAt'] != null
-          ? DateTime.fromMillisecondsSinceEpoch(map['uploadedAt'] as int)
-          : DateTime.now(),
+      uploadedAt: uploadedAt,
       availableColors: (map['availableColors'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
@@ -97,16 +122,12 @@ class ThreadDetails {
     required this.threadCount,
   });
 
-  bool get isValid => selectedColorIds.isNotEmpty && threadCount > 0;
-
-  Map<String, dynamic> toMap() {
+  bool get isValid => selectedColorIds.isNotEmpty && threadCount > 0;  Map<String, dynamic> toMap() {
     return {
       'selectedColorIds': selectedColorIds,
       'threadCount': threadCount,
     };
-  }
-
-  factory ThreadDetails.fromMap(Map<String, dynamic> map) {
+  }  factory ThreadDetails.fromMap(Map<String, dynamic> map) {
     return ThreadDetails(
       selectedColorIds: (map['selectedColorIds'] as List<dynamic>?)
               ?.map((e) => e.toString())

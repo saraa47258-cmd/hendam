@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Localization Audit Report - Hendam App</title>
+  <link rel="stylesheet" href="localization_audit_report.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>🌐 Localization Audit Report</h1>
+      <p>Comprehensive analysis of hardcoded strings in the Hendam Flutter application</p>
+      <div class="timestamp">Generated: <span id="timestamp"></span></div>
+    </header>
+
+    <!-- Summary Cards -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="label">Total Files Scanned</div>
+        <div class="value">1,819</div>
+        <div class="sub">Dart source files</div>
+      </div>
+      <div class="summary-card warning">
+        <div class="label">Files with Issues</div>
+        <div class="value">45+</div>
+        <div class="sub">Containing hardcoded text</div>
+      </div>
+      <div class="summary-card danger">
+        <div class="label">Hardcoded Strings</div>
+        <div class="value">350+</div>
+        <div class="sub">Estimated total count</div>
+      </div>
+      <div class="summary-card success">
+        <div class="label">Modules Affected</div>
+        <div class="value">12</div>
+        <div class="sub">Feature modules</div>
+      </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="search-container">
+      <input type="text" class="search-input" id="searchInput" placeholder="Search by file path, module, or widget name...">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="high">High Severity</button>
+      <button class="filter-btn" data-filter="medium">Medium Severity</button>
+      <button class="filter-btn" data-filter="low">Low Severity</button>
+    </div>
+
+    <!-- Top Modules Chart -->
+    <div class="top-modules">
+      <h3>📊 Top 5 Modules by Hardcoded Strings</h3>
+      <div class="module-bar">
+        <span class="name">Tailors</span>
+        <div class="bar-container"><div class="bar" style="width: 100%"></div></div>
+        <span class="count">110+</span>
+      </div>
+      <div class="module-bar">
+        <span class="name">Orders</span>
+        <div class="bar-container"><div class="bar" style="width: 63%"></div></div>
+        <span class="count">70+</span>
+      </div>
+      <div class="module-bar">
+        <span class="name">Profile</span>
+        <div class="bar-container"><div class="bar" style="width: 27%"></div></div>
+        <span class="count">30+</span>
+      </div>
+      <div class="module-bar">
+        <span class="name">Catalog</span>
+        <div class="bar-container"><div class="bar" style="width: 23%"></div></div>
+        <span class="count">25+</span>
+      </div>
+      <div class="module-bar">
+        <span class="name">Core/Shared</span>
+        <div class="bar-container"><div class="bar" style="width: 23%"></div></div>
+        <span class="count">25+</span>
+      </div>
+    </div>
+
+    <!-- Detailed Report by Module -->
+    <div id="reportContent">
+      
+      <!-- TAILORS MODULE -->
+      <div class="module-section" data-module="tailors">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            👔 Tailors Module
+          </h3>
+          <div class="module-stats">
+            <span>13 files</span>
+            <span>•</span>
+            <span class="count-badge">110+ strings</span>
+            <span class="badge high">High Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="high">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/gift_design_screen.dart</div>
+                <div class="file-widget">GiftDesignScreen</div>
+              </div>
+              <span class="badge high">60+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'⚠️ يرجى اختيار نوع القماش أولاً'</span>
+                <span class="example-tag">'هدية 🎁'</span>
+                <span class="example-tag">'القماش'</span>
+                <span class="example-tag">'لا توجد أقمشة متاحة'</span>
+                <span class="example-tag">'متابعة'</span>
+                <span class="example-tag">'الإجمالي:'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="high">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/tailoring_design_screen_backup.dart</div>
+                <div class="file-widget">TailoringDesignScreenBackup</div>
+              </div>
+              <span class="badge high">40+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'يرجى اختيار القماش أولاً'</span>
+                <span class="example-tag">'تم إرسال الطلب بنجاح!'</span>
+                <span class="example-tag">'ر.ع'</span>
+                <span class="example-tag">'سم'</span>
+                <span class="example-tag">'إنش'</span>
+                <span class="example-tag">'مراجعة الطلب'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="high">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/tailor_fabric_management_screen.dart</div>
+                <div class="file-widget">TailorFabricManagementScreen</div>
+              </div>
+              <span class="badge high">20+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'إدارة أقمشة ${widget.tailorName}'</span>
+                <span class="example-tag">'تم حذف القماش بنجاح'</span>
+                <span class="example-tag">'إضافة قماش جديد'</span>
+                <span class="example-tag">'تأكيد الحذف'</span>
+                <span class="example-tag">'إلغاء'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="high">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/tailor_fabric_admin_screen.dart</div>
+                <div class="file-widget">TailorFabricAdminScreen</div>
+              </div>
+              <span class="badge high">20+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'البحث في الأقمشة...'</span>
+                <span class="example-tag">'إضافة قماش'</span>
+                <span class="example-tag">'حذف القماش'</span>
+                <span class="example-tag">'لا توجد أقمشة لهذا الخياط'</span>
+                <span class="example-tag">'إعادة المحاولة'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/widgets/embroidery_step_widget.dart</div>
+                <div class="file-widget">EmbroideryStepWidget</div>
+              </div>
+              <span class="badge medium">10 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'اختر تصميم التطريز'</span>
+                <span class="example-tag">'بدون'</span>
+                <span class="example-tag">'خط واحد'</span>
+                <span class="example-tag">'خطان'</span>
+                <span class="example-tag">'ثلاثة خطوط'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/widgets/measurements_step_widget.dart</div>
+                <div class="file-widget">MeasurementsStepWidget</div>
+              </div>
+              <span class="badge medium">15 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'المقاسات واللون'</span>
+                <span class="example-tag">'سم'</span>
+                <span class="example-tag">'إنش'</span>
+                <span class="example-tag">'حفظ المقاسات'</span>
+                <span class="example-tag">'ملاحظات إضافية'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/widgets/interactive_body_map.dart</div>
+                <div class="file-widget">InteractiveBodyMap</div>
+              </div>
+              <span class="badge medium">15 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'اضغط على الجزء لإدخال المقاس'</span>
+                <span class="example-tag">'تأكيد'</span>
+                <span class="example-tag">Measurement labels (الطول, الكتف, etc.)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/tailoring_design_screen_responsive.dart</div>
+                <div class="file-widget">TailoringDesignScreenResponsive</div>
+              </div>
+              <span class="badge medium">7 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'تم إرسال الطلب'</span>
+                <span class="example-tag">'السابق'</span>
+                <span class="example-tag">'لا توجد أقمشة متاحة'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/tailor_shop_screen.dart</div>
+                <div class="file-widget">TailorShopScreen</div>
+              </div>
+              <span class="badge medium">7 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'متجر ${tailor.name}'</span>
+                <span class="example-tag">SnackBar messages</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/presentation/nearby_tailors_pretty.dart</div>
+                <div class="file-widget">NearbyTailorsPretty</div>
+              </div>
+              <span class="badge low">6 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'كم'</span>
+                <span class="example-tag">'مفتوح'</span>
+                <span class="example-tag">'مغلق'</span>
+                <span class="example-tag">'اتصال'</span>
+                <span class="example-tag">'خريطة'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/widgets/tailor_card.dart</div>
+                <div class="file-widget">TailorCard</div>
+              </div>
+              <span class="badge medium">12 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'تم تحديث قائمة المحلات بنجاح'</span>
+                <span class="example-tag">'متجر'</span>
+                <span class="example-tag">'وفّر حتى'</span>
+                <span class="example-tag">'إعادة المحاولة'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/widgets/tailor_tile.dart</div>
+                <div class="file-widget">TailorTile</div>
+              </div>
+              <span class="badge low">2 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'مفتوح'</span>
+                <span class="example-tag">'مغلق'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/tailors/widgets/nearby_tailors_pretty.dart</div>
+                <div class="file-widget">NearbyTailorsPretty (widgets)</div>
+              </div>
+              <span class="badge low">4 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'اتصال'</span>
+                <span class="example-tag">'خريطة'</span>
+                <span class="example-tag">'مفتوح الآن'</span>
+                <span class="example-tag">'مغلق حالياً'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ORDERS MODULE -->
+      <div class="module-section" data-module="orders">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            📦 Orders Module
+          </h3>
+          <div class="module-stats">
+            <span>6 files</span>
+            <span>•</span>
+            <span class="count-badge">70+ strings</span>
+            <span class="badge high">High Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="high">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/orders/presentation/my_orders_screen.dart</div>
+                <div class="file-widget">MyOrdersScreen</div>
+              </div>
+              <span class="badge high">40+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'ر.ع' (currency)</span>
+                <span class="example-tag">'إلغاء الطلب'</span>
+                <span class="example-tag">'سبب الرفض:'</span>
+                <span class="example-tag">Status labels (معلقة, مقبولة, etc.)</span>
+                <span class="example-tag">Measurement labels</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="high">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/orders/presentation/tailor_orders_screen.dart</div>
+                <div class="file-widget">TailorOrdersScreen</div>
+              </div>
+              <span class="badge high">35+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'البحث في الطلبات...'</span>
+                <span class="example-tag">'تم قبول الطلب'</span>
+                <span class="example-tag">'رفض'</span>
+                <span class="example-tag">'قبول'</span>
+                <span class="example-tag">'بدء التنفيذ'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="high">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/orders/presentation/customer_orders_screen.dart</div>
+                <div class="file-widget">CustomerOrdersScreen</div>
+              </div>
+              <span class="badge high">25+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'طلبات $customerName'</span>
+                <span class="example-tag">'رقم الطلب'</span>
+                <span class="example-tag">'الخياط'</span>
+                <span class="example-tag">'القماش'</span>
+                <span class="example-tag">'إغلاق'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/orders/presentation/order_details_screen.dart</div>
+                <div class="file-widget">OrderDetailsScreen</div>
+              </div>
+              <span class="badge medium">15+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'غير موجود'</span>
+                <span class="example-tag">'إعادة الطلب'</span>
+                <span class="example-tag">'تتبع الطلب'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/orders/presentation/last_order_card.dart</div>
+                <div class="file-widget">LastOrderCard</div>
+              </div>
+              <span class="badge low">2 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'أحدث طلب'</span>
+                <span class="example-tag">'تتبّع'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/orders/models/order_model.dart</div>
+                <div class="file-widget">OrderStatusExtension</div>
+              </div>
+              <span class="badge medium">12 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'في الانتظار'</span>
+                <span class="example-tag">'مقبول'</span>
+                <span class="example-tag">'قيد التنفيذ'</span>
+                <span class="example-tag">'مكتمل'</span>
+                <span class="example-tag">'مرفوض'</span>
+                <span class="example-tag">'ملغي'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PROFILE MODULE -->
+      <div class="module-section" data-module="profile">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            👤 Profile Module
+          </h3>
+          <div class="module-stats">
+            <span>5 files</span>
+            <span>•</span>
+            <span class="count-badge">30+ strings</span>
+            <span class="badge medium">Medium Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/profile/presentation/screens/help_support_screen.dart</div>
+                <div class="file-widget">HelpSupportScreen</div>
+              </div>
+              <span class="badge medium">14 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'المساعدة والدعم'</span>
+                <span class="example-tag">'الأسئلة الشائعة'</span>
+                <span class="example-tag">'تواصل معنا'</span>
+                <span class="example-tag">'support@hindam.app'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/profile/presentation/screens/privacy_security_screen.dart</div>
+                <div class="file-widget">PrivacySecurityScreen</div>
+              </div>
+              <span class="badge medium">11 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'الخصوصية والأمان'</span>
+                <span class="example-tag">'تغيير كلمة المرور'</span>
+                <span class="example-tag">'سياسة الخصوصية'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/profile/presentation/screens/about_app_screen.dart</div>
+                <div class="file-widget">AboutAppScreen</div>
+              </div>
+              <span class="badge medium">9 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'عن التطبيق'</span>
+                <span class="example-tag">'هندام'</span>
+                <span class="example-tag">'الإصدار 1.0.0'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/profile/presentation/screens/settings_screen.dart</div>
+                <div class="file-widget">SettingsScreen</div>
+              </div>
+              <span class="badge low">6 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'الإعدادات'</span>
+                <span class="example-tag">'الإشعارات'</span>
+                <span class="example-tag">'عروض وتخفيضات'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/profile/presentation/screens/payment_methods_screen.dart</div>
+                <div class="file-widget">PaymentMethodsScreen</div>
+              </div>
+              <span class="badge low">5 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'طرق الدفع'</span>
+                <span class="example-tag">'لا توجد طرق دفع محفوظة'</span>
+                <span class="example-tag">'إضافة طريقة دفع'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CATALOG MODULE -->
+      <div class="module-section" data-module="catalog">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            🛍️ Catalog Module
+          </h3>
+          <div class="module-stats">
+            <span>7 files</span>
+            <span>•</span>
+            <span class="count-badge">25+ strings</span>
+            <span class="badge medium">Medium Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="high">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/catalog/presentation/section_services_screens.dart</div>
+                <div class="file-widget">SectionServicesScreens</div>
+              </div>
+              <span class="badge high">20+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'الخياطة الرجالي'</span>
+                <span class="example-tag">'العبايات'</span>
+                <span class="example-tag">'التاجر الصغير'</span>
+                <span class="example-tag">'أضف'</span>
+                <span class="example-tag">Currency format</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/catalog/presentation/merchant_products_screen.dart</div>
+                <div class="file-widget">MerchantProductsScreen</div>
+              </div>
+              <span class="badge medium">12+ strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'منتج'</span>
+                <span class="example-tag">'فشل في تحميل المنتجات'</span>
+                <span class="example-tag">Category names (الكل, ملابس, أقمشة)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/catalog/presentation/catalog_screen.dart</div>
+                <div class="file-widget">CatalogScreen</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'الكتالوج'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/catalog/presentation/services_screen.dart</div>
+                <div class="file-widget">ServicesScreen</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'لا توجد عناصر لعرضها'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/catalog/widgets/service_card.dart</div>
+                <div class="file-widget">ServiceCard</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">Currency format</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/catalog/widgets/service_list_card.dart</div>
+                <div class="file-widget">ServiceListCard</div>
+              </div>
+              <span class="badge low">2 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">Currency format</span>
+                <span class="example-tag">'أضف'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/catalog/presentation/abaya_services_screen.dart</div>
+                <div class="file-widget">AbayaServicesScreen</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'type': 'عباية'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CORE/SHARED MODULE -->
+      <div class="module-section" data-module="core">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            ⚙️ Core / Shared Module
+          </h3>
+          <div class="module-stats">
+            <span>7 files</span>
+            <span>•</span>
+            <span class="count-badge">25+ strings</span>
+            <span class="badge medium">Medium Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/core/utils/photo_permission_helper.dart</div>
+                <div class="file-widget">PhotoPermissionHelper</div>
+              </div>
+              <span class="badge medium">8 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'الوصول إلى الصور'</span>
+                <span class="example-tag">'فتح الإعدادات'</span>
+                <span class="example-tag">'إلغاء'</span>
+                <span class="example-tag">'موافق'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/core/error/error_handler.dart</div>
+                <div class="file-widget">ErrorHandler</div>
+              </div>
+              <span class="badge low">3 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'إغلاق'</span>
+                <span class="example-tag">'حدث خطأ'</span>
+                <span class="example-tag">'إعادة المحاولة'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/core/widgets/section_header.dart</div>
+                <div class="file-widget">SectionHeader</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'عرض الكل'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/core/widgets/text_widgets.dart</div>
+                <div class="file-widget">ExpandableText</div>
+              </div>
+              <span class="badge low">2 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'عرض المزيد'</span>
+                <span class="example-tag">'عرض أقل'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/core/widgets/responsive_image.dart</div>
+                <div class="file-widget">ResponsiveImageGrid</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'إضافة صورة'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/core/state/cart_scope.dart</div>
+                <div class="file-widget">CartState</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'قيد المعالجة'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/shared/widgets/premium_app_bar.dart</div>
+                <div class="file-widget">PremiumStoreAppBar</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'رجوع'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MEASUREMENTS MODULE -->
+      <div class="module-section" data-module="measurements">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            📏 Measurements Module
+          </h3>
+          <div class="module-stats">
+            <span>2 files</span>
+            <span>•</span>
+            <span class="count-badge">20 strings</span>
+            <span class="badge medium">Medium Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/measurements/presentation/measurement_form_screen.dart</div>
+                <div class="file-widget">MeasurementFormScreen</div>
+              </div>
+              <span class="badge medium">13 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'استمارة المقاسات'</span>
+                <span class="example-tag">'الطول الكلي'</span>
+                <span class="example-tag">'الكتف'</span>
+                <span class="example-tag">'إلغاء'</span>
+                <span class="example-tag">'حفظ'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="medium">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/measurements/presentation/abaya_measure_screen_fixed.dart</div>
+                <div class="file-widget">AbayaMeasureScreenFixed</div>
+              </div>
+              <span class="badge medium">7 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'مقاسات العباية'</span>
+                <span class="example-tag">'المقاسات الأساسية'</span>
+                <span class="example-tag">'دليل القياس'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- AUTH MODULE -->
+      <div class="module-section" data-module="auth">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            🔐 Auth Module
+          </h3>
+          <div class="module-stats">
+            <span>4 files</span>
+            <span>•</span>
+            <span class="count-badge">5 strings</span>
+            <span class="badge low">Low Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/auth/presentation/splash_screen.dart</div>
+                <div class="file-widget">SplashScreen</div>
+              </div>
+              <span class="badge low">2 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">App name</span>
+                <span class="example-tag">Description</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/auth/presentation/signup_screen.dart</div>
+                <div class="file-widget">SignupScreen</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">Phone number hintText example</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/auth/presentation/forgot_password_screen.dart</div>
+                <div class="file-widget">ForgotPasswordScreen</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">Email hintText example</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/auth/presentation/auth_welcome_screen.dart</div>
+                <div class="file-widget">AuthWelcomeScreen</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'أو'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- HOME MODULE -->
+      <div class="module-section" data-module="home">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            🏠 Home Module
+          </h3>
+          <div class="module-stats">
+            <span>1 file</span>
+            <span>•</span>
+            <span class="count-badge">6 strings</span>
+            <span class="badge low">Low Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/home/presentation/home_screen.dart</div>
+                <div class="file-widget">HomeScreen</div>
+              </div>
+              <span class="badge low">6 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">Demo tailor names</span>
+                <span class="example-tag">Demo tags</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- CART MODULE -->
+      <div class="module-section" data-module="cart">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            🛒 Cart Module
+          </h3>
+          <div class="module-stats">
+            <span>1 file</span>
+            <span>•</span>
+            <span class="count-badge">5 strings</span>
+            <span class="badge low">Low Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/cart/models/cart_item.dart</div>
+                <div class="file-widget">CartItem</div>
+              </div>
+              <span class="badge low">5 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'اللون:'</span>
+                <span class="example-tag">'الطول:'</span>
+                <span class="example-tag">'الكم:'</span>
+                <span class="example-tag">'العرض:'</span>
+                <span class="example-tag">'خدمة'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FAVORITES MODULE -->
+      <div class="module-section" data-module="favorites">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            ❤️ Favorites Module
+          </h3>
+          <div class="module-stats">
+            <span>1 file</span>
+            <span>•</span>
+            <span class="count-badge">2 strings</span>
+            <span class="badge low">Low Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/favorites/widgets/favorite_button.dart</div>
+                <div class="file-widget">FavoriteButton</div>
+              </div>
+              <span class="badge low">2 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'تمت الإضافة للمفضلة'</span>
+                <span class="example-tag">'تمت الإزالة من المفضلة'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SHOPS MODULE -->
+      <div class="module-section" data-module="shops">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            🏪 Shops Module
+          </h3>
+          <div class="module-stats">
+            <span>2 files</span>
+            <span>•</span>
+            <span class="count-badge">5 strings</span>
+            <span class="badge low">Low Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/shops/presentation/tailor_details_screen.dart</div>
+                <div class="file-widget">TailorDetailsScreen</div>
+              </div>
+              <span class="badge low">3 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'الخدمات:'</span>
+                <span class="example-tag">SnackBar messages</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/features/shops/widgets/tailor_card.dart</div>
+                <div class="file-widget">TailorCard</div>
+              </div>
+              <span class="badge low">2 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'احجز موعد'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- APP MODULE -->
+      <div class="module-section" data-module="app">
+        <div class="module-header" onclick="toggleModule(this)">
+          <h3>
+            <span class="toggle-icon">▼</span>
+            📱 App Module
+          </h3>
+          <div class="module-stats">
+            <span>2 files</span>
+            <span>•</span>
+            <span class="count-badge">5 strings</span>
+            <span class="badge low">Low Priority</span>
+          </div>
+        </div>
+        <div class="module-content">
+          
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/app/router.dart</div>
+                <div class="file-widget">Router error builder</div>
+              </div>
+              <span class="badge low">4 strings</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'خطأ'</span>
+                <span class="example-tag">'حدث خطأ في التنقل'</span>
+                <span class="example-tag">'العودة للرئيسية'</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="file-card" data-severity="low">
+            <div class="file-header">
+              <div>
+                <div class="file-path">lib/app/app.dart</div>
+                <div class="file-widget">HendamApp</div>
+              </div>
+              <span class="badge low">1 string</span>
+            </div>
+            <div class="examples">
+              <div class="examples-title">Examples of hardcoded strings:</div>
+              <div class="example-list">
+                <span class="example-tag">'HINDAM'</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- No Results Message -->
+    <div class="no-results" id="noResults" style="display: none;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <h3>No results found</h3>
+      <p>Try adjusting your search or filter criteria</p>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Hendam App Localization Audit Report | Generated by Cursor AI</p>
+      <p>This is a read-only report. No code was modified.</p>
+    </footer>
+  </div>
+
+  <script>
+    // Set timestamp
+    document.getElementById('timestamp').textContent = new Date().toLocaleString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    // Toggle module sections
+    function toggleModule(header) {
+      header.classList.toggle('collapsed');
+      const content = header.nextElementSibling;
+      content.classList.toggle('collapsed');
+    }
+
+    // Search functionality
+    const searchInput = document.getElementById('searchInput');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const moduleSections = document.querySelectorAll('.module-section');
+    const noResults = document.getElementById('noResults');
+
+    let currentFilter = 'all';
+
+    searchInput.addEventListener('input', filterContent);
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        filterContent();
+      });
+    });
+
+    function filterContent() {
+      const searchTerm = searchInput.value.toLowerCase();
+      let visibleCount = 0;
+
+      moduleSections.forEach(section => {
+        const module = section.dataset.module;
+        const fileCards = section.querySelectorAll('.file-card');
+        let moduleVisible = false;
+
+        fileCards.forEach(card => {
+          const filePath = card.querySelector('.file-path').textContent.toLowerCase();
+          const widget = card.querySelector('.file-widget')?.textContent.toLowerCase() || '';
+          const severity = card.dataset.severity;
+          const examples = card.querySelector('.example-list')?.textContent.toLowerCase() || '';
+
+          const matchesSearch = !searchTerm || 
+            filePath.includes(searchTerm) || 
+            widget.includes(searchTerm) || 
+            module.includes(searchTerm) ||
+            examples.includes(searchTerm);
+
+          const matchesFilter = currentFilter === 'all' || severity === currentFilter;
+
+          if (matchesSearch && matchesFilter) {
+            card.style.display = '';
+            moduleVisible = true;
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        section.style.display = moduleVisible ? '' : 'none';
+      });
+
+      noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+  </script>
+</body>
+</html>

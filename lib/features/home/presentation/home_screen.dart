@@ -1,3 +1,4 @@
+
 // lib/features/home/presentation/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -743,34 +744,34 @@ class _PremiumCategoriesGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categories = [
-      _CategoryData(
+      const _CategoryData(
         id: 'men',
         label: 'الخياط الرجالي',
         svg: '${_iconPath}omani_icon_traced.svg',
         fallback: Icons.person,
-        color: const Color(0xFF0EA5E9),
+        color: Color(0xFF0EA5E9),
       ),
-      _CategoryData(
+      const _CategoryData(
         id: 'abaya',
         label: 'العبايات',
         svg: '${_iconPath}abaya_icon_traced.svg',
         fallback: Icons.woman,
-        color: const Color(0xFFE11D48),
+        color: Color(0xFFE11D48),
       ),
-      _CategoryData(
+      const _CategoryData(
         id: 'merchants',
         label: 'التجّار',
         svg: '${_iconPath}store-svgrepo-com.svg',
         fallback: Icons.store,
-        color: const Color(0xFFF59E0B),
+        color: Color(0xFFF59E0B),
         tint: false,
       ),
-      _CategoryData(
+      const _CategoryData(
         id: 'more',
         label: 'المزيد',
         svg: '${_iconPath}grid-circles-svgrepo-com.svg',
         fallback: Icons.apps_rounded,
-        color: const Color(0xFF8B5CF6),
+        color: Color(0xFF8B5CF6),
       ),
     ];
 

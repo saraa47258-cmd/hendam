@@ -1,10 +1,13 @@
 // lib/features/catalog/presentation/small_merchant_screen.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../shops/models/shop.dart';
+import '../../shops/services/traders_service.dart';
 
 // استبدل الاستيراد:
 import 'merchant_products_screen.dart';
+import '../../../shared/widgets/skeletons.dart';
 
 class SmallMerchantScreen extends StatefulWidget {
   const SmallMerchantScreen({super.key});
@@ -15,70 +18,47 @@ class SmallMerchantScreen extends StatefulWidget {
 
 class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
   final TextEditingController _search = TextEditingController();
+  final TradersService _tradersService = TradersService();
 
-  // بيانات تجريبية رجالية
-  final List<Shop> _all = [
-    Shop(
-      id: 'm1',
-      name: 'متجر اللمسة الرجالية',
-      category: 'مستلزمات رجالية',
-      city: 'مسقط',
-      imageUrl: 'assets/shops/3.jpg',
-      rating: 4.8,
-      reviews: 120,
-      minPrice: 9.5,
-      servicesCount: 24,
-      delivery: true,
-      isOpen: true,
-    ),
-    Shop(
-      id: 'm2',
-      name: 'بيت القماش',
-      category: 'أقمشة رجالية',
-      city: 'السيب',
-      imageUrl: 'assets/shops/4.jpg',
-      rating: 4.6,
-      reviews: 95,
-      minPrice: 10.0,
-      servicesCount: 18,
-      delivery: true,
-      isOpen: true,
-    ),
-    Shop(
-      id: 'm3',
-      name: 'أناقة رجالية',
-      category: 'تفصيل دشداشة',
-      city: 'مطرح',
-      imageUrl: 'assets/shops/5.jpg',
-      rating: 4.3,
-      reviews: 63,
-      minPrice: 8.0,
-      servicesCount: 12,
-      delivery: false,
-      isOpen: false,
-    ),
-    Shop(
-      id: 'm4',
-      name: 'أطياف ستايل',
-      category: 'أحذية وإكسسوارات',
-      city: 'العذيبة',
-      imageUrl: 'assets/shops/6.jpeg',
-      rating: 4.9,
-      reviews: 210,
-      minPrice: 12.0,
-      servicesCount: 30,
-      delivery: true,
-      isOpen: true,
-    ),
-  ];
+  // بيانات التجار من Firebase
+  List<Shop> _all = [];
+  List<Shop> _shown = [];
+  bool _isLoading = true;
+  StreamSubscription<List<Shop>>? _subscription;
 
-  late List<Shop> _shown = List.of(_all);
   bool _onlyOpen = false;
   bool _onlyDelivery = false;
 
   @override
+  void initState() {
+    super.initState();
+    _loadTraders();
+  }
+
+  void _loadTraders() {
+    _subscription = _tradersService.getTraders().listen(
+      (traders) {
+        if (mounted) {
+          setState(() {
+            _all = traders;
+            _isLoading = false;
+            _applyFilters();
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          print('خطأ في تحميل التجار: $error');
+        }
+      },
+    );
+  }
+
+  @override
   void dispose() {
     _search.dispose();
+    _subscription?.cancel();
     super.dispose();
   }
 
@@ -89,7 +69,9 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
     if (q.isNotEmpty) {
       list = list
           .where((s) =>
-      s.name.contains(q) || s.city.contains(q) || s.category.contains(q))
+              s.name.contains(q) ||
+              s.city.contains(q) ||
+              s.category.contains(q))
           .toList();
     }
     if (_onlyOpen) list = list.where((s) => s.isOpen).toList();
@@ -189,16 +171,16 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                         suffixIcon: _search.text.isEmpty
                             ? null
                             : IconButton(
-                          icon: const Icon(Icons.close_rounded),
-                          onPressed: () {
-                            _search.clear();
-                            _applyFilters();
-                          },
-                        ),
+                                icon: const Icon(Icons.close_rounded),
+                                onPressed: () {
+                                  _search.clear();
+                                  _applyFilters();
+                                },
+                              ),
                         filled: true,
                         fillColor: cs.surfaceContainerHighest.withOpacity(.7),
                         contentPadding:
-                        const EdgeInsets.symmetric(vertical: 12),
+                            const EdgeInsets.symmetric(vertical: 12),
                         border: OutlineInputBorder(
                           borderSide: BorderSide(color: cs.outlineVariant),
                           borderRadius: BorderRadius.circular(14),
@@ -208,8 +190,7 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide:
-                          BorderSide(color: cs.primary, width: 1.3),
+                          borderSide: BorderSide(color: cs.primary, width: 1.3),
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
@@ -238,8 +219,8 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                           },
                           selectedColor: const Color(0xFFE7F6EC),
                           checkmarkColor: const Color(0xFF1B5E20),
-                          avatar:
-                          const Icon(Icons.local_shipping_outlined, size: 18),
+                          avatar: const Icon(Icons.local_shipping_outlined,
+                              size: 18),
                         ),
                         const Spacer(),
                         Container(
@@ -265,33 +246,67 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
             ),
 
             // القائمة
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                      (context, i) {
-                    final s = _shown[i];
-                    return Padding(
-                      padding: EdgeInsets.only(
-                          bottom: i == _shown.length - 1 ? 0 : 12),
-                      child: _ShopCardModern(
-                        shop: s,
-                        // … داخل _ShopCardModern onTap:
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => MerchantProductsScreen(shop: s),
-                            ),
-                          );
-                        },
+            if (_isLoading)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, __) => const ShopCardSkeleton(),
+                    childCount: 5,
+                  ),
+                ),
+              )
+            else if (_shown.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.search,
+                        size: 64,
+                        color: cs.onSurfaceVariant.withOpacity(0.3),
                       ),
-                    );
-                  },
-                  childCount: _shown.length,
+                      const SizedBox(height: 16),
+                      Text(
+                        'لا توجد نتائج',
+                        style: TextStyle(
+                          color: cs.onSurfaceVariant,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, i) {
+                      final s = _shown[i];
+                      return Padding(
+                        padding: EdgeInsets.only(
+                            bottom: i == _shown.length - 1 ? 0 : 12),
+                        child: _ShopCardModern(
+                          shop: s,
+                          // … داخل _ShopCardModern onTap:
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => MerchantProductsScreen(shop: s),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                    childCount: _shown.length,
+                  ),
                 ),
               ),
-            ),
           ],
         ),
       ),
@@ -322,7 +337,7 @@ class _ShopCardModern extends StatelessWidget {
           src,
           fit: BoxFit.cover,
           loadingBuilder: (c, child, p) =>
-          p == null ? child : Container(color: cs.surfaceContainerHighest),
+              p == null ? child : Container(color: cs.surfaceContainerHighest),
           errorBuilder: (_, __, ___) =>
               Container(color: cs.surfaceContainerHighest),
         );
@@ -516,7 +531,7 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration:
-      BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Text(
         text,
         style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 12),

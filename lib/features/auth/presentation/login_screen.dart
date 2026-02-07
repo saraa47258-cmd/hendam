@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
+import 'package:hindam/l10n/app_localizations.dart';
+import 'package:hindam/core/providers/locale_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -72,14 +74,15 @@ class _LoginScreenState extends State<LoginScreen>
     if (mounted) {
       setState(() => _isLoading = false);
 
+      final l10n = AppLocalizations.of(context)!;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Row(
+            content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('✅ تم تسجيل الدخول بنجاح!'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('✅ ${l10n.loginSuccessful}'),
               ],
             ),
             backgroundColor: Colors.green,
@@ -98,8 +101,7 @@ class _LoginScreenState extends State<LoginScreen>
                 const Icon(Icons.error, color: Colors.white),
                 const SizedBox(width: 8),
                 Expanded(
-                    child:
-                        Text('❌ ${authProvider.error ?? 'فشل تسجيل الدخول'}')),
+                    child: Text('❌ ${authProvider.error ?? l10n.loginFailed}')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -116,9 +118,12 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = localeProvider.isRtl;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
@@ -150,32 +155,32 @@ class _LoginScreenState extends State<LoginScreen>
                       const SizedBox(height: 40),
 
                       // العنوان الرئيسي
-                      _buildTitle(theme),
+                      _buildTitle(theme, l10n),
 
                       const SizedBox(height: 8),
 
                       // العنوان الفرعي
-                      _buildSubtitle(theme),
+                      _buildSubtitle(theme, l10n),
 
                       const SizedBox(height: 48),
 
                       // نموذج تسجيل الدخول
-                      _buildLoginForm(theme),
+                      _buildLoginForm(theme, l10n),
 
                       const SizedBox(height: 24),
 
                       // زر تسجيل الدخول
-                      _buildLoginButton(theme),
+                      _buildLoginButton(theme, l10n),
 
                       const SizedBox(height: 24),
 
                       // رابط نسيان كلمة المرور
-                      _buildForgotPasswordLink(theme),
+                      _buildForgotPasswordLink(theme, l10n),
 
                       const SizedBox(height: 32),
 
                       // رابط التسجيل
-                      _buildSignUpLink(theme),
+                      _buildSignUpLink(theme, l10n),
 
                       const SizedBox(height: 20),
                     ],
@@ -220,13 +225,13 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildTitle(ThemeData theme) {
+  Widget _buildTitle(ThemeData theme, AppLocalizations l10n) {
     return Hero(
       tag: 'login_title',
       child: Material(
         color: Colors.transparent,
         child: Text(
-          'مرحباً بك مرة أخرى!',
+          l10n.welcomeBackTitle,
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.onSurface,
@@ -237,9 +242,9 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildSubtitle(ThemeData theme) {
+  Widget _buildSubtitle(ThemeData theme, AppLocalizations l10n) {
     return Text(
-      'سجل دخولك للوصول إلى حسابك',
+      l10n.loginToAccessAccount,
       style: theme.textTheme.bodyLarge?.copyWith(
         color: theme.colorScheme.onSurface.withOpacity(0.7),
       ),
@@ -247,24 +252,24 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildLoginForm(ThemeData theme) {
+  Widget _buildLoginForm(ThemeData theme, AppLocalizations l10n) {
     return Form(
       key: _formKey,
       child: Column(
         children: [
           // حقل البريد الإلكتروني
-          _buildEmailField(theme),
+          _buildEmailField(theme, l10n),
 
           const SizedBox(height: 20),
 
           // حقل كلمة المرور
-          _buildPasswordField(theme),
+          _buildPasswordField(theme, l10n),
         ],
       ),
     );
   }
 
-  Widget _buildEmailField(ThemeData theme) {
+  Widget _buildEmailField(ThemeData theme, AppLocalizations l10n) {
     return Hero(
       tag: 'login_email_field',
       child: Material(
@@ -285,8 +290,8 @@ class _LoginScreenState extends State<LoginScreen>
             keyboardType: TextInputType.emailAddress,
             textDirection: TextDirection.ltr,
             decoration: InputDecoration(
-              labelText: 'البريد الإلكتروني',
-              hintText: 'أدخل بريدك الإلكتروني',
+              labelText: l10n.email,
+              hintText: l10n.enterYourEmail,
               prefixIcon: Container(
                 margin: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -311,10 +316,10 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'الرجاء إدخال البريد الإلكتروني';
+                return l10n.pleaseEnterValidEmail;
               }
               if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                return 'الرجاء إدخال بريد إلكتروني صحيح';
+                return l10n.invalidEmail;
               }
               return null;
             },
@@ -324,7 +329,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildPasswordField(ThemeData theme) {
+  Widget _buildPasswordField(ThemeData theme, AppLocalizations l10n) {
     return Hero(
       tag: 'login_password_field',
       child: Material(
@@ -345,8 +350,8 @@ class _LoginScreenState extends State<LoginScreen>
             obscureText: _obscurePassword,
             textDirection: TextDirection.ltr,
             decoration: InputDecoration(
-              labelText: 'كلمة المرور',
-              hintText: 'أدخل كلمة المرور',
+              labelText: l10n.password,
+              hintText: l10n.enterYourPassword,
               prefixIcon: Container(
                 margin: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -384,7 +389,7 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'الرجاء إدخال كلمة المرور';
+                return l10n.pleaseEnterValidPassword;
               }
               return null;
             },
@@ -394,7 +399,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildLoginButton(ThemeData theme) {
+  Widget _buildLoginButton(ThemeData theme, AppLocalizations l10n) {
     return Hero(
       tag: 'login_button',
       flightShuttleBuilder: (
@@ -421,15 +426,16 @@ class _LoginScreenState extends State<LoginScreen>
         theme: theme,
         isLoading: _isLoading,
         onPressed: _handleLogin,
+        loginText: l10n.login,
       ),
     );
   }
 
-  Widget _buildForgotPasswordLink(ThemeData theme) {
+  Widget _buildForgotPasswordLink(ThemeData theme, AppLocalizations l10n) {
     return TextButton(
       onPressed: () => context.push('/forgot-password'),
       child: Text(
-        'نسيت كلمة المرور؟',
+        l10n.forgotPassword,
         style: TextStyle(
           color: theme.colorScheme.primary,
           fontWeight: FontWeight.w600,
@@ -438,7 +444,7 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Widget _buildSignUpLink(ThemeData theme) {
+  Widget _buildSignUpLink(ThemeData theme, AppLocalizations l10n) {
     return Hero(
       tag: 'login_signup_link',
       child: Material(
@@ -460,7 +466,7 @@ class _LoginScreenState extends State<LoginScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                'ليس لديك حساب؟ ',
+                '${l10n.dontHaveAccount} ',
                 style: TextStyle(
                   color: theme.colorScheme.onSurface.withOpacity(0.7),
                 ),
@@ -468,7 +474,7 @@ class _LoginScreenState extends State<LoginScreen>
               TextButton(
                 onPressed: () => context.push('/signup'),
                 child: Text(
-                  'إنشاء حساب جديد',
+                  l10n.createNewAccount,
                   style: TextStyle(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.bold,
@@ -577,11 +583,13 @@ class _AnimatedLoginButton extends StatefulWidget {
   final ThemeData theme;
   final bool isLoading;
   final VoidCallback onPressed;
+  final String loginText;
 
   const _AnimatedLoginButton({
     required this.theme,
     required this.isLoading,
     required this.onPressed,
+    required this.loginText,
   });
 
   @override
@@ -671,9 +679,9 @@ class _AnimatedLoginButtonState extends State<_AnimatedLoginButton>
                               AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : const Text(
-                        'تسجيل الدخول',
-                        style: TextStyle(
+                    : Text(
+                        widget.loginText,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,

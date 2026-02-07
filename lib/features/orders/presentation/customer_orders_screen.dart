@@ -1,5 +1,6 @@
 // lib/features/orders/presentation/customer_orders_screen.dart
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../services/order_service.dart';
 import '../models/order_model.dart';
 import '../../../shared/widgets/skeletons.dart';
@@ -18,13 +19,14 @@ class CustomerOrdersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
-          title: Text('طلبات $customerName'),
+          title: Text(l10n.customerOrdersTitle(customerName)),
           centerTitle: true,
         ),
         body: SafeArea(
@@ -35,7 +37,9 @@ class CustomerOrdersScreen extends StatelessWidget {
                 return const OrderSkeletonList();
               }
               if (snapshot.hasError) {
-                return Center(child: Text('حدث خطأ: ${snapshot.error}'));
+                return Center(
+                    child:
+                        Text(l10n.errorWithDetails(snapshot.error.toString())));
               }
               final orders = snapshot.data ?? [];
               if (orders.isEmpty) {
@@ -66,6 +70,7 @@ class _EmptyOrdersView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Column(
@@ -78,14 +83,14 @@ class _EmptyOrdersView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           Text(
-            'لا توجد طلبات حالياً',
+            l10n.noOrdersCurrently,
             style: tt.titleLarge?.copyWith(
               color: cs.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            'لم تقم بإرسال أي طلبات حتى الآن',
+            l10n.noOrdersYetDescription,
             style: tt.bodyMedium?.copyWith(
               color: cs.onSurfaceVariant,
             ),
@@ -106,6 +111,8 @@ class _OrderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     Color statusColor;
     String statusLabel;
@@ -114,35 +121,31 @@ class _OrderCard extends StatelessWidget {
     switch (order.status) {
       case OrderStatus.pending:
         statusColor = Colors.orange;
-        statusLabel = 'معلقة';
         statusIcon = Icons.hourglass_empty_rounded;
         break;
       case OrderStatus.accepted:
         statusColor = Colors.blue;
-        statusLabel = 'مقبولة';
         statusIcon = Icons.check_circle_outline_rounded;
         break;
       case OrderStatus.inProgress:
         statusColor = Colors.purple;
-        statusLabel = 'قيد التنفيذ';
         statusIcon = Icons.engineering_rounded;
         break;
       case OrderStatus.completed:
         statusColor = Colors.green;
-        statusLabel = 'مكتملة';
         statusIcon = Icons.check_circle_rounded;
         break;
       case OrderStatus.rejected:
         statusColor = Colors.red;
-        statusLabel = 'مرفوضة';
         statusIcon = Icons.cancel_rounded;
         break;
       case OrderStatus.cancelled:
         statusColor = Colors.grey;
-        statusLabel = 'ملغية';
         statusIcon = Icons.cancel_rounded;
         break;
     }
+
+    statusLabel = isArabic ? order.status.labelAr : order.status.labelEn;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -167,7 +170,7 @@ class _OrderCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'طلب #${order.id.length >= 8 ? order.id.substring(0, 8) : order.id}',
+                          '${l10n.order} #${order.id.length >= 8 ? order.id.substring(0, 8) : order.id}',
                           style: tt.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -279,7 +282,7 @@ class _OrderCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'اللون: ${order.fabricColorHex}',
+                    '${l10n.color}: ${order.fabricColorHex}',
                     style: tt.bodyMedium,
                   ),
                 ],
@@ -290,7 +293,7 @@ class _OrderCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'الإجمالي:',
+                    '${l10n.totalLabel}:',
                     style: tt.bodyMedium?.copyWith(
                       color: cs.onSurfaceVariant,
                     ),
@@ -325,7 +328,7 @@ class _OrderCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'سبب الرفض: ${order.rejectionReason}',
+                            '${l10n.orderRejectionReason}: ${order.rejectionReason}',
                             style: tt.bodySmall?.copyWith(
                               color: cs.onErrorContainer,
                             ),
@@ -360,6 +363,7 @@ class _OrderCard extends StatelessWidget {
   void _showOrderDetails(BuildContext context, OrderModel order) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     showDialog(
       context: context,
@@ -378,7 +382,7 @@ class _OrderCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'تفاصيل الطلب',
+                  l10n.orderDetails,
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -393,28 +397,30 @@ class _OrderCard extends StatelessWidget {
               children: [
                 _DetailRow(
                   icon: Icons.tag_rounded,
-                  label: 'رقم الطلب',
-                  value: order.id.length >= 12 ? order.id.substring(0, 12) : order.id,
+                  label: l10n.orderNumber,
+                  value: order.id.length >= 12
+                      ? order.id.substring(0, 12)
+                      : order.id,
                 ),
                 _DetailRow(
                   icon: Icons.storefront_rounded,
-                  label: 'الخياط',
+                  label: l10n.tailorLabel,
                   value: order.tailorName,
                 ),
                 _DetailRow(
                   icon: Icons.checkroom_rounded,
-                  label: 'القماش',
+                  label: l10n.fabric,
                   value: order.fabricName,
                 ),
                 _DetailRow(
                   icon: Icons.palette_rounded,
-                  label: 'اللون',
+                  label: l10n.color,
                   value: order.fabricColorHex,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  'المقاسات:',
-                  style: TextStyle(
+                Text(
+                  '${l10n.measurementsLabel}:',
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -428,7 +434,7 @@ class _OrderCard extends StatelessWidget {
                       children: [
                         Text(entry.key),
                         Text(
-                          '${entry.value} سم',
+                          '${entry.value} ${l10n.cmLabel}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                           ),
@@ -440,7 +446,7 @@ class _OrderCard extends StatelessWidget {
                 if (order.notes.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(
-                    'ملاحظات:',
+                    l10n.notes,
                     style: tt.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -466,7 +472,7 @@ class _OrderCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'السعر الإجمالي:',
+                        '${l10n.totalPriceLabel}:',
                         style: tt.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -487,7 +493,7 @@ class _OrderCard extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('إغلاق'),
+              child: Text(l10n.close),
             ),
           ],
         ),

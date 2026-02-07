@@ -12,15 +12,15 @@ class FirebaseService {
   static FirebaseAuth? _auth;
   static FirebaseStorage? _storage;
   static FirebaseAnalytics? _analytics;
+  static bool _analyticsInitialized = false;
 
-  // تهيئة Firebase
+  // تهيئة Firebase الأساسية فقط (سريعة)
   static Future<void> initialize() async {
     try {
       await Firebase.initializeApp();
       _firestore = FirebaseFirestore.instance;
       _auth = FirebaseAuth.instance;
       _storage = FirebaseStorage.instance;
-      _analytics = FirebaseAnalytics.instance;
 
       // إعدادات Firestore محسّنة للأداء
       _firestore!.settings = const Settings(
@@ -28,11 +28,31 @@ class FirebaseService {
         cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
       );
 
-      // تفعيل الشبكة للحصول على التحديثات الفورية
-      await _firestore!.enableNetwork();
+      // تأخير تهيئة Analytics لتحسين وقت البدء
+      // Analytics تسبب بطء كبير في بداية التطبيق
+      _initializeAnalyticsDeferred();
     } catch (e) {
       ErrorHandler.handleError(e, null, context: 'تهيئة Firebase');
     }
+  }
+
+  // تهيئة Analytics بشكل مؤجل (لا تحجب الـ main thread)
+  static void _initializeAnalyticsDeferred() {
+    // تأجيل تهيئة Analytics لمدة 3 ثواني بعد بدء التطبيق
+    Future.delayed(const Duration(seconds: 3), () async {
+      try {
+        // في وضع Debug، نتجنب Analytics لتحسين الأداء
+        if (kDebugMode) {
+          debugPrint('⏭️ تم تخطي Analytics في وضع Debug لتحسين الأداء');
+          return;
+        }
+        _analytics = FirebaseAnalytics.instance;
+        _analyticsInitialized = true;
+        debugPrint('✅ تم تهيئة Analytics بنجاح');
+      } catch (e) {
+        debugPrint('⚠️ فشل تهيئة Analytics: $e');
+      }
+    });
   }
 
   // Getters
@@ -57,18 +77,23 @@ class FirebaseService {
     return _storage!;
   }
 
-  static FirebaseAnalytics get analytics {
-    if (_analytics == null) {
-      throw Exception('Firebase لم يتم تهيئته بعد');
-    }
-    return _analytics!;
+  static FirebaseAnalytics? get analytics {
+    // إرجاع null إذا لم يتم تهيئة Analytics بعد (بدلاً من إلقاء استثناء)
+    return _analytics;
   }
+
+  // التحقق من جاهزية Analytics
+  static bool get isAnalyticsReady =>
+      _analyticsInitialized && _analytics != null;
 
   // تسجيل الأحداث (مع معالجة آمنة للأخطاء)
   static Future<void> logEvent(
       String eventName, Map<String, Object> parameters) async {
+    // تخطي في وضع Debug لتحسين الأداء
+    if (kDebugMode) return;
+
     try {
-      if (_analytics != null) {
+      if (_analytics != null && _analyticsInitialized) {
         await _analytics!.logEvent(name: eventName, parameters: parameters);
       }
     } catch (e) {
@@ -149,29 +174,29 @@ class FirebaseService {
       // في حالة الخطأ (مثلاً لا يوجد index)، نستخدم query بدون where
       debugPrint('تحذير: خطأ في getTailorsQuery: $e');
       debugPrint('محاولة استخدام query بسيط بدون where...');
-      
+
       try {
         // محاولة بدون where
         var query = firestore
             .collection('tailors')
             .orderBy('createdAt', descending: true);
-        
+
         if (limit != null) {
           query = query.limit(limit);
         }
-        
+
         return query;
       } catch (e2) {
         // إذا فشل الترتيب أيضاً، نرجع query بسيط جداً
         debugPrint('تحذير: خطأ في الترتيب أيضاً: $e2');
         debugPrint('استخدام query بسيط بدون ترتيب...');
-        
+
         Query<Map<String, dynamic>> query = firestore.collection('tailors');
-        
+
         if (limit != null) {
           query = query.limit(limit);
         }
-        
+
         return query;
       }
     }

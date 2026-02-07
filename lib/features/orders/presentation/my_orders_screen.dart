@@ -6,6 +6,8 @@ import '../../auth/providers/auth_provider.dart';
 import '../services/order_service.dart';
 import '../models/order_model.dart';
 import '../../../shared/widgets/skeletons.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// شاشة عرض طلبات العميل الحقيقية
 class MyOrdersScreen extends StatefulWidget {
@@ -17,29 +19,30 @@ class MyOrdersScreen extends StatefulWidget {
 
 class _MyOrdersScreenState extends State<MyOrdersScreen> {
   int _selectedTab = 0;
-  static const _statusTabs = [
-    'الكل',
-    'معلقة',
-    'مقبولة',
-    'قيد التنفيذ',
-    'مكتملة',
-    'مرفوضة'
-  ];
+
+  List<String> _getStatusTabs(AppLocalizations l10n) => [
+        l10n.allOrders,
+        l10n.pendingOrders,
+        l10n.acceptedOrders,
+        l10n.inProgressOrders,
+        l10n.completedOrdersTab,
+        l10n.rejectedOrders,
+      ];
 
   // مساعد لصياغة التاريخ
-  String _formatDate(DateTime date) {
+  String _formatDate(DateTime date, AppLocalizations l10n) {
     final now = DateTime.now();
     final diff = now.difference(date);
 
     if (diff.inDays == 0) {
       if (diff.inHours == 0) {
-        return 'قبل ${diff.inMinutes} دقيقة';
+        return l10n.minutesAgo(diff.inMinutes);
       }
-      return 'قبل ${diff.inHours} ساعة';
+      return l10n.hoursAgo(diff.inHours);
     } else if (diff.inDays == 1) {
-      return 'أمس';
+      return l10n.yesterday;
     } else if (diff.inDays < 7) {
-      return 'قبل ${diff.inDays} أيام';
+      return l10n.daysAgo(diff.inDays);
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
@@ -51,13 +54,17 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = localeProvider.locale?.languageCode == 'ar';
+    final statusTabs = _getStatusTabs(l10n);
 
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
         // التحقق من تسجيل الدخول
         if (!authProvider.isAuthenticated || authProvider.currentUser == null) {
           return Directionality(
-            textDirection: TextDirection.rtl,
+            textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
             child: Scaffold(
               backgroundColor: cs.surface,
               appBar: AppBar(
@@ -65,7 +72,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                   icon: const Icon(Icons.arrow_back_rounded),
                   onPressed: () => Navigator.maybePop(context),
                 ),
-                title: const Text('طلباتي'),
+                title: Text(l10n.myOrders),
                 centerTitle: true,
               ),
               body: Center(
@@ -74,7 +81,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                   children: [
                     Icon(Icons.login, size: 60, color: cs.onSurfaceVariant),
                     const SizedBox(height: 16),
-                    Text('يرجى تسجيل الدخول لعرض الطلبات',
+                    Text(l10n.pleaseLoginToViewOrders,
                         style: TextStyle(color: cs.onSurfaceVariant)),
                   ],
                 ),
@@ -91,7 +98,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
             '📱 MyOrdersScreen: User Name = ${authProvider.currentUser!.name}');
 
         return Directionality(
-          textDirection: TextDirection.rtl,
+          textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
           child: Scaffold(
             backgroundColor: cs.surface,
             appBar: AppBar(
@@ -114,7 +121,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                   context.go('/app');
                 },
               ),
-              title: const Text('طلباتي'),
+              title: Text(l10n.myOrders),
               centerTitle: true,
             ),
             body: Column(
@@ -128,7 +135,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                     itemBuilder: (_, i) {
                       final selected = i == _selectedTab;
                       return ChoiceChip(
-                        label: Text(_statusTabs[i]),
+                        label: Text(statusTabs[i]),
                         selected: selected,
                         onSelected: (_) => setState(() => _selectedTab = i),
                         backgroundColor:
@@ -143,7 +150,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                       );
                     },
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemCount: _statusTabs.length,
+                    itemCount: statusTabs.length,
                   ),
                 ),
 
@@ -177,9 +184,9 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                               Icon(Icons.error_outline,
                                   size: 48, color: cs.error),
                               const SizedBox(height: 16),
-                              const Text(
-                                'حدث خطأ في تحميل الطلبات',
-                                style: TextStyle(
+                              Text(
+                                l10n.errorLoadingOrders,
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -204,7 +211,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                   setState(() {});
                                 },
                                 icon: const Icon(Icons.refresh),
-                                label: const Text('إعادة المحاولة'),
+                                label: Text(l10n.retry),
                               ),
                             ],
                           ),
@@ -245,7 +252,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                   size: 80, color: cs.onSurfaceVariant),
                               const SizedBox(height: 24),
                               Text(
-                                'لا توجد طلبات',
+                                l10n.noOrdersYet,
                                 style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -256,9 +263,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 40),
                                 child: Text(
-                                  _selectedTab == 0
-                                      ? 'لم تقم بإرسال أي طلبات حتى الآن.\nابدأ بتصفح الخياطين واطلب قطعتك المفصلة!'
-                                      : 'لا توجد طلبات في هذه الفئة حالياً',
+                                  l10n.startShoppingNow,
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: cs.onSurfaceVariant,
@@ -276,7 +281,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                         .popUntil((route) => route.isFirst);
                                   },
                                   icon: const Icon(Icons.home),
-                                  label: const Text('تصفح الخياطين'),
+                                  label: Text(l10n.browseProducts),
                                   style: FilledButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 24,
@@ -295,7 +300,8 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         itemBuilder: (_, i) => _OrderCard(
                           order: filteredOrders[i],
                           priceText: _price(filteredOrders[i].totalPrice),
-                          dateText: _formatDate(filteredOrders[i].createdAt),
+                          dateText:
+                              _formatDate(filteredOrders[i].createdAt, l10n),
                           onTap: () {
                             // الانتقال لصفحة تفاصيل الطلب
                             Navigator.push(
@@ -314,26 +320,37 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                               ? () async {
                                   final confirmed = await showDialog<bool>(
                                     context: context,
-                                    builder: (context) => Directionality(
-                                      textDirection: TextDirection.rtl,
-                                      child: AlertDialog(
-                                        title: const Text('إلغاء الطلب'),
-                                        content: const Text(
-                                            'هل أنت متأكد من إلغاء هذا الطلب؟'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, false),
-                                            child: const Text('لا'),
-                                          ),
-                                          FilledButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, true),
-                                            child: const Text('نعم، إلغاء'),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                                    builder: (dialogContext) {
+                                      final dialogL10n =
+                                          AppLocalizations.of(dialogContext)!;
+                                      final isRtl = context
+                                              .read<LocaleProvider>()
+                                              .locale
+                                              ?.languageCode ==
+                                          'ar';
+                                      return Directionality(
+                                        textDirection: isRtl
+                                            ? TextDirection.rtl
+                                            : TextDirection.ltr,
+                                        child: AlertDialog(
+                                          title: Text(dialogL10n.cancelOrder),
+                                          content: Text(
+                                              dialogL10n.confirmCancelOrder),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(
+                                                  dialogContext, false),
+                                              child: Text(dialogL10n.no),
+                                            ),
+                                            FilledButton(
+                                              onPressed: () => Navigator.pop(
+                                                  dialogContext, true),
+                                              child: Text(dialogL10n.yesCancel),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
                                   );
 
                                   if (confirmed == true) {
@@ -393,6 +410,7 @@ class _OrderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     Color bg;
     Color fg;
@@ -403,37 +421,37 @@ class _OrderCard extends StatelessWidget {
       case OrderStatus.pending:
         bg = const Color(0xFFFFF4E5);
         fg = const Color(0xFF8D6E63);
-        statusText = 'معلقة';
+        statusText = l10n.pending;
         statusIcon = Icons.hourglass_empty_rounded;
         break;
       case OrderStatus.accepted:
         bg = const Color(0xFFE3F2FD);
         fg = const Color(0xFF0D47A1);
-        statusText = 'مقبولة';
+        statusText = l10n.accepted;
         statusIcon = Icons.check_circle_outline_rounded;
         break;
       case OrderStatus.inProgress:
         bg = const Color(0xFFF3E5F5);
         fg = const Color(0xFF4A148C);
-        statusText = 'قيد التنفيذ';
+        statusText = l10n.inProgress;
         statusIcon = Icons.engineering_rounded;
         break;
       case OrderStatus.completed:
         bg = const Color(0xFFE7F6EC);
         fg = const Color(0xFF1B5E20);
-        statusText = 'مكتملة';
+        statusText = l10n.completed;
         statusIcon = Icons.check_circle_rounded;
         break;
       case OrderStatus.rejected:
         bg = const Color(0xFFFDECEC);
         fg = const Color(0xFFB71C1C);
-        statusText = 'مرفوضة';
+        statusText = l10n.rejected;
         statusIcon = Icons.cancel_rounded;
         break;
       case OrderStatus.cancelled:
         bg = const Color(0xFFF5F5F5);
         fg = const Color(0xFF616161);
-        statusText = 'ملغية';
+        statusText = l10n.cancelled;
         statusIcon = Icons.cancel_rounded;
         break;
     }
@@ -458,7 +476,7 @@ class _OrderCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // صورة القماش
+                // صورة المنتج/القماش
                 ClipRRect(
                   borderRadius: const BorderRadiusDirectional.only(
                     topStart: Radius.circular(16),
@@ -467,12 +485,16 @@ class _OrderCard extends StatelessWidget {
                     width: 110,
                     height: 110,
                     color: cs.surfaceContainerHighest,
-                    child: order.fabricImageUrl.isEmpty
+                    child: order.displayImageUrl.isEmpty
                         ? Center(
-                            child: Icon(Icons.checkroom,
-                                size: 40, color: cs.onSurfaceVariant))
+                            child: Icon(
+                                order.isMerchantProduct
+                                    ? Icons.shopping_bag_outlined
+                                    : Icons.checkroom,
+                                size: 40,
+                                color: cs.onSurfaceVariant))
                         : Image.network(
-                            order.fabricImageUrl,
+                            order.displayImageUrl,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Center(
                               child: Icon(Icons.broken_image,
@@ -495,12 +517,12 @@ class _OrderCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // الحالة
+                        // اسم المنتج والحالة
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                order.fabricName,
+                                order.displayName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -543,7 +565,7 @@ class _OrderCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                order.tailorName,
+                                order.displaySellerName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
@@ -552,23 +574,36 @@ class _OrderCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 2),
-                        Row(
-                          children: [
-                            Icon(Icons.texture,
-                                size: 12, color: cs.onSurfaceVariant),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                order.fabricType,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    color: cs.onSurfaceVariant, fontSize: 11),
+                        // نوع القماش أو نوع المنتج
+                        if ((order.isMerchantProduct &&
+                                order.productSubtitle != null &&
+                                order.productSubtitle!.isNotEmpty) ||
+                            (!order.isMerchantProduct &&
+                                order.fabricType.isNotEmpty)) ...[
+                          const SizedBox(height: 2),
+                          Row(
+                            children: [
+                              Icon(
+                                  order.isMerchantProduct
+                                      ? Icons.category_outlined
+                                      : Icons.texture,
+                                  size: 12,
+                                  color: cs.onSurfaceVariant),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  order.isMerchantProduct
+                                      ? order.productSubtitle!
+                                      : order.fabricType,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      color: cs.onSurfaceVariant, fontSize: 11),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                        ],
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -622,7 +657,7 @@ class _OrderCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'سبب الرفض: ${order.rejectionReason}',
+                        '${l10n.rejectionReason}: ${order.rejectionReason}',
                         style: TextStyle(
                           color: Colors.red[700],
                           fontSize: 12,
@@ -679,7 +714,7 @@ class _OrderCard extends StatelessWidget {
                       TextButton.icon(
                         onPressed: onCancel,
                         icon: const Icon(Icons.cancel_outlined, size: 16),
-                        label: const Text('إلغاء الطلب'),
+                        label: Text(l10n.cancelOrder),
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.red,
                           padding: const EdgeInsets.symmetric(
@@ -728,9 +763,11 @@ class _OrderDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = context.watch<LocaleProvider>().locale?.languageCode == 'ar';
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
@@ -738,7 +775,7 @@ class _OrderDetailsScreen extends StatelessWidget {
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text('تفاصيل الطلب'),
+          title: Text(l10n.orderDetails),
           centerTitle: true,
         ),
         body: StreamBuilder<OrderModel?>(
@@ -756,7 +793,7 @@ class _OrderDetailsScreen extends StatelessWidget {
                   children: [
                     Icon(Icons.error_outline, size: 48, color: cs.error),
                     const SizedBox(height: 16),
-                    Text('حدث خطأ: ${snapshot.error}'),
+                    Text('${l10n.errorOccurred}: ${snapshot.error}'),
                   ],
                 ),
               );
@@ -771,7 +808,7 @@ class _OrderDetailsScreen extends StatelessWidget {
                     Icon(Icons.shopping_bag_outlined,
                         size: 60, color: cs.onSurfaceVariant),
                     const SizedBox(height: 16),
-                    Text('الطلب غير موجود',
+                    Text(l10n.orderNotFound,
                         style: TextStyle(color: cs.onSurfaceVariant)),
                   ],
                 ),

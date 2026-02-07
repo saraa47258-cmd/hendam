@@ -1,8 +1,13 @@
 // lib/features/cart/presentation/cart_screen.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:hindam/core/state/cart_scope.dart';
 import 'package:hindam/core/error/error_handler.dart';
 import 'package:hindam/core/performance/performance_utils.dart';
+import 'package:hindam/core/services/firebase_service.dart';
+import 'package:hindam/l10n/app_localizations.dart';
+import 'package:hindam/core/providers/locale_provider.dart';
+import 'package:hindam/features/orders/presentation/my_orders_screen.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -17,26 +22,29 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
     final cartState = CartScope.of(context);
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = localeProvider.isRtl;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
-          title: const Text('السلة'),
+          title: Text(l10n.cart),
           centerTitle: true,
           actions: [
             if (cartState.items.isNotEmpty)
               TextButton(
                 onPressed: () {
-                  _showClearCartDialog(context, cartState);
+                  _showClearCartDialog(context, cartState, l10n);
                 },
-                child: const Text('مسح الكل'),
+                child: Text(l10n.clearAll),
               ),
           ],
         ),
         body: cartState.items.isEmpty
-            ? _buildEmptyCart(cs, tt)
+            ? _buildEmptyCart(cs, tt, l10n)
             : Column(
                 children: [
                   Expanded(
@@ -45,18 +53,18 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
                       itemCount: cartState.items.length,
                       itemBuilder: (context, index) {
                         final item = cartState.items[index];
-                        return _buildCartItem(item, cartState, cs, tt);
+                        return _buildCartItem(item, cartState, cs, tt, l10n);
                       },
                     ),
                   ),
-                  _buildCartSummary(cartState, cs, tt),
+                  _buildCartSummary(cartState, cs, tt, l10n),
                 ],
               ),
       ),
     );
   }
 
-  Widget _buildEmptyCart(ColorScheme cs, TextTheme tt) {
+  Widget _buildEmptyCart(ColorScheme cs, TextTheme tt, AppLocalizations l10n) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -68,7 +76,7 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
           ),
           const SizedBox(height: 16),
           Text(
-            'السلة فارغة',
+            l10n.emptyCart,
             style: tt.headlineSmall?.copyWith(
               color: cs.onSurfaceVariant,
               fontWeight: FontWeight.w600,
@@ -76,7 +84,7 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
           ),
           const SizedBox(height: 8),
           Text(
-            'أضف بعض المنتجات لتبدأ التسوق',
+            l10n.addProductsToStart,
             style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
@@ -85,15 +93,15 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
               // العودة للرئيسية
               Navigator.of(context).pop();
             },
-            child: const Text('تصفح المنتجات'),
+            child: Text(l10n.browseProducts),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCartItem(
-      dynamic item, CartState cartState, ColorScheme cs, TextTheme tt) {
+  Widget _buildCartItem(dynamic item, CartState cartState, ColorScheme cs,
+      TextTheme tt, AppLocalizations l10n) {
     // الحصول على تفاصيل التخصيص
     final customization = item.customization;
     final hasCustomization = customization?.hasCustomization ?? false;
@@ -171,7 +179,7 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${item.price.toStringAsFixed(2)} ر.ع',
+                        l10n.currency(item.price.toStringAsFixed(2)),
                         style: tt.bodyMedium?.copyWith(
                           color: cs.primary,
                           fontWeight: FontWeight.w600,
@@ -180,7 +188,7 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
                       // عرض ملخص التخصيص
                       if (hasCustomization) ...[
                         const SizedBox(height: 8),
-                        _buildCustomizationSummary(customization, cs, tt),
+                        _buildCustomizationSummary(customization, cs, tt, l10n),
                       ],
                     ],
                   ),
@@ -242,7 +250,7 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
                 ),
                 const Spacer(),
                 Text(
-                  '${(item.price * item.qty).toStringAsFixed(2)} ر.ع',
+                  l10n.currency((item.price * item.qty).toStringAsFixed(2)),
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: cs.primary,
@@ -257,8 +265,8 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
   }
 
   /// بناء ملخص التخصيص
-  Widget _buildCustomizationSummary(
-      dynamic customization, ColorScheme cs, TextTheme tt) {
+  Widget _buildCustomizationSummary(dynamic customization, ColorScheme cs,
+      TextTheme tt, AppLocalizations l10n) {
     final parts = <Widget>[];
 
     // اللون
@@ -277,7 +285,7 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
           ),
           const SizedBox(width: 4),
           Text(
-            'اللون',
+            l10n.color,
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ],
@@ -316,7 +324,7 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
           Icon(Icons.note, size: 12, color: cs.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
-            'ملاحظات',
+            l10n.notes,
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
           ),
         ],
@@ -342,7 +350,8 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
     }
   }
 
-  Widget _buildCartSummary(CartState cartState, ColorScheme cs, TextTheme tt) {
+  Widget _buildCartSummary(CartState cartState, ColorScheme cs, TextTheme tt,
+      AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -362,11 +371,11 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'الإجمالي',
+                l10n.total,
                 style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               Text(
-                '${cartState.total.toStringAsFixed(2)} ر.ع',
+                l10n.currency(cartState.total.toStringAsFixed(2)),
                 style: tt.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: cs.primary,
@@ -379,12 +388,12 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
             width: double.infinity,
             child: FilledButton(
               onPressed: () {
-                _showPlaceOrderDialog(context, cartState);
+                _showPlaceOrderDialog(context, cartState, l10n);
               },
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text('إتمام الطلب'),
+              child: Text(l10n.completeOrder),
             ),
           ),
         ],
@@ -392,51 +401,174 @@ class _CartScreenState extends State<CartScreen> with PerformanceMixin {
     );
   }
 
-  void _showClearCartDialog(BuildContext context, CartState cartState) {
+  void _showClearCartDialog(
+      BuildContext context, CartState cartState, AppLocalizations l10n) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('مسح السلة'),
-        content: const Text('هل أنت متأكد من مسح جميع العناصر من السلة؟'),
+        title: Text(l10n.clearCart),
+        content: Text(l10n.clearCartConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إلغاء'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () {
               cartState.clear();
               Navigator.of(context).pop();
-              ErrorHandler.showSuccessSnackBar(context, 'تم مسح السلة');
+              ErrorHandler.showSuccessSnackBar(context, l10n.cartCleared);
             },
-            child: const Text('مسح'),
+            child: Text(l10n.clear),
           ),
         ],
       ),
     );
   }
 
-  void _showPlaceOrderDialog(BuildContext context, CartState cartState) {
+  void _showPlaceOrderDialog(
+      BuildContext context, CartState cartState, AppLocalizations l10n) {
+    final user = FirebaseService.currentUser;
+
+    if (user == null) {
+      ErrorHandler.showErrorSnackBar(context, l10n.pleaseSignInFirst);
+      return;
+    }
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('إتمام الطلب'),
-        content:
-            Text('إجمالي الطلب: ${cartState.total.toStringAsFixed(2)} ر.ع'),
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.completeOrder),
+        content: Text(
+            '${l10n.orderTotalAmount}: ${l10n.currency(cartState.total.toStringAsFixed(2))}'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('إلغاء'),
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
-            onPressed: () {
-              cartState.placeOrder();
-              Navigator.of(context).pop();
-              ErrorHandler.showSuccessSnackBar(context, 'تم إرسال الطلب بنجاح');
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+
+              // عرض مؤشر التحميل
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (_) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+
+              // إرسال الطلب إلى Firebase
+              final orderId = await cartState.submitCartOrder(
+                customerId: user.uid,
+                customerName: user.displayName ?? l10n.guest,
+                customerPhone: user.phoneNumber ?? '',
+              );
+
+              // إغلاق مؤشر التحميل
+              if (context.mounted) {
+                Navigator.of(context).pop();
+              }
+
+              if (orderId != null && context.mounted) {
+                // عرض dialog النجاح
+                _showOrderSuccessDialog(context, orderId, l10n);
+              } else if (context.mounted) {
+                ErrorHandler.showErrorSnackBar(context, l10n.failedToSendOrder);
+              }
             },
-            child: const Text('تأكيد الطلب'),
+            child: Text(l10n.confirmOrder),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showOrderSuccessDialog(
+      BuildContext context, String orderId, AppLocalizations l10n) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.green[50],
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.check_circle_rounded,
+                    color: Colors.green[600], size: 56),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.orderSubmittedSuccessfully,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '${l10n.orderNumber}: #${orderId.substring(0, 8).toUpperCase()}',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(l10n.continueShopping),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // استخدام navigator reference قبل إغلاق الـ dialog
+                        final navigator =
+                            Navigator.of(context, rootNavigator: true);
+                        Navigator.pop(ctx);
+                        navigator.push(
+                          MaterialPageRoute(
+                            builder: (_) => const MyOrdersScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(l10n.viewOrders),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

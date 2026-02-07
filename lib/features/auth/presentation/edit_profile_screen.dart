@@ -1,8 +1,11 @@
 // lib/features/auth/presentation/edit_profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hindam/l10n/app_localizations.dart';
+import 'package:hindam/core/providers/locale_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -55,14 +58,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       final success = await authProvider.updateUser(updatedUser);
 
+      final l10n = AppLocalizations.of(context)!;
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('تم تحديث الملف الشخصي بنجاح'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(l10n.profileUpdatedSuccessfully),
               ],
             ),
             backgroundColor: Colors.green,
@@ -72,12 +76,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         context.pop();
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.error, color: Colors.white),
-                SizedBox(width: 8),
-                Text('فشل تحديث الملف الشخصي'),
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 8),
+                Text(l10n.profileUpdateFailed),
               ],
             ),
             backgroundColor: Colors.red,
@@ -87,13 +91,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
               children: [
                 const Icon(Icons.error, color: Colors.white),
                 const SizedBox(width: 8),
-                Expanded(child: Text('حدث خطأ: ${e.toString()}')),
+                Expanded(child: Text('${l10n.errorOccurred}: ${e.toString()}')),
               ],
             ),
             backgroundColor: Colors.red,
@@ -110,27 +115,66 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   String _initials(String name) {
     final parts = name.trim().split(' ');
+    if (parts.isEmpty) return '?';
     if (parts.length == 1) {
-      return parts.first.characters.take(2).toString().toUpperCase();
+      final s = parts.first;
+      return s.length >= 2 ? s.substring(0, 2).toUpperCase() : s.toUpperCase();
     }
     return (parts.first.characters.first + parts.last.characters.first)
         .toUpperCase();
+  }
+
+  Widget _avatarPlaceholder(BuildContext context, dynamic user) {
+    final cs = Theme.of(context).colorScheme;
+    final name = user?.name ?? _nameController.text;
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [cs.primary, cs.secondary],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: cs.primary.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Text(
+          _initials(name),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 32,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final user = context.watch<AuthProvider>().currentUser;
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final isRtl = localeProvider.isRtl;
 
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('تعديل الملف الشخصي')),
-        body: const Center(child: Text('لا يوجد مستخدم مسجل')),
+        appBar: AppBar(title: Text(l10n.editProfile)),
+        body: Center(child: Text(l10n.noUserLoggedIn)),
       );
     }
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
         backgroundColor: cs.surface,
         body: SafeArea(
@@ -153,13 +197,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      icon: Icon(
+                        isRtl ? Icons.arrow_back : Icons.arrow_forward,
+                        color: Colors.white,
+                      ),
                       onPressed: () => context.pop(),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'تعديل الملف الشخصي',
-                      style: TextStyle(
+                    Text(
+                      l10n.editProfile,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
@@ -178,41 +225,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // صورة المستخدم
+                        // صورة المستخدم (من الملف أو الأحرف الأولى)
                         Center(
                           child: Stack(
                             children: [
-                              Container(
-                                width: 120,
-                                height: 120,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                    colors: [
-                                      cs.primary,
-                                      cs.secondary,
-                                    ],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: cs.primary.withOpacity(0.3),
-                                      blurRadius: 20,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    _initials(_nameController.text),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 32,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
+                              ClipOval(
+                                child: user.photoUrl != null &&
+                                        user.photoUrl!.isNotEmpty
+                                    ? CachedNetworkImage(
+                                        imageUrl: user.photoUrl!,
+                                        width: 120,
+                                        height: 120,
+                                        fit: BoxFit.cover,
+                                        placeholder: (_, __) =>
+                                            _avatarPlaceholder(context, user),
+                                        errorWidget: (_, __, ___) =>
+                                            _avatarPlaceholder(context, user),
+                                      )
+                                    : _avatarPlaceholder(context, user),
                               ),
                               Positioned(
                                 bottom: 0,
@@ -241,7 +271,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                         // حقل الاسم
                         Text(
-                          'الاسم الكامل',
+                          l10n.fullName,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -253,7 +283,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           controller: _nameController,
                           onChanged: (_) => setState(() {}),
                           decoration: InputDecoration(
-                            hintText: 'أدخل اسمك الكامل',
+                            hintText: l10n.enterFullName,
                             prefixIcon:
                                 Icon(Icons.person_rounded, color: cs.primary),
                             filled: true,
@@ -270,7 +300,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'الرجاء إدخال الاسم';
+                              return l10n.pleaseEnterName;
                             }
                             return null;
                           },
@@ -279,7 +309,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                         // حقل البريد الإلكتروني (غير قابل للتعديل)
                         Text(
-                          'البريد الإلكتروني',
+                          l10n.email,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -291,7 +321,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           initialValue: user.email,
                           enabled: false,
                           decoration: InputDecoration(
-                            hintText: 'البريد الإلكتروني',
+                            hintText: l10n.email,
                             prefixIcon:
                                 Icon(Icons.email_rounded, color: cs.primary),
                             filled: true,
@@ -305,7 +335,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'لا يمكن تعديل البريد الإلكتروني',
+                          l10n.emailCannotBeChanged,
                           style: TextStyle(
                             fontSize: 12,
                             color: cs.onSurfaceVariant,
@@ -315,7 +345,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                         // حقل رقم الهاتف
                         Text(
-                          'رقم الهاتف',
+                          l10n.phoneNumber,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -327,7 +357,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           controller: _phoneController,
                           keyboardType: TextInputType.phone,
                           decoration: InputDecoration(
-                            hintText: 'مثال: +968 12345678',
+                            hintText: '+968 12345678',
                             prefixIcon:
                                 Icon(Icons.phone_rounded, color: cs.primary),
                             filled: true,
@@ -370,14 +400,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       ),
                                     ),
                                   )
-                                : const Row(
+                                : Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      Icon(Icons.save_rounded),
-                                      SizedBox(width: 8),
+                                      const Icon(Icons.save_rounded),
+                                      const SizedBox(width: 8),
                                       Text(
-                                        'حفظ التغييرات',
-                                        style: TextStyle(
+                                        l10n.saveChanges,
+                                        style: const TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -401,9 +431,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            child: const Text(
-                              'إلغاء',
-                              style: TextStyle(
+                            child: Text(
+                              l10n.cancel,
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),

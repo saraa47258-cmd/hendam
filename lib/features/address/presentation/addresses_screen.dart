@@ -5,6 +5,8 @@ import '../../auth/providers/auth_provider.dart';
 import '../models/address_model.dart';
 import '../services/address_service.dart';
 import '../../../shared/widgets/skeletons.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class AddressesScreen extends StatefulWidget {
   const AddressesScreen({super.key});
@@ -21,12 +23,16 @@ class _AddressesScreenState extends State<AddressesScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final authProvider = context.watch<AuthProvider>();
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final textDirection =
+        localeProvider.isRtl ? TextDirection.rtl : TextDirection.ltr;
 
     if (!authProvider.isAuthenticated) {
       return Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: textDirection,
         child: Scaffold(
-          appBar: AppBar(title: const Text('عناويني')),
+          appBar: AppBar(title: Text(l10n.myAddressesTitle)),
           body: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -34,12 +40,12 @@ class _AddressesScreenState extends State<AddressesScreen> {
                 Icon(Icons.location_on_outlined,
                     size: 64, color: cs.onSurfaceVariant),
                 const SizedBox(height: 16),
-                Text('يرجى تسجيل الدخول لإدارة عناوينك', style: tt.titleMedium),
+                Text(l10n.pleaseLoginToManageAddresses, style: tt.titleMedium),
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   onPressed: () => context.push('/login'),
                   icon: const Icon(Icons.login_rounded),
-                  label: const Text('تسجيل الدخول'),
+                  label: Text(l10n.login),
                 ),
               ],
             ),
@@ -49,7 +55,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
     }
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: PreferredSize(
@@ -108,7 +114,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'عناويني',
+                            l10n.myAddressesTitle,
                             style: tt.titleLarge?.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -116,7 +122,7 @@ class _AddressesScreenState extends State<AddressesScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'أضف وعدّل عناوين الشحن والاستلام',
+                            l10n.addAndEditAddresses,
                             style:
                                 tt.bodySmall?.copyWith(color: Colors.white70),
                           ),
@@ -138,16 +144,17 @@ class _AddressesScreenState extends State<AddressesScreen> {
 
             if (snapshot.hasError) {
               return _ErrorState(
-                message: 'حدث خطأ في جلب العناوين',
+                message: l10n.errorFetchingAddresses,
                 details: snapshot.error.toString(),
                 onRetry: () => setState(() {}),
+                l10n: l10n,
               );
             }
 
             final addresses = snapshot.data ?? [];
 
             if (addresses.isEmpty) {
-              return _EmptyState(onCreate: _openAddressSheet);
+              return _EmptyState(onCreate: _openAddressSheet, l10n: l10n);
             }
 
             return ListView.separated(
@@ -157,8 +164,9 @@ class _AddressesScreenState extends State<AddressesScreen> {
                 return _AddressTile(
                   address: address,
                   onEdit: () => _openAddressSheet(existing: address),
-                  onDelete: () => _confirmDelete(address.id),
+                  onDelete: () => _confirmDelete(address.id, l10n),
                   onMakeDefault: () => _service.setDefault(address.id),
+                  l10n: l10n,
                 );
               },
               separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -169,29 +177,33 @@ class _AddressesScreenState extends State<AddressesScreen> {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () => _openAddressSheet(),
           icon: const Icon(Icons.add_location_alt_rounded),
-          label: const Text('إضافة عنوان'),
+          label: Text(l10n.addAddressButton),
         ),
       ),
     );
   }
 
-  Future<void> _confirmDelete(String id) async {
+  Future<void> _confirmDelete(String id, AppLocalizations l10n) async {
+    final localeProvider = context.read<LocaleProvider>();
+    final textDirection =
+        localeProvider.isRtl ? TextDirection.rtl : TextDirection.ltr;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: textDirection,
         child: AlertDialog(
-          title: const Text('حذف العنوان'),
-          content: const Text('هل أنت متأكد من حذف هذا العنوان؟'),
+          title: Text(l10n.deleteAddressTitle),
+          content: Text(l10n.confirmDeleteAddressMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('إلغاء'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(context, true),
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('حذف'),
+              child: Text(l10n.delete),
             ),
           ],
         ),
@@ -201,8 +213,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
     if (confirmed == true) {
       await _service.deleteAddress(id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('تم حذف العنوان'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(l10n.addressDeleted),
           backgroundColor: Colors.red,
         ));
       }
@@ -210,6 +222,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
   }
 
   Future<void> _openAddressSheet({AddressModel? existing}) async {
+    final l10n = AppLocalizations.of(context)!;
+
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -226,8 +240,8 @@ class _AddressesScreenState extends State<AddressesScreen> {
     if (result == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(existing == null
-            ? 'تم إضافة العنوان بنجاح'
-            : 'تم تحديث العنوان بنجاح'),
+            ? l10n.addressAddedSuccess
+            : l10n.addressUpdatedSuccess),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ));
     }
@@ -297,12 +311,14 @@ class _AddressTile extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onMakeDefault;
+  final AppLocalizations l10n;
 
   const _AddressTile({
     required this.address,
     required this.onEdit,
     required this.onDelete,
     required this.onMakeDefault,
+    required this.l10n,
   });
 
   @override
@@ -344,7 +360,7 @@ class _AddressTile extends StatelessWidget {
                     color: cs.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text('افتراضي',
+                  child: Text(l10n.defaultLabel,
                       style: tt.labelSmall?.copyWith(color: cs.primary)),
                 ),
               PopupMenuButton<String>(
@@ -362,11 +378,11 @@ class _AddressTile extends StatelessWidget {
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'edit', child: Text('تعديل')),
+                  PopupMenuItem(value: 'edit', child: Text(l10n.editLabel)),
                   if (!address.isDefault)
-                    const PopupMenuItem(
-                        value: 'default', child: Text('تعيين كافتراضي')),
-                  const PopupMenuItem(value: 'delete', child: Text('حذف')),
+                    PopupMenuItem(
+                        value: 'default', child: Text(l10n.setAsDefaultLabel)),
+                  PopupMenuItem(value: 'delete', child: Text(l10n.deleteLabel)),
                 ],
                 icon: Icon(Icons.more_vert_rounded, color: cs.onSurfaceVariant),
               ),
@@ -421,8 +437,9 @@ class _InfoRow extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final VoidCallback onCreate;
+  final AppLocalizations l10n;
 
-  const _EmptyState({required this.onCreate});
+  const _EmptyState({required this.onCreate, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -437,17 +454,17 @@ class _EmptyState extends StatelessWidget {
             Icon(Icons.location_city_rounded,
                 size: 72, color: cs.onSurfaceVariant),
             const SizedBox(height: 20),
-            Text('لا توجد عناوين بعد',
+            Text(l10n.noAddressesYetTitle,
                 style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text('أضف عنوانك لتسهيل عملية التوصيل والدفع',
+            Text(l10n.addAddressForDelivery,
                 textAlign: TextAlign.center,
                 style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant)),
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: onCreate,
               icon: const Icon(Icons.add_location_alt_rounded),
-              label: const Text('إضافة عنوان جديد'),
+              label: Text(l10n.addAddressButton),
             ),
           ],
         ),
@@ -460,11 +477,13 @@ class _ErrorState extends StatelessWidget {
   final String message;
   final String details;
   final VoidCallback onRetry;
+  final AppLocalizations l10n;
 
   const _ErrorState({
     required this.message,
     required this.details,
     required this.onRetry,
+    required this.l10n,
   });
 
   @override
@@ -489,7 +508,7 @@ class _ErrorState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('إعادة المحاولة'),
+              label: Text(l10n.retryButton),
             ),
           ],
         ),
@@ -521,12 +540,13 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
   late final TextEditingController _directionsCtrl;
   bool _isDefault = false;
   bool _processing = false;
+  bool _initialized = false;
 
   @override
   void initState() {
     super.initState();
     final existing = widget.existing;
-    _labelCtrl = TextEditingController(text: existing?.label ?? 'المنزل');
+    _labelCtrl = TextEditingController(text: existing?.label ?? '');
     _nameCtrl = TextEditingController(text: existing?.recipientName ?? '');
     _phoneCtrl = TextEditingController(text: existing?.phone ?? '');
     _cityCtrl = TextEditingController(text: existing?.city ?? '');
@@ -536,6 +556,18 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
     _directionsCtrl =
         TextEditingController(text: existing?.additionalDirections ?? '');
     _isDefault = existing?.isDefault ?? false;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_initialized && widget.existing == null && _labelCtrl.text.isEmpty) {
+      final l10n = AppLocalizations.of(context);
+      if (l10n != null) {
+        _labelCtrl.text = l10n.homeLabel;
+      }
+      _initialized = true;
+    }
   }
 
   @override
@@ -555,8 +587,13 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final textDirection =
+        localeProvider.isRtl ? TextDirection.rtl : TextDirection.ltr;
+
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Padding(
         padding: EdgeInsets.only(
           left: 16,
@@ -571,42 +608,44 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                widget.existing == null ? 'إضافة عنوان جديد' : 'تعديل العنوان',
+                widget.existing == null
+                    ? l10n.addNewAddressTitle
+                    : l10n.editAddressTitle,
                 style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
-              Text('يرجى إدخال بيانات عنوان دقيقة',
+              Text(l10n.enterAccurateAddressData,
                   style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
               const SizedBox(height: 12),
               _buildField(
                 controller: _labelCtrl,
-                label: 'اسم العنوان (مثال: المنزل، المكتب)',
+                label: l10n.addressLabelExample,
                 icon: Icons.bookmark_rounded,
-                validator: _notEmpty,
+                validator: (v) => _notEmpty(v, l10n),
               ),
               Row(
                 children: [
                   Expanded(
                     child: _buildField(
                       controller: _nameCtrl,
-                      label: 'اسم المستلم',
+                      label: l10n.recipientNameLabel,
                       icon: Icons.person_rounded,
-                      validator: _notEmpty,
+                      validator: (v) => _notEmpty(v, l10n),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildField(
                       controller: _phoneCtrl,
-                      label: 'رقم الهاتف',
+                      label: l10n.phoneNumberLabel,
                       icon: Icons.phone_rounded,
                       keyboardType: TextInputType.phone,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'أدخل رقم الهاتف';
+                          return l10n.enterPhoneNumber;
                         }
                         if (value.trim().length < 7) {
-                          return 'رقم غير صالح';
+                          return l10n.invalidPhoneNumber;
                         }
                         return null;
                       },
@@ -619,36 +658,36 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                   Expanded(
                     child: _buildField(
                       controller: _cityCtrl,
-                      label: 'المدينة / المحافظة',
+                      label: l10n.cityProvinceLabel,
                       icon: Icons.location_city_rounded,
-                      validator: _notEmpty,
+                      validator: (v) => _notEmpty(v, l10n),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildField(
                       controller: _areaCtrl,
-                      label: 'المنطقة / الولاية',
+                      label: l10n.areaWilayaLabel,
                       icon: Icons.location_on_rounded,
-                      validator: _notEmpty,
+                      validator: (v) => _notEmpty(v, l10n),
                     ),
                   ),
                 ],
               ),
               _buildField(
                 controller: _streetCtrl,
-                label: 'الشارع / الشقة',
+                label: l10n.streetApartmentLabel,
                 icon: Icons.signpost_rounded,
-                validator: _notEmpty,
+                validator: (v) => _notEmpty(v, l10n),
               ),
               _buildField(
                 controller: _buildingCtrl,
-                label: 'المبنى / رقم المنزل (اختياري)',
+                label: l10n.buildingHouseNumberOptional,
                 icon: Icons.home_work_rounded,
               ),
               _buildField(
                 controller: _directionsCtrl,
-                label: 'إرشادات إضافية (اختياري)',
+                label: l10n.additionalDirectionsOptional,
                 icon: Icons.map_outlined,
                 minLines: 2,
                 maxLines: 3,
@@ -657,7 +696,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
                 value: _isDefault,
-                title: const Text('تعيين كعنوان افتراضي'),
+                title: Text(l10n.setAsDefaultAddress),
                 onChanged: (value) => setState(() => _isDefault = value),
               ),
               const SizedBox(height: 12),
@@ -676,8 +715,8 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                         )
                       : const Icon(Icons.check_circle_rounded),
                   label: Text(widget.existing == null
-                      ? 'حفظ العنوان'
-                      : 'تحديث العنوان'),
+                      ? l10n.saveAddress
+                      : l10n.updateAddress),
                 ),
               ),
             ],
@@ -714,9 +753,9 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
     );
   }
 
-  String? _notEmpty(String? value) {
+  String? _notEmpty(String? value, AppLocalizations l10n) {
     if (value == null || value.trim().isEmpty) {
-      return 'هذا الحقل مطلوب';
+      return l10n.thisFieldRequired;
     }
     return null;
   }

@@ -12,6 +12,7 @@ import '../../favorites/services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/state/cart_scope.dart';
 import '../../../shared/widgets/any_image.dart';
+import '../../../shared/widgets/skeletons.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Design System
@@ -66,9 +67,9 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
 
   double _minPrice = 0.0, _maxPrice = 100.0;
   late RangeValues _priceRange;
-  bool _onlyNew = false;
+  final bool _onlyNew = false;
   final Set<Color> _selectedColors = {};
-  _SortMode _sort = _SortMode.popular;
+  final _SortMode _sort = _SortMode.popular;
   bool _isLoading = true;
   StreamSubscription<List<AbayaItem>>? _subscription;
   int _selectedTab = 0;
@@ -167,12 +168,7 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
   }
 
   Widget _buildLoading() {
-    return const Center(
-      child: CircularProgressIndicator(
-        valueColor: AlwaysStoppedAnimation<Color>(_DS.primaryBrown),
-        strokeWidth: 2,
-      ),
-    );
+    return const AbayaServicesSkeleton();
   }
 
   Widget _buildContent() {

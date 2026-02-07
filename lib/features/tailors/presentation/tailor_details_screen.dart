@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/app_localizations.dart';
 import 'tailor_store_screen.dart';
 
 class TailorDetailsScreen extends StatelessWidget {
@@ -29,9 +31,13 @@ class TailorDetailsScreen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final heroTag = 'tailor-image-$tailorId';
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final textDirection =
+        localeProvider.isRtl ? TextDirection.rtl : TextDirection.ltr;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         body: CustomScrollView(
           slivers: [
@@ -79,7 +85,8 @@ class TailorDetailsScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 child: MediaQuery(
                   // يمنع تضخيم الخط داخل الصفحة
-                  data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.0)),
+                  data: MediaQuery.of(context)
+                      .copyWith(textScaler: const TextScaler.linear(1.0)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -108,7 +115,7 @@ class TailorDetailsScreen extends StatelessWidget {
                           Icon(Icons.location_on_outlined,
                               size: 20, color: cs.onSurfaceVariant),
                           const SizedBox(width: 4),
-                          Text('مسقط', style: tt.bodyLarge),
+                          Text(l10n.muscat, style: tt.bodyLarge),
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -119,13 +126,13 @@ class TailorDetailsScreen extends StatelessWidget {
                         runSpacing: 8,
                         children: [
                           Chip(
-                            label: const Text('تسليم سريع'),
+                            label: Text(l10n.fastDeliveryLabel),
                             backgroundColor:
                                 cs.secondaryContainer.withValues(alpha: .6),
                             side: BorderSide.none,
                           ),
                           Chip(
-                            label: const Text('دشداشة رجالي'),
+                            label: Text(l10n.menDishdashaTailoring),
                             backgroundColor:
                                 cs.secondaryContainer.withValues(alpha: .6),
                             side: BorderSide.none,
@@ -139,7 +146,7 @@ class TailorDetailsScreen extends StatelessWidget {
                         children: [
                           if (serviceFeeOMR != null)
                             Text(
-                                'رسوم الخدمة: ر.ع ${serviceFeeOMR!.toStringAsFixed(3)}',
+                                '${l10n.serviceFee}: ${l10n.omr} ${serviceFeeOMR!.toStringAsFixed(3)}',
                                 style: tt.bodyMedium
                                     ?.copyWith(fontWeight: FontWeight.w700)),
                           if (serviceFeeOMR != null && etaMinutes != null)
@@ -150,7 +157,7 @@ class TailorDetailsScreen extends StatelessWidget {
                                 const Icon(Icons.access_time, size: 18),
                                 const SizedBox(width: 4),
                                 Text(
-                                    'الوقت: دقيقة ${etaMinutes!.start.toInt()} - ${etaMinutes!.end.toInt()}'),
+                                    '${l10n.time}: ${etaMinutes!.start.toInt()} - ${etaMinutes!.end.toInt()} ${l10n.minutes}'),
                               ],
                             ),
                         ],
@@ -158,11 +165,13 @@ class TailorDetailsScreen extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       // قائمة الخدمات
-                      Text('الخدمات المتاحة',
+                      Text(l10n.availableServices,
                           style: tt.titleMedium
                               ?.copyWith(fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
-                      _ServicesList(services: services ?? _defaultServices()),
+                      _ServicesList(
+                          services: services ?? _defaultServices(l10n),
+                          l10n: l10n),
 
                       const SizedBox(height: 24),
                       Consumer<AuthProvider>(
@@ -174,32 +183,33 @@ class TailorDetailsScreen extends StatelessWidget {
                                 // إظهار مربع حوار لتسجيل الدخول
                                 showDialog(
                                   context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Row(
-                                      children: [
-                                        Icon(Icons.info_outline,
-                                            color: Colors.orange),
-                                        SizedBox(width: 8),
-                                        Text('تسجيل الدخول مطلوب'),
+                                  builder: (context) => Directionality(
+                                    textDirection: textDirection,
+                                    child: AlertDialog(
+                                      title: Row(
+                                        children: [
+                                          const Icon(Icons.info_outline,
+                                              color: Colors.orange),
+                                          const SizedBox(width: 8),
+                                          Text(l10n.loginRequired),
+                                        ],
+                                      ),
+                                      content: Text(l10n.loginToOrderService),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: Text(l10n.cancel),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            context.push('/login');
+                                          },
+                                          child: Text(l10n.login),
+                                        ),
                                       ],
                                     ),
-                                    content: const Text(
-                                      'لطلب الخدمة، يرجى تسجيل الدخول أولاً.\n'
-                                      'يمكنك إنشاء حساب جديد في ثوانٍ.',
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('إلغاء'),
-                                      ),
-                                      FilledButton(
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          context.push('/login');
-                                        },
-                                        child: const Text('تسجيل الدخول'),
-                                      ),
-                                    ],
                                   ),
                                 );
                                 return;
@@ -217,7 +227,7 @@ class TailorDetailsScreen extends StatelessWidget {
                             },
                             style: FilledButton.styleFrom(
                                 minimumSize: const Size.fromHeight(48)),
-                            child: const Text('اطلب الآن'),
+                            child: Text(l10n.orderNowButton),
                           );
                         },
                       ),
@@ -232,12 +242,17 @@ class TailorDetailsScreen extends StatelessWidget {
     );
   }
 
-  List<ServiceItem> _defaultServices() => [
+  List<ServiceItem> _defaultServices(AppLocalizations l10n) => [
         ServiceItem(
-            title: 'تفصيل دشداشة رجالي', price: 6.000, duration: '3-2 أيام'),
+            title: l10n.menDishdashaTailoringService,
+            price: 6.000,
+            duration: '2-3 ${l10n.days}'),
         ServiceItem(
-            title: 'تقصير/تعديل بسيط', price: 1.500, duration: 'نفس اليوم'),
-        ServiceItem(title: 'توسيع/تضييق', price: 2.000, duration: 'يوم واحد'),
+            title: l10n.shorteningAlteration,
+            price: 1.500,
+            duration: l10n.sameDay),
+        ServiceItem(
+            title: l10n.wideningNarrowing, price: 2.000, duration: l10n.oneDay),
       ];
 }
 
@@ -252,7 +267,8 @@ class ServiceItem {
 
 class _ServicesList extends StatelessWidget {
   final List<ServiceItem> services;
-  const _ServicesList({required this.services});
+  final AppLocalizations l10n;
+  const _ServicesList({required this.services, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
@@ -277,9 +293,9 @@ class _ServicesList extends StatelessWidget {
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             title: Text(s.title, style: tt.bodyLarge),
-            subtitle: Text('المدة: ${s.duration}',
+            subtitle: Text('${l10n.duration}: ${s.duration}',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
-            trailing: Text('ر.ع ${s.price.toStringAsFixed(3)}',
+            trailing: Text('${l10n.omr} ${s.price.toStringAsFixed(3)}',
                 style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
           );
         },

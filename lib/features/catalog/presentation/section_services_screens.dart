@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 /// نموذج بسيط للعرض في القوائم
 class ServiceItem {
@@ -29,9 +30,10 @@ class SectionServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final textDirection = Directionality.of(context);
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         appBar: AppBar(title: Text(title)),
         backgroundColor: cs.surface,
@@ -63,6 +65,7 @@ class _ServiceListCardState extends State<_ServiceListCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return InkWell(
       onTap: () {},
@@ -147,14 +150,14 @@ class _ServiceListCardState extends State<_ServiceListCard> {
                     Row(
                       children: [
                         Text(
-                          'ر.ع ${widget.item.price.toStringAsFixed(2)}',
+                          l10n.currency(widget.item.price.toStringAsFixed(2)),
                           style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w900),
                         ),
                         const Spacer(),
                         FilledButton.icon(
                           onPressed: () {},
                           icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                          label: const Text('أضف'),
+                          label: Text(l10n.add),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(0, 40),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

@@ -21,52 +21,94 @@ class EmbroideryService {
     DocumentSnapshot? startAfterDocument,
   }) async {
     final stopwatch = Stopwatch()..start();
-    final fullPath1 = 'tailors/$tailorId/embroideryDesigns';
+    final fullPath1 = 'tailors/$tailorId/displayed_embroidery';
 
     try {
-      // 1) محاولة من مجموعة embroideryDesigns
+      final options = useCacheFirst
+          ? const GetOptions(source: Source.cache)
+          : const GetOptions(source: Source.serverAndCache);
+
+      // 1) محاولة من مجموعة displayed_embroidery (المسار الرئيسي)
       Query<Map<String, dynamic>> query = _firestore
           .collection('tailors')
           .doc(tailorId)
-          .collection('embroideryDesigns')
-          .orderBy('uploadedAt', descending: true)
+          .collection('displayed_embroidery')
           .limit(limit);
 
       if (startAfterDocument != null) {
         query = query.startAfterDocument(startAfterDocument);
       }
 
-      final options = useCacheFirst
-          ? const GetOptions(source: Source.cache)
-          : const GetOptions(source: Source.serverAndCache);
-
-      QuerySnapshot<Map<String, dynamic>> designsSnapshot;
+      QuerySnapshot<Map<String, dynamic>> displayedSnapshot;
       try {
-        designsSnapshot = await query.get(options);
+        displayedSnapshot = await query.get(options);
       } catch (e) {
         debugPrint(
             '📂 [Embroidery] Firestore path: $fullPath1 | query failed: $e');
         stopwatch.stop();
-        debugPrint(
-            '📂 [Embroidery] Query time: ${stopwatch.elapsedMilliseconds}ms');
         rethrow;
       }
 
-      final count = designsSnapshot.docs.length;
-      stopwatch.stop();
+      final count = displayedSnapshot.docs.length;
       debugPrint(
           '📂 [Embroidery] Firestore path: $fullPath1 | documents: $count | time: ${stopwatch.elapsedMilliseconds}ms');
 
-      if (designsSnapshot.docs.isNotEmpty) {
-        final list = designsSnapshot.docs
+      if (displayedSnapshot.docs.isNotEmpty) {
+        // displayed_embroidery تحتوي مراجع فقط، نجلب التفاصيل من embroidery_images
+        final List<EmbroideryDesign> designs = [];
+        
+        for (final doc in displayedSnapshot.docs) {
+          final embroideryId = doc.id;
+          
+          try {
+            // جلب تفاصيل التصميم من embroidery_images
+            final embroideryDoc = await _firestore
+                .collection('embroidery_images')
+                .doc(embroideryId)
+                .get(options);
+            
+            if (embroideryDoc.exists && embroideryDoc.data() != null) {
+              final data = embroideryDoc.data()!;
+              debugPrint('📂 [Embroidery] Found design $embroideryId: ${data.keys.toList()}');
+              designs.add(EmbroideryDesign.fromMap(data, embroideryId));
+            } else {
+              debugPrint('📂 [Embroidery] Design $embroideryId not found in embroidery_images');
+            }
+          } catch (e) {
+            debugPrint('📂 [Embroidery] Error fetching design $embroideryId: $e');
+          }
+        }
+        
+        stopwatch.stop();
+        debugPrint('📂 [Embroidery] Total designs loaded: ${designs.length} | time: ${stopwatch.elapsedMilliseconds}ms');
+        
+        if (designs.isNotEmpty) {
+          return designs;
+        }
+      }
+
+      // 2) محاولة من مجموعة embroideryDesigns (المسار القديم)
+      final fullPath2 = 'tailors/$tailorId/embroideryDesigns';
+      debugPrint('📂 [Embroidery] $fullPath1 empty, trying $fullPath2');
+
+      final embroideryDesignsSnapshot = await _firestore
+          .collection('tailors')
+          .doc(tailorId)
+          .collection('embroideryDesigns')
+          .orderBy('uploadedAt', descending: true)
+          .limit(limit)
+          .get(options);
+
+      if (embroideryDesignsSnapshot.docs.isNotEmpty) {
+        final list = embroideryDesignsSnapshot.docs
             .map((doc) => EmbroideryDesign.fromMap(doc.data(), doc.id))
             .toList();
         return list;
       }
 
-      // 2) محاولة من مجموعة embroidery_images (إذا كانت البيانات هناك)
-      final fullPath2 = 'tailors/$tailorId/embroidery_images';
-      debugPrint('📂 [Embroidery] $fullPath1 empty, trying $fullPath2');
+      // 3) محاولة من مجموعة embroidery_images (إذا كانت البيانات هناك)
+      final fullPath3 = 'tailors/$tailorId/embroidery_images';
+      debugPrint('📂 [Embroidery] $fullPath2 empty, trying $fullPath3');
 
       final imagesSnapshot = await _firestore
           .collection('tailors')
@@ -77,22 +119,79 @@ class EmbroideryService {
 
       final count2 = imagesSnapshot.docs.length;
       debugPrint(
-          '📂 [Embroidery] Firestore path: $fullPath2 | documents: $count2');
+          '📂 [Embroidery] Firestore path: $fullPath3 | documents: $count2');
 
       if (imagesSnapshot.docs.isNotEmpty) {
-        return imagesSnapshot.docs.map((doc) {
+        final docs = imagesSnapshot.docs;
+
+        // تحضير قائمة ملفات التخزين كـ fallback عند غياب الروابط
+        List<Reference> storageItems = const [];
+        final needStorageLookup = docs.any((doc) {
+          final d = doc.data();
+          final url = d['imageUrl'] ??
+              d['image_url'] ??
+              d['url'] ??
+              d['downloadUrl'] ??
+              d['image'];
+          return (url == null || (url is String && url.isEmpty));
+        });
+        if (needStorageLookup) {
+          try {
+            final listResult = await _storage
+                .ref('tailors/$tailorId/embroidery_images')
+                .listAll();
+            storageItems = listResult.items;
+          } catch (_) {
+            // ignore - fallback will just keep empty url
+          }
+        }
+
+        final designs = <EmbroideryDesign>[];
+        for (final doc in docs) {
           final d = doc.data();
           final rawUploaded = d['uploadedAt'];
           final uploadedMs = rawUploaded is Timestamp
               ? rawUploaded.millisecondsSinceEpoch
               : (rawUploaded as int?) ?? DateTime.now().millisecondsSinceEpoch;
-          return EmbroideryDesign.fromMap({
-            'imageUrl': d['imageUrl'] ?? d['url'] ?? '',
+
+          String imageUrl = (d['imageUrl'] ??
+                  d['image_url'] ??
+                  d['url'] ??
+                  d['downloadUrl'] ??
+                  d['image']) as String? ??
+              '';
+
+          // إذا لم يوجد رابط، حاول استخراجه من Storage
+          if (imageUrl.isEmpty) {
+            final storagePath = (d['storagePath'] ??
+                    d['path'] ??
+                    d['fullPath'] ??
+                    d['filePath']) as String? ??
+                '';
+            if (storagePath.isNotEmpty) {
+              try {
+                imageUrl = await _storage.ref(storagePath).getDownloadURL();
+              } catch (_) {}
+            } else if (storageItems.isNotEmpty) {
+              // محاولة مطابقة الـ doc.id مع اسم الملف
+              final match = storageItems.firstWhere(
+                (r) => r.name.split('.').first == doc.id,
+                orElse: () => storageItems.first,
+              );
+              try {
+                imageUrl = await match.getDownloadURL();
+              } catch (_) {}
+            }
+          }
+
+          designs.add(EmbroideryDesign.fromMap({
+            'imageUrl': imageUrl,
             'name': d['name'] ?? 'تطريز ${doc.id}',
             'price': (d['price'] as num?)?.toDouble() ?? 0.0,
             'uploadedAt': uploadedMs,
-          }, doc.id);
-        }).toList();
+          }, doc.id));
+        }
+        return designs;
       }
 
       // 3) Fallback: جلب من Storage
@@ -238,9 +337,7 @@ class EmbroideryService {
 
       // إذا لم تكن موجودة، جلب الألوان العامة
       final globalSnapshot =
-          await _firestore.collection('settings').doc('threadColors').get();
-
-      if (globalSnapshot.exists) {
+          await _firestore.collection('settings').doc('threadColors').get();      if (globalSnapshot.exists) {
         final data = globalSnapshot.data();
         final colorsList = data?['colors'] as List<dynamic>? ?? [];
         return colorsList.asMap().entries.map((entry) {
@@ -300,9 +397,7 @@ class ThreadColor {
   final String id;
   final String name;
   final String hexCode;
-  final int order;
-
-  const ThreadColor({
+  final int order;  const ThreadColor({
     required this.id,
     required this.name,
     required this.hexCode,

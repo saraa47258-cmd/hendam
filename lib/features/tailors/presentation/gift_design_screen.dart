@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/premium_app_bar.dart';
 import '../services/fabric_service.dart';
 import '../services/embroidery_service.dart';
@@ -1741,6 +1742,7 @@ class _GiftRecipientStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Form(
       key: formKey,
@@ -1947,8 +1949,7 @@ class _GiftRecipientStep extends StatelessWidget {
                       ),
                     )
                   : const Icon(Icons.card_giftcard_rounded),
-              label:
-                  Text(isSubmitting ? 'جاري الإرسال...' : 'إرسال طلب الهدية'),
+              label: Text(isSubmitting ? l10n.sending : l10n.sendGiftRequest),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(56),
                 backgroundColor: const Color(0xFFE91E63),

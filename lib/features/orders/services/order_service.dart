@@ -399,6 +399,8 @@ class OrderService {
     required Map<String, double> measurements, // {length, sleeve, width}
     String notes = '',
     String? selectedColor,
+    bool isGift = false,
+    GiftRecipientDetails? giftRecipientDetails,
   }) async {
     try {
       final orderData = {
@@ -433,6 +435,11 @@ class OrderService {
         // حالة الطلب
         'status': 'pending',
 
+        // معلومات الهدية
+        'isGift': isGift,
+        if (isGift && giftRecipientDetails != null)
+          'giftRecipientDetails': giftRecipientDetails.toMap(),
+
         // التواريخ
         'createdAt': FieldValue.serverTimestamp(),
         'updatedAt': FieldValue.serverTimestamp(),
@@ -444,6 +451,7 @@ class OrderService {
       print('   👗 المنتج: $productName');
       print('   📏 المقاسات: $measurements');
       print('   💰 السعر: $productPrice ر.ع');
+      print('   🎁 هدية: $isGift');
 
       final docRef = await FirebaseService.firestore
           .collection(_ordersCollection)
@@ -464,6 +472,9 @@ class OrderService {
           'productName': productName,
           'totalPrice': productPrice,
           'status': 'pending',
+          'isGift': isGift,
+          if (isGift && giftRecipientDetails != null)
+            'giftRecipientDetails': giftRecipientDetails.toMap(),
           'createdAt': FieldValue.serverTimestamp(),
         });
       } catch (e) {
@@ -475,6 +486,166 @@ class OrderService {
       print('❌ خطأ في إرسال طلب العباية: $e');
       print('📍 Stack trace: $stackTrace');
       return null;
+    }
+  }
+
+  /// إرسال طلب منتج من متجر (محلات المستلزمات)
+  static Future<String?> submitMerchantProductOrder({
+    required String customerId,
+    required String customerName,
+    required String customerPhone,
+    required String traderId,
+    required String traderName,
+    required String productId,
+    required String productName,
+    required String productSubtitle,
+    required String productImageUrl,
+    required double productPrice,
+    String? selectedColor,
+    String notes = '',
+    bool isGift = false,
+    GiftRecipientDetails? giftRecipientDetails,
+  }) async {
+    try {
+      final orderData = {
+        // نوع الطلب
+        'orderType': 'merchant_product',
+
+        // معلومات العميل
+        'customerId': customerId,
+        'customerName': customerName,
+        'customerPhone': customerPhone,
+
+        // معلومات المتجر/التاجر
+        'traderId': traderId,
+        'traderName': traderName,
+        'tailorId': traderId, // للتوافق مع النظام الحالي
+        'tailorName': traderName,
+
+        // معلومات المنتج
+        'productId': productId,
+        'productName': productName,
+        'productSubtitle': productSubtitle,
+        'productImageUrl': productImageUrl,
+        'productPrice': productPrice,
+        'selectedColor': selectedColor,
+
+        // معلومات الهدية
+        'isGift': isGift,
+        if (isGift && giftRecipientDetails != null)
+          'giftRecipientDetails': giftRecipientDetails.toMap(),
+
+        // ملاحظات
+        'notes': notes,
+
+        // السعر الإجمالي
+        'totalPrice': productPrice,
+
+        // حالة الطلب
+        'status': 'pending',
+
+        // التواريخ
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      print('📦 إرسال طلب منتج:');
+      print('   👤 العميل: $customerName ($customerPhone)');
+      print('   🏪 المتجر: $traderName ($traderId)');
+      print('   📦 المنتج: $productName');
+      print('   🎨 اللون: $selectedColor');
+      print('   💰 السعر: $productPrice ر.ع');
+      if (isGift) {
+        print('   🎁 هدية إلى: ${giftRecipientDetails?.recipientName ?? "غير محدد"}');
+      }
+
+      // إضافة الطلب إلى مجموعة الطلبات العامة
+      final docRef = await FirebaseService.firestore
+          .collection(_ordersCollection)
+          .add(orderData);
+
+      print('✅ تم إرسال الطلب بنجاح: ${docRef.id}');
+
+      // إرسال نسخة من الطلب إلى مجموعة طلبات التاجر
+      try {
+        await FirebaseService.firestore
+            .collection('traders')
+            .doc(traderId)
+            .collection('orders')
+            .doc(docRef.id)
+            .set({
+          'orderId': docRef.id,
+          'customerId': customerId,
+          'customerName': customerName,
+          'customerPhone': customerPhone,
+          'productId': productId,
+          'productName': productName,
+          'productImageUrl': productImageUrl,
+          'totalPrice': productPrice,
+          'selectedColor': selectedColor,
+          'status': 'pending',
+          'isNew': true,
+          'isGift': isGift,
+          if (isGift && giftRecipientDetails != null)
+            'giftRecipientDetails': giftRecipientDetails.toMap(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        print('✅ تم إرسال الطلب إلى التاجر');
+      } catch (e) {
+        print('⚠️ لم يتم إرسال إشعار للتاجر: $e');
+      }
+
+      return docRef.id;
+    } catch (e, stackTrace) {
+      print('❌ خطأ في إرسال طلب المنتج: $e');
+      print('📍 Stack trace: $stackTrace');
+      return null;
+    }
+  }
+
+  /// جلب طلبات التاجر (محلات المستلزمات)
+  static Stream<List<OrderModel>> getTraderOrders(String traderId) {
+    return FirebaseService.firestore
+        .collection(_ordersCollection)
+        .where('traderId', isEqualTo: traderId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) =>
+            snapshot.docs.map((doc) => OrderModel.fromFirestore(doc)).toList());
+  }
+
+  /// تحديث حالة طلب التاجر
+  static Future<bool> updateTraderOrderStatus(
+      String orderId, String traderId, OrderStatus newStatus) async {
+    try {
+      // تحديث الطلب في المجموعة العامة
+      await FirebaseService.firestore
+          .collection(_ordersCollection)
+          .doc(orderId)
+          .update({
+        'status': newStatus.toString().split('.').last,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // تحديث نسخة الطلب لدى التاجر
+      try {
+        await FirebaseService.firestore
+            .collection('traders')
+            .doc(traderId)
+            .collection('orders')
+            .doc(orderId)
+            .update({
+          'status': newStatus.toString().split('.').last,
+          'isNew': false,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      } catch (_) {}
+
+      print('✅ تم تحديث حالة الطلب: $orderId -> ${newStatus.labelAr}');
+      return true;
+    } catch (e) {
+      print('❌ خطأ في تحديث حالة الطلب: $e');
+      return false;
     }
   }
 }

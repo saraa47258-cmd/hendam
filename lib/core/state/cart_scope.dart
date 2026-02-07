@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' hide Order;
 import 'dart:convert';
 import 'package:hindam/features/cart/models/cart_item.dart';
 import 'package:hindam/features/catalog/models/product.dart';
 import 'package:hindam/features/orders/models/order.dart';
 import 'package:hindam/core/error/error_handler.dart';
+import 'package:hindam/core/services/firebase_service.dart';
 
 class CartState extends ChangeNotifier {
   final List<CartItem> _items = <CartItem>[];
@@ -173,6 +175,47 @@ class CartState extends ChangeNotifier {
     );
   }
 
+  /// إضافة منتج من متجر (محلات المستلزمات) للسلة
+  void addMerchantProduct({
+    required String id,
+    required String title,
+    required double price,
+    String? imageUrl,
+    String? subtitle,
+    String? selectedColor,
+    String? shopId,
+    String? shopName,
+  }) {
+    // إنشاء كائن التخصيص للون المختار
+    CartCustomization? customization;
+    if (selectedColor != null) {
+      customization = CartCustomization(
+        selectedColor: selectedColor,
+      );
+    }
+
+    // البحث عن نفس المنتج مع نفس اللون
+    final idx = _items.indexWhere((i) => i.matches(id, customization));
+
+    if (idx >= 0) {
+      // إذا كان موجوداً بنفس اللون، نزيد الكمية
+      final cur = _items[idx];
+      _items[idx] = cur.copyWith(qty: cur.qty + 1);
+    } else {
+      // إضافة عنصر جديد
+      _items.add(CartItem(
+        productId: id,
+        serviceName: title,
+        imageUrl: imageUrl,
+        price: price,
+        qty: 1,
+        customization: customization,
+      ));
+    }
+    _saveData();
+    notifyListeners();
+  }
+
   void inc(CartItem item) {
     item.qty += 1;
     _saveData();
@@ -216,6 +259,80 @@ class CartState extends ChangeNotifier {
     _items.clear();
     _saveData();
     notifyListeners();
+  }
+
+  /// إرسال طلب السلة إلى Firebase
+  Future<String?> submitCartOrder({
+    required String customerId,
+    required String customerName,
+    required String customerPhone,
+  }) async {
+    if (_items.isEmpty) return null;
+
+    try {
+      // تجميع المنتجات حسب المتجر
+      final itemsByShop = <String, List<CartItem>>{};
+      for (final item in _items) {
+        // استخراج معرف المتجر من productId أو استخدام 'default'
+        const shopId = 'default'; // يمكن تحسينه لاحقاً
+        itemsByShop.putIfAbsent(shopId, () => []).add(item);
+      }
+
+      String? lastOrderId;
+
+      // إنشاء طلب لكل منتج في السلة
+      for (final item in _items) {
+        final orderData = {
+          // نوع الطلب
+          'orderType': 'cart_order',
+
+          // معلومات العميل
+          'customerId': customerId,
+          'customerName': customerName,
+          'customerPhone': customerPhone,
+
+          // معلومات المنتج
+          'productId': item.productId ?? '',
+          'productName': item.title,
+          'productImageUrl': item.imageUrl ?? '',
+          'productPrice': item.price,
+          'quantity': item.qty,
+          'selectedColor': item.customization?.selectedColor,
+
+          // السعر الإجمالي
+          'totalPrice': item.price * item.qty,
+
+          // حالة الطلب
+          'status': 'pending',
+
+          // التواريخ
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+
+        print('📦 إرسال طلب من السلة:');
+        print('   👤 العميل: $customerName');
+        print('   📦 المنتج: ${item.title}');
+        print('   💰 السعر: ${item.price * item.qty} ر.ع');
+
+        final docRef =
+            await FirebaseService.firestore.collection('orders').add(orderData);
+
+        lastOrderId = docRef.id;
+        print('✅ تم إرسال الطلب: ${docRef.id}');
+      }
+
+      // مسح السلة بعد الإرسال
+      _items.clear();
+      _saveData();
+      notifyListeners();
+
+      return lastOrderId;
+    } catch (e, stackTrace) {
+      print('❌ خطأ في إرسال طلب السلة: $e');
+      print('📍 Stack trace: $stackTrace');
+      return null;
+    }
   }
 }
 

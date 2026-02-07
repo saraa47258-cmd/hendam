@@ -1,15 +1,19 @@
-import 'dart:math' as math;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hindam/l10n/app_localizations.dart';
 
-/// شاشة الترحيب - تصميم فاخر مستوحى من Apple / Airbnb / Stripe
+/// ══════════════════════════════════════════════════════════════════════════
+/// شاشة الترحيب - تصميم عالمي فاخر (Apple / Google Level)
+/// ══════════════════════════════════════════════════════════════════════════
 class AuthWelcomeScreen extends StatelessWidget {
   const AuthWelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ضبط شريط الحالة
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -21,80 +25,129 @@ class AuthWelcomeScreen extends StatelessWidget {
     return const Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: _LuxuryColors.backgroundBase,
-        body: _LuxuryWelcomeBody(),
+        backgroundColor: _DS.bgBase,
+        body: _WelcomeBody(),
       ),
     );
   }
 }
 
-/// لوحة الألوان الفاخرة المحسّنة
-abstract class _LuxuryColors {
-  // === الخلفية المتدرجة الأنيقة ===
-  static const Color backgroundBase = Color(0xFFF7F8FC);
-  static const Color backgroundWarm = Color(0xFFFDF9F6);
-  static const Color backgroundCool = Color(0xFFF0F4FA);
+/// ══════════════════════════════════════════════════════════════════════════
+/// نظام التصميم - Design System
+/// ══════════════════════════════════════════════════════════════════════════
+abstract class _DS {
+  // === الخلفية ===
+  static const Color bgBase = Color(0xFFF8FAFC);
+  static const Color bgWarm = Color(0xFFFFFBF7);
+  static const Color bgCool = Color(0xFFF0F4FF);
 
-  // === الألوان الأساسية - أزرق ملكي عميق ===
-  static const Color primaryDeep = Color(0xFF0F2847);
-  static const Color primary = Color(0xFF1E3A5F);
-  static const Color primarySoft = Color(0xFFDBE9FF);
-  static const Color primaryGlow = Color(0xFF3B82F6);
+  // === الألوان الأساسية ===
+  static const Color primary = Color(0xFF1A365D);
+  static const Color primaryLight = Color(0xFF2B4C7E);
+  static const Color primarySoft = Color(0xFFE8F0FE);
+  static const Color accent = Color(0xFF3B82F6);
 
-  // === ألوان الأزرار المحسّنة ===
-  static const Color buttonPrimaryStart = Color(0xFF1E3A5F);
-  static const Color buttonPrimaryEnd = Color(0xFF2D5A87);
-  static const Color buttonSecondaryBorder = Color(0xFF1E3A5F);
-
-  // === النصوص - تدرج هرمي واضح ===
+  // === النصوص ===
+  static const Color textPrimary = Color(0xFF0F172A);
   static const Color textSecondary = Color(0xFF475569);
   static const Color textMuted = Color(0xFF94A3B8);
+  static const Color textOnPrimary = Colors.white;
 
-  // === عناصر الأجواء والديكور ===
-  static const Color glowWarm = Color(0xFFFEF3E7);
-  static const Color glowCool = Color(0xFFE0ECFF);
-  static const Color glowAccent = Color(0xFFF0E6FF);
-  static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceElevated = Color(0xFFFCFDFF);
+  // === الأسطح ===
+  static const Color surface = Colors.white;
   static const Color border = Color(0xFFE2E8F0);
-  static const Color borderSubtle = Color(0xFFF1F5F9);
+  static const Color borderLight = Color(0xFFF1F5F9);
+
+  // === المسافات ===
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 20;
+  static const double xxl = 24;
+  static const double xxxl = 32;
+
+  // === الأقطار ===
+  static const double radiusSm = 8;
+  static const double radiusMd = 12;
+  static const double radiusLg = 16;
+  static const double radiusXl = 20;
+  static const double radiusXxl = 28;
+
+  // === الظلال ===
+  static List<BoxShadow> get shadowMedium => [
+        BoxShadow(
+          color: primary.withOpacity(0.08),
+          blurRadius: 40,
+          offset: const Offset(0, 16),
+        ),
+        BoxShadow(
+          color: primary.withOpacity(0.04),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ];
+
+  static List<BoxShadow> get shadowButton => [
+        BoxShadow(
+          color: primary.withOpacity(0.25),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+        BoxShadow(
+          color: accent.withOpacity(0.15),
+          blurRadius: 32,
+          offset: const Offset(0, 4),
+        ),
+      ];
 }
 
+/// ══════════════════════════════════════════════════════════════════════════
 /// المحتوى الرئيسي
-class _LuxuryWelcomeBody extends StatelessWidget {
-  const _LuxuryWelcomeBody();
+/// ══════════════════════════════════════════════════════════════════════════
+class _WelcomeBody extends StatelessWidget {
+  const _WelcomeBody();
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // الخلفية المتعددة الطبقات
-        const _ElegantBackground(),
+        // الخلفية النظيفة
+        const _CleanBackground(),
 
         // المحتوى
         SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isCompact = constraints.maxHeight < 700;
+              final horizontalPadding =
+                  constraints.maxWidth > 400 ? 32.0 : 24.0;
 
               return SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: constraints.maxWidth > 400 ? 36 : 28,
-                    ),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: horizontalPadding),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SizedBox(height: isCompact ? 40 : 60),
-                        const _LuxuryBrandSection(),
-                        SizedBox(height: isCompact ? 48 : 64),
-                        const _LuxuryActionCard(),
+                        SizedBox(height: isCompact ? 48 : 72),
+
+                        // الشعار والعلامة التجارية
+                        const _BrandSection(),
+
+                        SizedBox(height: isCompact ? 40 : 56),
+
+                        // بطاقة الإجراءات
+                        const _ActionCard(),
+
                         SizedBox(height: isCompact ? 32 : 48),
-                        const _TrustBadges(),
-                        const SizedBox(height: 40),
+
+                        // شارات الثقة
+                        const _TrustIndicators(),
+
+                        const SizedBox(height: 32),
                       ],
                     ),
                   ),
@@ -108,155 +161,70 @@ class _LuxuryWelcomeBody extends StatelessWidget {
   }
 }
 
-/// الخلفية الأنيقة متعددة الطبقات
-class _ElegantBackground extends StatelessWidget {
-  const _ElegantBackground();
+/// ══════════════════════════════════════════════════════════════════════════
+/// الخلفية النظيفة - بسيطة وأنيقة
+/// ══════════════════════════════════════════════════════════════════════════
+class _CleanBackground extends StatelessWidget {
+  const _CleanBackground();
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
 
     return SizedBox.expand(
       child: Stack(
         children: [
-          // === الطبقة 1: التدرج الأساسي الناعم ===
+          // التدرج الأساسي الناعم
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
                 colors: [
-                  _LuxuryColors.backgroundWarm,
-                  _LuxuryColors.backgroundBase,
-                  _LuxuryColors.backgroundCool,
+                  _DS.bgWarm,
+                  _DS.bgBase,
+                  _DS.bgCool,
                 ],
                 stops: [0.0, 0.5, 1.0],
               ),
             ),
           ),
 
-          // === الطبقة 2: توهج دافئ كبير - أعلى اليمين ===
+          // توهج دافئ - أعلى اليمين
           Positioned(
-            top: -size.height * 0.2,
-            right: -size.width * 0.35,
+            top: -size.height * 0.15,
+            right: -size.width * 0.3,
             child: Container(
-              width: size.width * 1.0,
-              height: size.width * 1.0,
+              width: size.width * 0.9,
+              height: size.width * 0.9,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    _LuxuryColors.glowWarm.withOpacity(0.9),
-                    _LuxuryColors.glowWarm.withOpacity(0.4),
-                    _LuxuryColors.glowWarm.withOpacity(0.0),
-                  ],
-                  stops: const [0.0, 0.4, 1.0],
-                ),
-              ),
-            ),
-          ),
-
-          // === الطبقة 3: توهج بارد - أسفل اليسار ===
-          Positioned(
-            bottom: -size.height * 0.15,
-            left: -size.width * 0.4,
-            child: Container(
-              width: size.width * 1.1,
-              height: size.width * 1.1,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    _LuxuryColors.glowCool.withOpacity(0.85),
-                    _LuxuryColors.glowCool.withOpacity(0.3),
-                    _LuxuryColors.glowCool.withOpacity(0.0),
-                  ],
-                  stops: const [0.0, 0.5, 1.0],
-                ),
-              ),
-            ),
-          ),
-
-          // === الطبقة 4: توهج أرجواني خفيف - وسط ===
-          Positioned(
-            top: size.height * 0.35,
-            right: -size.width * 0.2,
-            child: Container(
-              width: size.width * 0.7,
-              height: size.width * 0.7,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [
-                    _LuxuryColors.glowAccent.withOpacity(0.5),
-                    _LuxuryColors.glowAccent.withOpacity(0.0),
+                    const Color(0xFFFEE2E2).withOpacity(0.5),
+                    const Color(0xFFFEE2E2).withOpacity(0.0),
                   ],
                 ),
               ),
             ),
           ),
 
-          // === الطبقة 5: نمط شبكي خفيف جداً ===
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _SubtleGridPainter(
-                color: _LuxuryColors.primary.withOpacity(0.015),
+          // توهج بارد - أسفل اليسار
+          Positioned(
+            bottom: -size.height * 0.1,
+            left: -size.width * 0.3,
+            child: Container(
+              width: size.width * 0.8,
+              height: size.width * 0.8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFFDBEAFE).withOpacity(0.6),
+                    const Color(0xFFDBEAFE).withOpacity(0.0),
+                  ],
+                ),
               ),
-            ),
-          ),
-
-          // === الطبقة 6: أشكال هندسية عائمة ===
-          Positioned(
-            top: size.height * 0.08,
-            left: size.width * 0.06,
-            child: _FloatingShape(
-              size: 90,
-              color: _LuxuryColors.primarySoft.withOpacity(0.4),
-              borderRadius: 28,
-            ),
-          ),
-          Positioned(
-            top: size.height * 0.52,
-            right: size.width * 0.04,
-            child: Transform.rotate(
-              angle: math.pi / 6,
-              child: _FloatingShape(
-                size: 70,
-                color: _LuxuryColors.glowWarm.withOpacity(0.6),
-                borderRadius: 20,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: size.height * 0.22,
-            left: size.width * 0.08,
-            child: Transform.rotate(
-              angle: -math.pi / 8,
-              child: _FloatingShape(
-                size: 55,
-                color: _LuxuryColors.glowCool.withOpacity(0.5),
-                borderRadius: 16,
-              ),
-            ),
-          ),
-
-          // === الطبقة 7: خطوط ديكورية رقيقة ===
-          Positioned(
-            top: size.height * 0.15,
-            right: size.width * 0.15,
-            child: _DecorativeLine(
-              length: 80,
-              color: _LuxuryColors.primary.withOpacity(0.06),
-              angle: math.pi / 4,
-            ),
-          ),
-          Positioned(
-            bottom: size.height * 0.3,
-            right: size.width * 0.2,
-            child: _DecorativeLine(
-              length: 60,
-              color: _LuxuryColors.primary.withOpacity(0.04),
-              angle: -math.pi / 3,
             ),
           ),
         ],
@@ -265,98 +233,11 @@ class _ElegantBackground extends StatelessWidget {
   }
 }
 
-/// رسام شبكة خفيفة
-class _SubtleGridPainter extends CustomPainter {
-  final Color color;
-
-  _SubtleGridPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 0.5;
-
-    const spacing = 60.0;
-
-    for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-    for (double y = 0; y < size.height; y += spacing) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// شكل عائم ديكوري
-class _FloatingShape extends StatelessWidget {
-  final double size;
-  final Color color;
-  final double borderRadius;
-
-  const _FloatingShape({
-    required this.size,
-    required this.color,
-    required this.borderRadius,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-    );
-  }
-}
-
-/// خط ديكوري
-class _DecorativeLine extends StatelessWidget {
-  final double length;
-  final Color color;
-  final double angle;
-
-  const _DecorativeLine({
-    required this.length,
-    required this.color,
-    required this.angle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: angle,
-      child: Container(
-        width: length,
-        height: 2,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              color.withOpacity(0),
-              color,
-              color.withOpacity(0),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(1),
-        ),
-      ),
-    );
-  }
-}
-
-/// قسم العلامة التجارية الفاخر
-class _LuxuryBrandSection extends StatelessWidget {
-  const _LuxuryBrandSection();
+/// ══════════════════════════════════════════════════════════════════════════
+/// قسم العلامة التجارية
+/// ══════════════════════════════════════════════════════════════════════════
+class _BrandSection extends StatelessWidget {
+  const _BrandSection();
 
   @override
   Widget build(BuildContext context) {
@@ -364,47 +245,42 @@ class _LuxuryBrandSection extends StatelessWidget {
 
     return Column(
       children: [
-        // الشعار المحسّن مع توهج
-        const _GlowingLogo(),
+        // الشعار
+        const _Logo(),
 
-        const SizedBox(height: 36),
+        const SizedBox(height: _DS.xxxl),
 
-        // اسم التطبيق مع تأثير متدرج
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [
-              _LuxuryColors.primaryDeep,
-              _LuxuryColors.primary,
-            ],
-          ).createShader(bounds),
-          child: Text(
-            l10n.hindam,
-            style: const TextStyle(
-              fontSize: 52,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -2,
-              height: 1.0,
-            ),
+        // اسم التطبيق
+        Text(
+          l10n.hindam,
+          style: GoogleFonts.cairo(
+            fontSize: 48,
+            fontWeight: FontWeight.w800,
+            color: _DS.textPrimary,
+            letterSpacing: -1.5,
+            height: 1.0,
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: _DS.md),
 
-        // الوصف مع خلفية شفافة
+        // الوصف
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _DS.xl,
+            vertical: _DS.sm,
+          ),
           decoration: BoxDecoration(
-            color: _LuxuryColors.primarySoft.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(30),
+            color: _DS.primarySoft.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(_DS.radiusXl),
           ),
           child: Text(
             l10n.menTailoringShopsApp,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: _LuxuryColors.textSecondary,
-              letterSpacing: 0.3,
+            style: GoogleFonts.cairo(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: _DS.textSecondary,
+              letterSpacing: 0.2,
             ),
           ),
         ),
@@ -413,381 +289,400 @@ class _LuxuryBrandSection extends StatelessWidget {
   }
 }
 
-/// الشعار المتوهج
-class _GlowingLogo extends StatelessWidget {
-  const _GlowingLogo();
+/// ══════════════════════════════════════════════════════════════════════════
+/// الشعار
+/// ══════════════════════════════════════════════════════════════════════════
+class _Logo extends StatelessWidget {
+  const _Logo();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 120,
-      height: 120,
+      width: 100,
+      height: 100,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
+        color: _DS.surface,
         boxShadow: [
-          // توهج خارجي كبير
           BoxShadow(
-            color: _LuxuryColors.primaryGlow.withOpacity(0.15),
-            blurRadius: 60,
-            spreadRadius: 10,
+            color: _DS.primary.withOpacity(0.08),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
           ),
-          // ظل متوسط
           BoxShadow(
-            color: _LuxuryColors.primary.withOpacity(0.12),
-            blurRadius: 30,
-            offset: const Offset(0, 15),
-          ),
-          // ظل قريب
-          BoxShadow(
-            color: _LuxuryColors.primary.withOpacity(0.08),
-            blurRadius: 15,
+            color: _DS.accent.withOpacity(0.1),
+            blurRadius: 48,
             offset: const Offset(0, 8),
           ),
         ],
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _LuxuryColors.surface,
-              _LuxuryColors.surfaceElevated,
-            ],
-          ),
-          border: Border.all(
-            color: _LuxuryColors.borderSubtle,
-            width: 1.5,
-          ),
-        ),
-        child: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                _LuxuryColors.primarySoft,
-                Color(0xFFE8F0FF),
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: _LuxuryColors.primary.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.content_cut_rounded,
-              size: 48,
-              color: _LuxuryColors.primary,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// بطاقة الإجراءات الفاخرة
-class _LuxuryActionCard extends StatelessWidget {
-  const _LuxuryActionCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(maxWidth: 420),
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: _LuxuryColors.surface,
-        borderRadius: BorderRadius.circular(28),
         border: Border.all(
-          color: _LuxuryColors.border.withOpacity(0.5),
+          color: _DS.borderLight,
           width: 1,
         ),
-        boxShadow: [
-          // ظل خارجي ناعم كبير
-          BoxShadow(
-            color: _LuxuryColors.primary.withOpacity(0.04),
-            blurRadius: 40,
-            offset: const Offset(0, 20),
-            spreadRadius: 0,
-          ),
-          // ظل متوسط
-          BoxShadow(
-            color: _LuxuryColors.primary.withOpacity(0.06),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-          // ظل داخلي خفيف (محاكاة)
-          BoxShadow(
-            color: Colors.white.withOpacity(0.8),
-            blurRadius: 0,
-            offset: const Offset(0, -1),
-          ),
-        ],
       ),
-      child: const Column(
-        children: [
-          _PrimaryActionButton(),
-          SizedBox(height: 16),
-          _SecondaryActionButton(),
-          SizedBox(height: 28),
-          _OrDivider(),
-          SizedBox(height: 20),
-          _GuestButton(),
-        ],
-      ),
-    );
-  }
-}
-
-/// زر الإجراء الأساسي - تصميم متدرج فاخر
-class _PrimaryActionButton extends StatefulWidget {
-  const _PrimaryActionButton();
-
-  @override
-  State<_PrimaryActionButton> createState() => _PrimaryActionButtonState();
-}
-
-class _PrimaryActionButtonState extends State<_PrimaryActionButton> {
-  bool _isPressed = false;
-  bool _isLoading = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: () {
-        if (_isLoading) return;
-        HapticFeedback.mediumImpact();
-        setState(() => _isLoading = true);
-        Future.delayed(const Duration(milliseconds: 250), () {
-          if (mounted) {
-            setState(() => _isLoading = false);
-            context.push('/login');
-          }
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        width: double.infinity,
-        height: 62,
-        transform: Matrix4.identity()..scale(_isPressed ? 0.975 : 1.0),
-        transformAlignment: Alignment.center,
+      child: Container(
+        margin: const EdgeInsets.all(6),
         decoration: BoxDecoration(
+          shape: BoxShape.circle,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: _isPressed
-                ? [
-                    _LuxuryColors.primaryDeep,
-                    _LuxuryColors.buttonPrimaryStart,
-                  ]
-                : [
-                    _LuxuryColors.buttonPrimaryStart,
-                    _LuxuryColors.buttonPrimaryEnd,
-                  ],
+            colors: [
+              _DS.primarySoft,
+              _DS.primarySoft.withOpacity(0.6),
+            ],
           ),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  _LuxuryColors.primary.withOpacity(_isPressed ? 0.25 : 0.35),
-              blurRadius: _isPressed ? 15 : 25,
-              offset: Offset(0, _isPressed ? 6 : 12),
-              spreadRadius: _isPressed ? -2 : 0,
-            ),
-            BoxShadow(
-              color:
-                  _LuxuryColors.primaryGlow.withOpacity(_isPressed ? 0.1 : 0.2),
-              blurRadius: 40,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
-        child: Stack(
-          children: [
-            // تأثير لمعان علوي
-            Positioned(
-              top: 0,
-              left: 20,
-              right: 20,
-              child: Container(
-                height: 1,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0),
-                      Colors.white.withOpacity(0.2),
-                      Colors.white.withOpacity(0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // المحتوى
-            Center(
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 26,
-                      height: 26,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          l10n.login,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ],
+        child: const Center(
+          child: Icon(
+            Icons.content_cut_rounded,
+            size: 40,
+            color: _DS.primary,
+          ),
         ),
       ),
     );
   }
 }
 
-/// زر الإجراء الثانوي - تصميم أنيق متباين
-class _SecondaryActionButton extends StatefulWidget {
-  const _SecondaryActionButton();
+/// ══════════════════════════════════════════════════════════════════════════
+/// بطاقة الإجراءات - Glassmorphism خفيف
+/// ══════════════════════════════════════════════════════════════════════════
+class _ActionCard extends StatelessWidget {
+  const _ActionCard();
 
   @override
-  State<_SecondaryActionButton> createState() => _SecondaryActionButtonState();
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(_DS.radiusXxl),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 400),
+          padding: const EdgeInsets.all(_DS.xxl),
+          decoration: BoxDecoration(
+            color: _DS.surface.withOpacity(0.85),
+            borderRadius: BorderRadius.circular(_DS.radiusXxl),
+            border: Border.all(
+              color: _DS.border.withOpacity(0.4),
+              width: 1,
+            ),
+            boxShadow: _DS.shadowMedium,
+          ),
+          child: const Column(
+            children: [
+              _LoginButton(),
+              SizedBox(height: _DS.lg),
+              _SignUpButton(),
+              SizedBox(height: _DS.xxl),
+              _Divider(),
+              SizedBox(height: _DS.xl),
+              _GuestLink(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _SecondaryActionButtonState extends State<_SecondaryActionButton> {
+/// ══════════════════════════════════════════════════════════════════════════
+/// زر تسجيل الدخول الأساسي
+/// ══════════════════════════════════════════════════════════════════════════
+class _LoginButton extends StatefulWidget {
+  const _LoginButton();
+
+  @override
+  State<_LoginButton> createState() => _LoginButtonState();
+}
+
+class _LoginButtonState extends State<_LoginButton>
+    with SingleTickerProviderStateMixin {
   bool _isPressed = false;
   bool _isLoading = false;
+
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) {
+    setState(() => _isPressed = true);
+    _controller.forward();
+  }
+
+  void _onTapUp(TapUpDetails _) {
+    setState(() => _isPressed = false);
+    _controller.reverse();
+  }
+
+  void _onTapCancel() {
+    setState(() => _isPressed = false);
+    _controller.reverse();
+  }
+
+  Future<void> _onTap() async {
+    if (_isLoading) return;
+
+    HapticFeedback.mediumImpact();
+    setState(() => _isLoading = true);
+
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      context.push('/login');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) => setState(() => _isPressed = false),
-      onTapCancel: () => setState(() => _isPressed = false),
-      onTap: () {
-        if (_isLoading) return;
-        HapticFeedback.lightImpact();
-        setState(() => _isLoading = true);
-        Future.delayed(const Duration(milliseconds: 250), () {
-          if (mounted) {
-            setState(() => _isLoading = false);
-            context.push('/signup');
-          }
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOutCubic,
-        width: double.infinity,
-        height: 62,
-        transform: Matrix4.identity()..scale(_isPressed ? 0.975 : 1.0),
-        transformAlignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: _isPressed
-              ? _LuxuryColors.primarySoft.withOpacity(0.5)
-              : _LuxuryColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: _isPressed
-                ? _LuxuryColors.primary
-                : _LuxuryColors.buttonSecondaryBorder.withOpacity(0.4),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  _LuxuryColors.primary.withOpacity(_isPressed ? 0.08 : 0.05),
-              blurRadius: _isPressed ? 8 : 15,
-              offset: Offset(0, _isPressed ? 3 : 6),
-            ),
-          ],
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      onTap: _onTap,
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnimation.value,
+          child: child,
         ),
-        child: Center(
-          child: _isLoading
-              ? const SizedBox(
-                  width: 26,
-                  height: 26,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      _LuxuryColors.primary,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: double.infinity,
+          height: 58,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: _isPressed
+                  ? [_DS.primary, _DS.primary]
+                  : [_DS.primary, _DS.primaryLight],
+            ),
+            borderRadius: BorderRadius.circular(_DS.radiusLg),
+            boxShadow: _isPressed
+                ? [
+                    BoxShadow(
+                      color: _DS.primary.withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
+                  ]
+                : _DS.shadowButton,
+          ),
+          child: Center(
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation(_DS.textOnPrimary),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        l10n.login,
+                        style: GoogleFonts.cairo(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: _DS.textOnPrimary,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(width: _DS.md),
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(_DS.radiusSm),
+                        ),
+                        child: const Icon(
+                          Icons.arrow_back_rounded, // RTL: السهم يشير لليسار
+                          size: 16,
+                          color: _DS.textOnPrimary,
+                        ),
+                      ),
+                    ],
                   ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: _LuxuryColors.primarySoft.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.person_add_alt_1_rounded,
-                        size: 18,
-                        color: _LuxuryColors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      l10n.createNewAccount,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
-                        color: _LuxuryColors.primary,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
-                ),
+          ),
         ),
       ),
     );
   }
 }
 
-/// فاصل "أو" أنيق
-class _OrDivider extends StatelessWidget {
-  const _OrDivider();
+/// ══════════════════════════════════════════════════════════════════════════
+/// زر إنشاء حساب جديد
+/// ══════════════════════════════════════════════════════════════════════════
+class _SignUpButton extends StatefulWidget {
+  const _SignUpButton();
+
+  @override
+  State<_SignUpButton> createState() => _SignUpButtonState();
+}
+
+class _SignUpButtonState extends State<_SignUpButton>
+    with SingleTickerProviderStateMixin {
+  bool _isPressed = false;
+  bool _isLoading = false;
+
+  late final AnimationController _controller;
+  late final Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onTapDown(TapDownDetails _) {
+    setState(() => _isPressed = true);
+    _controller.forward();
+  }
+
+  void _onTapUp(TapUpDetails _) {
+    setState(() => _isPressed = false);
+    _controller.reverse();
+  }
+
+  void _onTapCancel() {
+    setState(() => _isPressed = false);
+    _controller.reverse();
+  }
+
+  Future<void> _onTap() async {
+    if (_isLoading) return;
+
+    HapticFeedback.lightImpact();
+    setState(() => _isLoading = true);
+
+    await Future.delayed(const Duration(milliseconds: 200));
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      context.push('/signup');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
+    return GestureDetector(
+      onTapDown: _onTapDown,
+      onTapUp: _onTapUp,
+      onTapCancel: _onTapCancel,
+      onTap: _onTap,
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnimation.value,
+          child: child,
+        ),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: double.infinity,
+          height: 58,
+          decoration: BoxDecoration(
+            color: _isPressed ? _DS.primarySoft : _DS.surface,
+            borderRadius: BorderRadius.circular(_DS.radiusLg),
+            border: Border.all(
+              color: _isPressed ? _DS.primary : _DS.primary.withOpacity(0.3),
+              width: 1.5,
+            ),
+            boxShadow: _isPressed
+                ? []
+                : [
+                    BoxShadow(
+                      color: _DS.primary.withOpacity(0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          child: Center(
+            child: _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      valueColor: AlwaysStoppedAnimation(_DS.primary),
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: _DS.primarySoft,
+                          borderRadius: BorderRadius.circular(_DS.radiusSm),
+                        ),
+                        child: const Icon(
+                          Icons.person_add_alt_1_rounded,
+                          size: 16,
+                          color: _DS.primary,
+                        ),
+                      ),
+                      const SizedBox(width: _DS.md),
+                      Text(
+                        l10n.createNewAccount,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: _DS.primary,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ══════════════════════════════════════════════════════════════════════════
+/// فاصل "أو"
+/// ══════════════════════════════════════════════════════════════════════════
+class _Divider extends StatelessWidget {
+  const _Divider();
 
   @override
   Widget build(BuildContext context) {
@@ -795,50 +690,49 @@ class _OrDivider extends StatelessWidget {
       children: [
         Expanded(
           child: Container(
-            height: 1.5,
+            height: 1,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _LuxuryColors.border.withOpacity(0),
-                  _LuxuryColors.border,
+                  _DS.border.withOpacity(0),
+                  _DS.border,
                 ],
               ),
-              borderRadius: BorderRadius.circular(1),
             ),
           ),
         ),
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: _DS.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _DS.lg,
+            vertical: _DS.sm,
+          ),
           decoration: BoxDecoration(
-            color: _LuxuryColors.backgroundBase,
-            borderRadius: BorderRadius.circular(20),
+            color: _DS.bgBase,
+            borderRadius: BorderRadius.circular(_DS.radiusMd),
             border: Border.all(
-              color: _LuxuryColors.border.withOpacity(0.5),
-              width: 1,
+              color: _DS.border.withOpacity(0.5),
             ),
           ),
-          child: const Text(
+          child: Text(
             'أو',
-            style: TextStyle(
+            style: GoogleFonts.cairo(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: _LuxuryColors.textMuted,
-              letterSpacing: 0.5,
+              color: _DS.textMuted,
             ),
           ),
         ),
         Expanded(
           child: Container(
-            height: 1.5,
+            height: 1,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _LuxuryColors.border,
-                  _LuxuryColors.border.withOpacity(0),
+                  _DS.border,
+                  _DS.border.withOpacity(0),
                 ],
               ),
-              borderRadius: BorderRadius.circular(1),
             ),
           ),
         ),
@@ -847,15 +741,17 @@ class _OrDivider extends StatelessWidget {
   }
 }
 
-/// زر الزائر
-class _GuestButton extends StatefulWidget {
-  const _GuestButton();
+/// ══════════════════════════════════════════════════════════════════════════
+/// رابط المتابعة كزائر
+/// ══════════════════════════════════════════════════════════════════════════
+class _GuestLink extends StatefulWidget {
+  const _GuestLink();
 
   @override
-  State<_GuestButton> createState() => _GuestButtonState();
+  State<_GuestLink> createState() => _GuestLinkState();
 }
 
-class _GuestButtonState extends State<_GuestButton> {
+class _GuestLinkState extends State<_GuestLink> {
   bool _isPressed = false;
 
   @override
@@ -872,12 +768,13 @@ class _GuestButtonState extends State<_GuestButton> {
       },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: _DS.xl,
+          vertical: _DS.md,
+        ),
         decoration: BoxDecoration(
-          color: _isPressed
-              ? _LuxuryColors.backgroundCool.withOpacity(0.8)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          color: _isPressed ? _DS.bgCool : Colors.transparent,
+          borderRadius: BorderRadius.circular(_DS.radiusMd),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -885,32 +782,26 @@ class _GuestButtonState extends State<_GuestButton> {
           children: [
             Icon(
               Icons.explore_outlined,
-              size: 20,
-              color: _isPressed
-                  ? _LuxuryColors.primary
-                  : _LuxuryColors.textSecondary,
+              size: 18,
+              color: _isPressed ? _DS.primary : _DS.textSecondary,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: _DS.sm),
             Text(
               l10n.continueAsGuest,
-              style: TextStyle(
-                fontSize: 15,
+              style: GoogleFonts.cairo(
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: _isPressed
-                    ? _LuxuryColors.primary
-                    : _LuxuryColors.textSecondary,
+                color: _isPressed ? _DS.primary : _DS.textSecondary,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: _DS.xs),
             AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              transform: Matrix4.translationValues(_isPressed ? 4 : 0, 0, 0),
+              transform: Matrix4.translationValues(_isPressed ? -4 : 0, 0, 0),
               child: Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: _isPressed
-                    ? _LuxuryColors.primary
-                    : _LuxuryColors.textMuted,
+                Icons.arrow_back_ios_rounded, // RTL: السهم يشير لليسار
+                size: 12,
+                color: _isPressed ? _DS.primary : _DS.textMuted,
               ),
             ),
           ],
@@ -920,58 +811,48 @@ class _GuestButtonState extends State<_GuestButton> {
   }
 }
 
-/// شارات الثقة
-class _TrustBadges extends StatelessWidget {
-  const _TrustBadges();
+/// ══════════════════════════════════════════════════════════════════════════
+/// مؤشرات الثقة
+/// ══════════════════════════════════════════════════════════════════════════
+class _TrustIndicators extends StatelessWidget {
+  const _TrustIndicators();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
-      constraints: const BoxConstraints(maxWidth: 420),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      constraints: const BoxConstraints(maxWidth: 400),
+      padding: const EdgeInsets.symmetric(
+        horizontal: _DS.lg,
+        vertical: _DS.xl,
+      ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            _LuxuryColors.surface.withOpacity(0.9),
-            _LuxuryColors.surfaceElevated.withOpacity(0.7),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: _DS.surface.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(_DS.radiusXl),
         border: Border.all(
-          color: _LuxuryColors.border.withOpacity(0.3),
-          width: 1,
+          color: _DS.border.withOpacity(0.3),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: _LuxuryColors.primary.withOpacity(0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _TrustBadge(
-            icon: Icons.local_shipping_rounded,
+          _TrustItem(
+            icon: Icons.local_shipping_outlined,
             label: l10n.fastDelivery,
-            color: const Color(0xFF059669),
+            color: const Color(0xFF10B981),
           ),
-          _BadgeDivider(),
-          _TrustBadge(
-            icon: Icons.verified_rounded,
+          _VerticalDivider(),
+          _TrustItem(
+            icon: Icons.verified_outlined,
             label: l10n.guaranteedQuality,
-            color: const Color(0xFF2563EB),
+            color: const Color(0xFF3B82F6),
           ),
-          _BadgeDivider(),
-          _TrustBadge(
-            icon: Icons.headset_mic_rounded,
+          _VerticalDivider(),
+          _TrustItem(
+            icon: Icons.support_agent_outlined,
             label: l10n.continuousSupport,
-            color: const Color(0xFF7C3AED),
+            color: const Color(0xFF8B5CF6),
           ),
         ],
       ),
@@ -979,13 +860,12 @@ class _TrustBadges extends StatelessWidget {
   }
 }
 
-/// شارة ثقة واحدة
-class _TrustBadge extends StatelessWidget {
+class _TrustItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
 
-  const _TrustBadge({
+  const _TrustItem({
     required this.icon,
     required this.label,
     required this.color,
@@ -997,32 +877,26 @@ class _TrustBadge extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 48,
-          height: 48,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
             color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: color.withOpacity(0.15),
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(_DS.radiusMd),
           ),
           child: Icon(
             icon,
-            size: 24,
+            size: 22,
             color: color,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: _DS.sm),
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.cairo(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: _LuxuryColors.textSecondary,
-            letterSpacing: 0.2,
+            color: _DS.textSecondary,
           ),
-          textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -1031,21 +905,20 @@ class _TrustBadge extends StatelessWidget {
   }
 }
 
-/// فاصل بين الشارات
-class _BadgeDivider extends StatelessWidget {
+class _VerticalDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 1,
-      height: 40,
+      height: 36,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            _LuxuryColors.border.withOpacity(0),
-            _LuxuryColors.border.withOpacity(0.5),
-            _LuxuryColors.border.withOpacity(0),
+            _DS.border.withOpacity(0),
+            _DS.border.withOpacity(0.5),
+            _DS.border.withOpacity(0),
           ],
         ),
       ),

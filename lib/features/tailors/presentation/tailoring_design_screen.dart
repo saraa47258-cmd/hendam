@@ -1,11 +1,8 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../../../shared/widgets/premium_app_bar.dart';
 import '../services/fabric_service.dart';
 import '../services/embroidery_service.dart';
 import '../models/embroidery_design.dart';
@@ -13,10 +10,66 @@ import '../../orders/services/order_service.dart';
 import '../../orders/models/order_model.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../measurements/models/measurement_profile.dart';
-import '../../measurements/services/measurement_service.dart';
+import '../../../shared/widgets/gift_recipient_bottom_sheet.dart';
+import '../../../l10n/app_localizations.dart';
 
 bool _isNetworkPath(String p) =>
     p.startsWith('http://') || p.startsWith('https://');
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PREMIUM DESIGN SYSTEM - Luxury Tailoring App
+// Calm, Confident, Modern, Elegant, Timeless
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Premium color palette - Refined, elegant colors
+class _DesignTokens {
+  // Primary palette - Deep sophisticated blue
+  static const Color primaryDark = Color(0xFF1A2F4B);
+  static const Color primary = Color(0xFF2C4A6E);
+  static const Color primaryLight = Color(0xFF4A6B8F);
+  static const Color primarySoft = Color(0xFF6B8AAE);
+
+  // Accent - Warm gold for elegance
+  static const Color accent = Color(0xFFB8860B);
+  static const Color accentLight = Color(0xFFD4A84B);
+
+  // Surfaces - Clean, calm backgrounds
+  static const Color surfacePure = Color(0xFFFFFFFF);
+  static const Color surfaceLight = Color(0xFFFAFBFC);
+  static const Color surfaceMuted = Color(0xFFF5F7FA);
+  static const Color surfaceDim = Color(0xFFEEF1F5);
+
+  // Text hierarchy
+  static const Color textPrimary = Color(0xFF1A1F2E);
+  static const Color textSecondary = Color(0xFF4A5568);
+  static const Color textTertiary = Color(0xFF718096);
+  static const Color textMuted = Color(0xFFA0AEC0);
+
+  // Borders - Subtle, refined
+  static const Color borderLight = Color(0xFFF0F2F5);
+  static const Color borderDefault = Color(0xFFE2E8F0);
+  static const Color borderStrong = Color(0xFFCBD5E0);
+
+  // Semantic colors
+  static const Color success = Color(0xFF38A169);
+  static const Color warning = Color(0xFFD69E2E);
+  static const Color error = Color(0xFFE53E3E);
+
+  // Spacing scale
+  static const double spaceXS = 4.0;
+  static const double spaceSM = 8.0;
+  static const double spaceMD = 16.0;
+  static const double spaceLG = 24.0;
+  static const double spaceXL = 32.0;
+  static const double space2XL = 48.0;
+
+  // Border radius scale
+  static const double radiusSM = 8.0;
+  static const double radiusMD = 12.0;
+  static const double radiusLG = 16.0;
+  static const double radiusXL = 20.0;
+  static const double radius2XL = 24.0;
+}
 
 /// ===== وحدات القياس =====
 enum MeasurementUnit { cm, inch }
@@ -28,7 +81,10 @@ extension MeasurementUnitX on MeasurementUnit {
 
 const double _cmPerInch = 2.54;
 
-/// شاشة تفصيل الثوب - أنيقة بالعربي
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN SCREEN - Premium Tailoring Experience
+// ═══════════════════════════════════════════════════════════════════════════
+
 class TailoringDesignScreen extends StatefulWidget {
   final String tailorId;
   final String tailorName;
@@ -55,87 +111,281 @@ class TailoringDesignScreen extends StatefulWidget {
 
 class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     with TickerProviderStateMixin {
-  // ==== فورم المقاسات ====
+  // Form controllers
   final _formKey = GlobalKey<FormState>();
+  final _lengthCtrl = TextEditingController();
+  final _shoulderCtrl = TextEditingController();
+  final _sleeveCtrl = TextEditingController();
+  final _upperSleeveCtrl = TextEditingController();
+  final _lowerSleeveCtrl = TextEditingController();
+  final _chestCtrl = TextEditingController();
+  final _waistCtrl = TextEditingController();
+  final _neckCtrl = TextEditingController();
+  final _embroideryCtrl = TextEditingController();
+  final _notesCtrl = TextEditingController();
 
-  // المقاسات الثمانية فقط (بالعربي):
-  final _lengthCtrl = TextEditingController(); // الطول
-  final _shoulderCtrl = TextEditingController(); // الكتف
-  final _neckCtrl = TextEditingController(); // الرقبة
-  final _armLengthCtrl = TextEditingController(); // طول الذراع
-  final _wristWidthCtrl = TextEditingController(); // عرض المعصم
-  final _chestWidthCtrl = TextEditingController(); // عرض الصدر مع الجانبيين
-  final _bottomWidthCtrl = TextEditingController(); // الوسع السفلي
-  final _patternLengthCtrl = TextEditingController(); // طول النقشة
-  final _notesCtrl = TextEditingController(); // ملاحظات (للطلب)
+  // Navigation state
+  final _pageController = PageController();
+  int _currentStep = 0;
 
-  // ==== معالج الخطوات ====
-  final _pager = PageController();
-  int _step = 0; // 0..2 (القماش، المقاسات+اللون، التطريز)
+  // Selection state
+  String? _fabricType;
+  String? _fabricThumb;
+  String? _selectedFabricId;
+  Color _embroideryColor = const Color(0xFF4A5568);
+  int _embroideryLines = 0;
+  EmbroideryDesign? _selectedEmbroidery;
+  MeasurementUnit _unit = MeasurementUnit.cm;
 
-  // ==== القماش ====
-  String? _fabricType; // الاسم الظاهر
-  String? _fabricThumb; // asset أو رابط
-  String? _selectedFabricId; // معرف القماش المحدد
+  // Gift feature state
+  bool _isGift = false;
+  GiftRecipientDetails? _giftRecipientDetails;
 
-  // ==== التطريز ====
-  Color _embroideryColor = const Color(0xFF795548);
-  int _embroideryLines = 0; // 0..3
-  EmbroideryDesign? _selectedEmbroidery; // التطريز المختار
+  // Animation controllers
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
 
-  // ==== الوحدات ====
-  MeasurementUnit _unit = MeasurementUnit.cm; // افتراضيًا سم
+  @override
+  void initState() {
+    super.initState();
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: Curves.easeOutQuart,
+    );
+    _fadeController.forward();
 
-  // ==== إرسال الطلب الحقيقي ====
-  bool _isSubmitting = false;
+    // Set status bar style
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+    ));
+  }
 
-  Future<void> _submitRealOrder() async {
-    // منع الإرسال المتكرر
-    if (_isSubmitting) return;
+  double get _totalPrice {
+    double price = widget.basePriceOMR;
+    if (_fabricType == 'فاخر') price += 1.500;
+    if (_fabricType == 'شتوي') price += 0.800;
+    price += (_embroideryLines * 0.250);
+    if (_selectedEmbroidery != null && _selectedEmbroidery!.price > 0) {
+      price += _selectedEmbroidery!.price;
+    }
+    return price;
+  }
 
-    if (!_formKey.currentState!.validate()) return;
+  String _getColorName(Color color) {
+    const names = {
+      0xFF1A2F4B: 'كحلي',
+      0xFF2C4A6E: 'أزرق',
+      0xFF4A5568: 'رمادي',
+      0xFF38A169: 'أخضر',
+      0xFFB8860B: 'ذهبي',
+      0xFF8B4513: 'بني',
+      0xFF553C9A: 'بنفسجي',
+      0xFF1A1F2E: 'أسود',
+      0xFFC0C0C0: 'فضي',
+    };
+    return names[color.value] ?? 'لون مخصص';
+  }
 
-    // التحقق من البيانات المطلوبة
-    if (_fabricType == null || _selectedFabricId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى اختيار القماش أولاً')),
+  @override
+  void dispose() {
+    _fadeController.dispose();
+    _pageController.dispose();
+    for (final c in [
+      _lengthCtrl,
+      _shoulderCtrl,
+      _sleeveCtrl,
+      _upperSleeveCtrl,
+      _lowerSleeveCtrl,
+      _chestCtrl,
+      _waistCtrl,
+      _neckCtrl,
+      _embroideryCtrl,
+      _notesCtrl
+    ]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // NAVIGATION
+  // ═══════════════════════════════════════════════════════════════════════
+
+  Future<void> _goToNextStep() async {
+    FocusScope.of(context).unfocus();
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    if (!_validateCurrentStep()) return;
+
+    if (_currentStep < 2) {
+      setState(() => _currentStep++);
+      await _pageController.animateToPage(
+        _currentStep,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeOutCubic,
       );
+      HapticFeedback.lightImpact();
+    } else {
+      _showOrderReview();
+    }
+  }
+
+  Future<void> _goToPreviousStep() async {
+    FocusScope.of(context).unfocus();
+
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+      await _pageController.animateToPage(
+        _currentStep,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+      );
+      HapticFeedback.lightImpact();
+    } else {
+      Navigator.pop(context);
+    }
+  }
+
+  bool _validateCurrentStep() {
+    switch (_currentStep) {
+      case 0:
+        if (_fabricType == null || _selectedFabricId == null) {
+          HapticFeedback.mediumImpact();
+          _showSnackBar('يرجى اختيار نوع القماش', isError: true);
+          return false;
+        }
+        return true;
+      case 1:
+        if (!(_formKey.currentState?.validate() ?? false)) {
+          HapticFeedback.mediumImpact();
+          _showSnackBar('يرجى إدخال المقاسات بشكل صحيح', isError: true);
+          return false;
+        }
+        return true;
+      default:
+        return true;
+    }
+  }
+
+  void _switchUnit(MeasurementUnit newUnit) {
+    if (newUnit == _unit) return;
+
+    double? convert(String text) {
+      final v = double.tryParse(text.trim().replaceAll(',', '.'));
+      if (v == null) return null;
+      final inCm = _unit == MeasurementUnit.cm ? v : v * _cmPerInch;
+      return newUnit == MeasurementUnit.cm ? inCm : (inCm / _cmPerInch);
+    }
+
+    void apply(TextEditingController c) {
+      final v = convert(c.text);
+      if (v == null) return;
+      c.text = v.toStringAsFixed(newUnit == MeasurementUnit.cm ? 1 : 2);
+    }
+
+    setState(() {
+      for (final c in [
+        _lengthCtrl,
+        _shoulderCtrl,
+        _sleeveCtrl,
+        _upperSleeveCtrl,
+        _lowerSleeveCtrl,
+        _chestCtrl,
+        _waistCtrl,
+        _neckCtrl,
+        _embroideryCtrl
+      ]) {
+        apply(c);
+      }
+      _unit = newUnit;
+    });
+    HapticFeedback.selectionClick();
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ORDER SUBMISSION
+  // ═══════════════════════════════════════════════════════════════════════
+
+  void _showOrderReview() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _OrderReviewSheet(
+        tailorName: widget.tailorName,
+        fabricType: _fabricType,
+        fabricThumb: _fabricThumb,
+        embroideryColor: _embroideryColor,
+        embroideryLines: _embroideryLines,
+        selectedEmbroidery: _selectedEmbroidery,
+        lengthCtrl: _lengthCtrl,
+        shoulderCtrl: _shoulderCtrl,
+        sleeveCtrl: _sleeveCtrl,
+        upperSleeveCtrl: _upperSleeveCtrl,
+        lowerSleeveCtrl: _lowerSleeveCtrl,
+        chestCtrl: _chestCtrl,
+        waistCtrl: _waistCtrl,
+        neckCtrl: _neckCtrl,
+        embroideryCtrl: _embroideryCtrl,
+        notesCtrl: _notesCtrl,
+        unit: _unit,
+        price: _totalPrice,
+        getColorName: _getColorName,
+        isGift: _isGift,
+        giftRecipientDetails: _giftRecipientDetails,
+        onGiftToggle: (value) async {
+          if (value && _giftRecipientDetails == null) {
+            final result = await GiftRecipientBottomSheet.show(context);
+            if (result != null) {
+              setState(() {
+                _isGift = true;
+                _giftRecipientDetails = result;
+              });
+              if (mounted) Navigator.pop(context);
+              _showOrderReview();
+            }
+          } else {
+            setState(() {
+              _isGift = value;
+              if (!value) _giftRecipientDetails = null;
+            });
+            if (mounted) Navigator.pop(context);
+            _showOrderReview();
+          }
+        },
+        onEditGiftRecipient: () async {
+          final result = await GiftRecipientBottomSheet.show(
+            context,
+            initialData: _giftRecipientDetails,
+          );
+          if (result != null) {
+            setState(() => _giftRecipientDetails = result);
+            if (mounted) Navigator.pop(context);
+            _showOrderReview();
+          }
+        },
+        onConfirm: _submitOrder,
+      ),
+    );
+  }
+
+  Future<void> _submitOrder() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_fabricType == null || _selectedFabricId == null) {
+      _showSnackBar('يرجى اختيار القماش', isError: true);
       return;
     }
 
-    setState(() => _isSubmitting = true);
-
-    // حفظ المراجع قبل العمليات غير المتزامنة
-    final navigator = Navigator.of(context);
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-    // إظهار مؤشر التحميل
+    // Show loading
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => PopScope(
-        canPop: false,
-        child: Center(
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(dialogContext).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                const SizedBox(height: 16),
-                Text(
-                  'جاري إرسال الطلب...',
-                  style: Theme.of(dialogContext).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+      builder: (_) => const _LoadingOverlay(),
     );
 
     try {
@@ -143,16 +393,13 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       final currentUser = authProvider.currentUser;
 
       if (currentUser == null) {
-        navigator.pop(); // إغلاق مربع التحميل
-        setState(() => _isSubmitting = false);
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('يرجى تسجيل الدخول أولاً')),
-        );
+        Navigator.pop(context);
+        _showSnackBar('يرجى تسجيل الدخول', isError: true);
         return;
       }
 
       final order = OrderModel(
-        id: '', // سيتم إنشاؤه تلقائياً
+        id: '',
         customerId: currentUser.uid,
         customerName: currentUser.name,
         customerPhone: currentUser.phoneNumber ?? '+968 00000000',
@@ -165,679 +412,164 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
         fabricColor: '5C6BC0',
         fabricColorHex: '#FF5C6BC0',
         measurements: {
-          'الطول': double.tryParse(_lengthCtrl.text) ?? 0.0,
+          'الطول الكلي': double.tryParse(_lengthCtrl.text) ?? 0.0,
           'الكتف': double.tryParse(_shoulderCtrl.text) ?? 0.0,
-          'الرقبة': double.tryParse(_neckCtrl.text) ?? 0.0,
-          'طول الذراع': double.tryParse(_armLengthCtrl.text) ?? 0.0,
-          'عرض المعصم': double.tryParse(_wristWidthCtrl.text) ?? 0.0,
-          'عرض الصدر مع الجانبيين':
-              double.tryParse(_chestWidthCtrl.text) ?? 0.0,
-          'الوسع السفلي': double.tryParse(_bottomWidthCtrl.text) ?? 0.0,
-          'طول النقشة': double.tryParse(_patternLengthCtrl.text) ?? 0.0,
+          'طول الكم': double.tryParse(_sleeveCtrl.text) ?? 0.0,
+          'محيط الكم العلوي': double.tryParse(_upperSleeveCtrl.text) ?? 0.0,
+          'محيط الكم السفلي': double.tryParse(_lowerSleeveCtrl.text) ?? 0.0,
+          'الصدر': double.tryParse(_chestCtrl.text) ?? 0.0,
+          'الخصر': double.tryParse(_waistCtrl.text) ?? 0.0,
+          'محيط الرقبة': double.tryParse(_neckCtrl.text) ?? 0.0,
+          'التطريز الامامي': double.tryParse(_embroideryCtrl.text) ?? 0.0,
         },
         notes: _notesCtrl.text,
         embroideryDesignId: _selectedEmbroidery?.id,
         embroideryDesignName: _selectedEmbroidery?.name,
         embroideryDesignImageUrl: _selectedEmbroidery?.imageUrl,
         embroideryDesignPrice: _selectedEmbroidery?.price,
-        totalPrice: _price,
+        isGift: _isGift,
+        giftRecipientDetails: _giftRecipientDetails,
+        totalPrice: _totalPrice,
         status: OrderStatus.pending,
         createdAt: DateTime.now(),
       );
 
-      // إرسال الطلب
       final orderId = await OrderService.submitOrder(order);
-
-      // إخفاء مؤشر التحميل
-      navigator.pop();
-      setState(() => _isSubmitting = false);
-
-      if (!mounted) return;
+      Navigator.pop(context); // Close loading
 
       if (orderId != null) {
-        // إظهار رسالة النجاح
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
-            icon: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.check_circle_rounded,
-                  color: Colors.green, size: 48),
-            ),
-            title: const Text('تم إرسال الطلب بنجاح!'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildOrderInfoRow('رقم الطلب', orderId),
-                _buildOrderInfoRow('الخياط', widget.tailorName),
-                _buildOrderInfoRow(
-                    'الإجمالي', 'ر.ع ${_price.toStringAsFixed(3)}'),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline_rounded,
-                          color: Colors.blue, size: 20),
-                      SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'سيتم التواصل معك قريباً لتأكيد التفاصيل',
-                          style: TextStyle(fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              FilledButton.icon(
-                onPressed: () {
-                  Navigator.of(dialogContext).pop();
-                  navigator.pop(); // العودة للشاشة السابقة
-                },
-                icon: const Icon(Icons.done_rounded),
-                label: const Text('تم'),
-              ),
-            ],
-          ),
-        );
+        _showSuccessDialog(orderId);
       } else {
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(
-            content: Text('حدث خطأ في إرسال الطلب، يرجى المحاولة مرة أخرى'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _showSnackBar('حدث خطأ في إرسال الطلب', isError: true);
       }
     } catch (e) {
-      // إخفاء مؤشر التحميل
-      navigator.pop();
-      setState(() => _isSubmitting = false);
-
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('حدث خطأ: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      Navigator.pop(context);
+      _showSnackBar('حدث خطأ: $e', isError: true);
     }
   }
 
-  Widget _buildOrderInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-
-  // ==== التسعير ====
-  double get _price {
-    double p = widget.basePriceOMR;
-    if (_fabricType == 'فاخر') p += 1.500;
-    if (_fabricType == 'شتوي') p += 0.800;
-    p += (_embroideryLines * 0.250);
-    // إضافة سعر تصميم التطريز المختار
-    if (_selectedEmbroidery != null && _selectedEmbroidery!.price > 0) {
-      p += _selectedEmbroidery!.price;
-    }
-    return p;
-  }
-
-  // الحصول على اسم اللون بالعربي
-  String _getColorName(Color color) {
-    const colorNames = {
-      0xFF3F51B5: 'أزرق',
-      0xFF009688: 'تركواز',
-      0xFFFF5722: 'برتقالي',
-      0xFF795548: 'بني',
-      0xFF607D8B: 'رمادي مزرق',
-      0xFF9C27B0: 'بنفسجي',
-      0xFF1B5E20: 'أخضر داكن',
-      0xFFB71C1C: 'أحمر داكن',
-    };
-
-    return colorNames[color.value] ?? 'لون مخصص';
-  }
-
-  @override
-  void dispose() {
-    _pager.dispose();
-    for (final c in [
-      _lengthCtrl,
-      _shoulderCtrl,
-      _neckCtrl,
-      _armLengthCtrl,
-      _wristWidthCtrl,
-      _chestWidthCtrl,
-      _bottomWidthCtrl,
-      _patternLengthCtrl,
-      _notesCtrl,
-    ]) {
-      c.dispose();
-    }
-    super.dispose();
-  }
-
-  // ==== تنقّل الخطوات ====
-  // ignore: unused_element - يمكن استخدامها لاحقاً من داخل الخطوات أو من مكان آخر
-  void _next() async {
-    // إخفاء لوحة المفاتيح
-    FocusScope.of(context).unfocus();
-
-    // الانتظار قليلاً لإخفاء لوحة المفاتيح
-    await Future.delayed(const Duration(milliseconds: 100));
-
-    // التحقق من إمكانية المتابعة
-    if (!_canProceed(_step)) return;
-
-    if (_step < 2) {
-      // الانتقال للخطوة التالية
-      setState(() => _step++);
-      await _pager.animateToPage(
-        _step,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOutCubic,
-      );
-      HapticFeedback.lightImpact();
-    } else {
-      // إرسال الطلب
-      _submitOrder();
-    }
-  }
-
-  /// الرجوع خطوة واحدة: داخل التصميم أو للشاشة السابقة
-  void _back() {
-    if (!mounted) return;
-    FocusScope.of(context).unfocus();
-
-    if (_step > 0) {
-      // الرجوع خطوة واحدة داخل التصميم
-      final newStep = _step - 1;
-      setState(() => _step = newStep);
-      _pager.jumpToPage(newStep);
-      HapticFeedback.lightImpact();
-    } else {
-      // في الخطوة الأولى: الرجوع للشاشة السابقة (Navigator.pop)
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-    }
-  }
-
-  bool _canProceed(int step) {
-    final messenger = ScaffoldMessenger.of(context);
-
-    switch (step) {
-      case 0:
-        // التحقق من اختيار القماش
-        if (_fabricType == null || _selectedFabricId == null) {
-          HapticFeedback.mediumImpact();
-          messenger.showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white),
-                  SizedBox(width: 8),
-                  Expanded(child: Text('⚠️ يرجى اختيار نوع القماش أولاً')),
-                ],
-              ),
-              backgroundColor: Colors.orange.shade700,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-          return false;
-        }
-        return true;
-
-      case 1:
-        // التحقق من المقاسات
-        if (!(_formKey.currentState?.validate() ?? false)) {
-          HapticFeedback.mediumImpact();
-          messenger.showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.straighten_rounded, color: Colors.white),
-                  SizedBox(width: 8),
-                  Expanded(
-                      child: Text('📏 يرجى إدخال جميع المقاسات بشكل صحيح')),
-                ],
-              ),
-              backgroundColor: Colors.red.shade700,
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 2),
-            ),
-          );
-          return false;
-        }
-        return true;
-
-      default:
-        return true;
-    }
-  }
-
-  double? _parseNum(String s) {
-    final t = s.trim().replaceAll(',', '.');
-    return double.tryParse(t.isEmpty ? '' : t);
-  }
-
-  /// تحويل الحقول عند تغيير الوحدة
-  void _switchUnit(MeasurementUnit newUnit) {
-    if (newUnit == _unit) return;
-
-    double? convert(String text) {
-      final v = _parseNum(text);
-      if (v == null) return null;
-      final inCm = _unit == MeasurementUnit.cm ? v : v * _cmPerInch;
-      final res = newUnit == MeasurementUnit.cm ? inCm : (inCm / _cmPerInch);
-      return res;
-    }
-
-    void apply(TextEditingController c) {
-      final v = convert(c.text);
-      if (v == null) return;
-      final dec = newUnit == MeasurementUnit.cm ? 1 : 2;
-      c.text = v.toStringAsFixed(dec);
-    }
-
-    setState(() {
-      for (final c in [
-        _lengthCtrl,
-        _shoulderCtrl,
-        _neckCtrl,
-        _armLengthCtrl,
-        _wristWidthCtrl,
-        _chestWidthCtrl,
-        _bottomWidthCtrl,
-        _patternLengthCtrl,
-      ]) {
-        apply(c);
-      }
-      _unit = newUnit;
-    });
-
-    HapticFeedback.selectionClick();
-  }
-
-  // ==== الإرسال (مراجعة الطلب) ====
-  void _submitOrder() {
-    showModalBottomSheet(
+  void _showSuccessDialog(String orderId) {
+    showDialog(
       context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      barrierDismissible: false,
+      builder: (_) => _SuccessDialog(
+        orderId: orderId,
+        tailorName: widget.tailorName,
+        price: _totalPrice,
+        onDismiss: () {
+          Navigator.pop(context);
+          Navigator.pop(context);
+        },
       ),
-      builder: (_) {
-        final tt = Theme.of(context).textTheme;
-        final cs = Theme.of(context).colorScheme;
-        const chosenColorHex = 'حسب اختيارك السابق'; // لون تم اختياره مسبقاً
-        String fmt(TextEditingController c) =>
-            c.text.isEmpty ? '—' : '${c.text} ${_unit.labelAr}';
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 8,
-              bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_rounded),
-                      tooltip: 'رجوع',
-                    ),
-                    const SizedBox(width: 6),
-                    Text('مراجعة الطلب',
-                        style: tt.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w900)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                _KV('الخياط', widget.tailorName),
-                const _KV('المدينة', 'مسقط'),
-                const Divider(height: 24),
-                const _KV('مصدر القماش', 'قماش من المتجر'),
-                _KV('نوع القماش', _fabricType ?? '—'),
-                const _KV('لون القماش', chosenColorHex),
-                if (_fabricThumb != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: _isNetworkPath(_fabricThumb!)
-                          ? Image.network(
-                              _fabricThumb!,
-                              height: 120,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _imgErr(cs),
-                            )
-                          : Image.asset(
-                              _fabricThumb!,
-                              height: 120,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _imgErr(cs),
-                            ),
-                    ),
-                  ),
-                const Divider(height: 24),
-
-                // قسم التطريز
-                Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Text('التطريز',
-                      style:
-                          tt.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
-                ),
-                const SizedBox(height: 6),
-
-                // نوع تصميم التطريز
-                if (_selectedEmbroidery != null) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text('تصميم التطريز',
-                            style: tt.bodyMedium
-                                ?.copyWith(color: cs.onSurfaceVariant)),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        flex: 2,
-                        child: Row(
-                          children: [
-                            if (_selectedEmbroidery!.imageUrl.isNotEmpty)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: CachedNetworkImage(
-                                  imageUrl: _selectedEmbroidery!.imageUrl,
-                                  width: 50,
-                                  height: 50,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    width: 50,
-                                    height: 50,
-                                    color: cs.surfaceContainerHighest,
-                                    child: const Center(
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                    width: 50,
-                                    height: 50,
-                                    color: cs.surfaceContainerHighest,
-                                    child: Icon(
-                                      Icons.image_not_supported_rounded,
-                                      color: cs.onSurfaceVariant,
-                                      size: 24,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _selectedEmbroidery!.name,
-                                    style: tt.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  if (_selectedEmbroidery!.price > 0)
-                                    Text(
-                                      '+${_selectedEmbroidery!.price.toStringAsFixed(3)} ر.ع',
-                                      style: tt.bodySmall?.copyWith(
-                                        color: cs.primary,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                ] else
-                  const _KV('تصميم التطريز', 'لا يوجد'),
-
-                // لون خيط التطريز
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text('لون خيط التطريز',
-                          style: tt.bodyMedium
-                              ?.copyWith(color: cs.onSurfaceVariant)),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 2,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: _embroideryColor,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            _getColorName(_embroideryColor),
-                            style: tt.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-
-                // عدد الخطوط الزخرفية
-                _KV('الخطوط الزخرفية',
-                    '$_embroideryLines ${_embroideryLines > 0 ? "(+${(_embroideryLines * 0.250).toStringAsFixed(3)} ر.ع)" : ""}'),
-
-                const Divider(height: 24),
-                Align(
-                  alignment: AlignmentDirectional.centerEnd,
-                  child: Text('المقاسات (رجالي)',
-                      style:
-                          tt.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
-                ),
-                const SizedBox(height: 6),
-                _KV('الطول', fmt(_lengthCtrl)),
-                _KV('الكتف', fmt(_shoulderCtrl)),
-                _KV('الرقبة', fmt(_neckCtrl)),
-                _KV('طول الذراع', fmt(_armLengthCtrl)),
-                _KV('عرض المعصم', fmt(_wristWidthCtrl)),
-                _KV('عرض الصدر مع الجانبيين', fmt(_chestWidthCtrl)),
-                _KV('الوسع السفلي', fmt(_bottomWidthCtrl)),
-                _KV('طول النقشة', fmt(_patternLengthCtrl)),
-                const Divider(height: 24),
-                _KV('ملاحظات', _notesCtrl.text.isEmpty ? '—' : _notesCtrl.text),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text('الإجمالي',
-                          style: tt.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w900)),
-                    ),
-                    Text('ر.ع ${_price.toStringAsFixed(3)}',
-                        style: tt.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w900)),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back_rounded),
-                        label: const Text('رجوع'),
-                        style: OutlinedButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _submitRealOrder,
-                        icon: const Icon(Icons.send_rounded),
-                        label: const Text('تأكيد الإرسال'),
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(48),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
-  Widget _imgErr(ColorScheme cs) => Container(
-        height: 120,
-        color: cs.surfaceContainerHighest,
-        alignment: Alignment.center,
-        child:
-            Icon(Icons.image_not_supported_rounded, color: cs.onSurfaceVariant),
-      );
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        backgroundColor: isError ? _DesignTokens.error : _DesignTokens.success,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+        ),
+        margin: const EdgeInsets.all(_DesignTokens.spaceMD),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // BUILD
+  // ═══════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
 
     return PopScope(
-      canPop: _step == 0, // السماح بالخروج فقط في الخطوة الأولى
+      canPop: _currentStep == 0,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return; // تم الخروج بالفعل
-        // إذا لم يتم الخروج (أي _step > 0)، نرجع خطوة واحدة داخل التصميم
-        _back();
+        if (!didPop && _currentStep > 0) _goToPreviousStep();
       },
       child: Directionality(
         textDirection: TextDirection.rtl,
         child: Scaffold(
-          backgroundColor: cs.surface,
-          appBar: PremiumStoreAppBar(
-            title: widget.tailorName,
-            locationText: 'مسقط',
-          ),
-          body: SafeArea(
-            top: false,
+          backgroundColor: isDark ? cs.surface : _DesignTokens.surfaceLight,
+          body: FadeTransition(
+            opacity: _fadeAnimation,
             child: Column(
               children: [
-                // ===== شريط التقدّم =====
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 840),
-                      child: _StepperHeader(
-                        current: _step,
-                        labels: const ['القماش', 'المقاسات و اللون', 'التطريز'],
-                      ),
-                    ),
-                  ),
+                // App Bar
+                _AppBar(
+                  tailorName: widget.tailorName,
+                  onBack: () => Navigator.pop(context),
                 ),
 
-                // ===== الصفحات =====
+                // Progress Indicator
+                _ProgressIndicator(
+                  currentStep: _currentStep,
+                  steps: const ['القماش', 'المقاسات و اللون', 'التطريز'],
+                ),
+
+                // Content
                 Expanded(
                   child: PageView(
-                    controller: _pager,
+                    controller: _pageController,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
-                      _FabricStep(
+                      _FabricSelectionStep(
                         tailorId: widget.tailorId,
                         selectedType: _fabricType,
                         selectedFabricId: _selectedFabricId,
-                        onTypeChanged: (v, thumb, fabricId) => setState(() {
-                          _fabricType = v;
+                        onFabricSelected: (type, thumb, id) => setState(() {
+                          _fabricType = type;
                           _fabricThumb = thumb;
-                          _selectedFabricId = fabricId;
+                          _selectedFabricId = id;
                         }),
-                        onNext: _next,
                       ),
-                      _MeasurementsAndColorStep(
-                        fabricId: _selectedFabricId ?? '',
+                      _MeasurementsStep(
                         formKey: _formKey,
                         unit: _unit,
                         onUnitChanged: _switchUnit,
-                        onNext: _next,
-                        lengthCtrl: _lengthCtrl,
-                        shoulderCtrl: _shoulderCtrl,
-                        neckCtrl: _neckCtrl,
-                        armLengthCtrl: _armLengthCtrl,
-                        wristWidthCtrl: _wristWidthCtrl,
-                        chestWidthCtrl: _chestWidthCtrl,
-                        bottomWidthCtrl: _bottomWidthCtrl,
-                        patternLengthCtrl: _patternLengthCtrl,
+                        controllers: _MeasurementControllers(
+                          length: _lengthCtrl,
+                          shoulder: _shoulderCtrl,
+                          sleeve: _sleeveCtrl,
+                          upperSleeve: _upperSleeveCtrl,
+                          lowerSleeve: _lowerSleeveCtrl,
+                          chest: _chestCtrl,
+                          waist: _waistCtrl,
+                          neck: _neckCtrl,
+                          embroidery: _embroideryCtrl,
+                          notes: _notesCtrl,
+                        ),
                       ),
                       _EmbroideryStep(
+                        tailorId: widget.tailorId,
                         color: _embroideryColor,
                         lines: _embroideryLines,
-                        onChanged: (color, lines) => setState(() {
-                          _embroideryColor = color;
-                          _embroideryLines = lines;
-                        }),
-                        tailorId: widget.tailorId,
-                        selectedEmbroidery: _selectedEmbroidery,
-                        onEmbroideryChanged: (design) => setState(() {
-                          _selectedEmbroidery = design;
-                        }),
-                        onSubmitOrder: _submitRealOrder,
-                        totalPrice: _price,
-                        tailorName: widget.tailorName,
+                        selectedDesign: _selectedEmbroidery,
+                        onColorChanged: (c) =>
+                            setState(() => _embroideryColor = c),
+                        onLinesChanged: (l) =>
+                            setState(() => _embroideryLines = l),
+                        onDesignChanged: (d) =>
+                            setState(() => _selectedEmbroidery = d),
                       ),
                     ],
                   ),
+                ),
+
+                // Bottom Bar
+                _BottomActionBar(
+                  price: _totalPrice,
+                  step: _currentStep,
+                  onBack: _goToPreviousStep,
+                  onNext: _goToNextStep,
                 ),
               ],
             ),
@@ -848,311 +580,393 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   }
 }
 
-/* ===================== شريط التقدم (refined, premium) ===================== */
-class _StepperHeader extends StatelessWidget {
-  final int current;
-  final List<String> labels;
-  const _StepperHeader({required this.current, required this.labels});
+// ═══════════════════════════════════════════════════════════════════════════
+// APP BAR
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _AppBar extends StatelessWidget {
+  final String tailorName;
+  final VoidCallback onBack;
+
+  const _AppBar({required this.tailorName, required this.onBack});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final items = List.generate(labels.length, (i) {
-      final active = i <= current;
-      final completed = i < current;
-      return Expanded(
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _StepDot(
-              index: i + 1,
-              label: labels[i],
-              active: active,
-              completed: completed,
-              cs: cs,
-              tt: tt,
-            ),
-            if (i < labels.length - 1)
-              Expanded(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 320),
-                  curve: Curves.easeInOutCubic,
-                  height: 1.5,
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  decoration: BoxDecoration(
-                    color: active
-                        ? cs.primary.withOpacity(0.4)
-                        : cs.outlineVariant.withOpacity(0.25),
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                ),
-              ),
-          ],
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        _DesignTokens.spaceLG,
+        topPadding + _DesignTokens.spaceMD,
+        _DesignTokens.spaceLG,
+        _DesignTokens.spaceLG,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? cs.surface : _DesignTokens.surfacePure,
+        border: Border(
+          bottom: BorderSide(
+            color: isDark
+                ? cs.outlineVariant.withOpacity(0.15)
+                : _DesignTokens.borderLight,
+          ),
         ),
-      );
-    });
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(children: items),
+      ),
+      child: Row(
+        children: [
+          // Back button
+          _IconButton(
+            icon: Icons.arrow_forward_rounded,
+            onTap: onBack,
+          ),
+          const SizedBox(width: _DesignTokens.spaceMD),
+
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tailorName,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                    letterSpacing: -0.3,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 14,
+                      color: isDark
+                          ? cs.onSurfaceVariant
+                          : _DesignTokens.textTertiary,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'مسقط',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? cs.onSurfaceVariant
+                            : _DesignTokens.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _StepDot extends StatelessWidget {
-  final int index;
-  final String label;
-  final bool active;
-  final bool completed;
-  final ColorScheme cs;
-  final TextTheme tt;
+// ═══════════════════════════════════════════════════════════════════════════
+// PROGRESS INDICATOR
+// ═══════════════════════════════════════════════════════════════════════════
 
-  const _StepDot({
-    required this.index,
-    required this.label,
-    required this.active,
-    required this.completed,
-    required this.cs,
-    required this.tt,
+class _ProgressIndicator extends StatelessWidget {
+  final int currentStep;
+  final List<String> steps;
+
+  const _ProgressIndicator({required this.currentStep, required this.steps});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        _DesignTokens.spaceLG,
+        _DesignTokens.spaceLG,
+        _DesignTokens.spaceLG,
+        _DesignTokens.spaceMD,
+      ),
+      child: Row(
+        children: List.generate(steps.length * 2 - 1, (index) {
+          if (index.isOdd) {
+            final beforeStep = index ~/ 2;
+            final isActive = beforeStep < currentStep;
+            return Expanded(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 350),
+                height: 2,
+                margin: const EdgeInsets.symmetric(
+                    horizontal: _DesignTokens.spaceSM),
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? (isDark ? cs.primary : _DesignTokens.primary)
+                      : (isDark
+                          ? cs.outlineVariant.withOpacity(0.2)
+                          : _DesignTokens.borderDefault),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            );
+          }
+
+          final stepIndex = index ~/ 2;
+          final isActive = stepIndex <= currentStep;
+          final isCurrent = stepIndex == currentStep;
+          final isCompleted = stepIndex < currentStep;
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 350),
+                width: isCurrent ? 34 : 30,
+                height: isCurrent ? 34 : 30,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isActive
+                      ? (isDark ? cs.primary : _DesignTokens.primary)
+                      : Colors.transparent,
+                  border: Border.all(
+                    color: isActive
+                        ? (isDark ? cs.primary : _DesignTokens.primary)
+                        : (isDark
+                            ? cs.outlineVariant
+                            : _DesignTokens.borderDefault),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: isCompleted
+                      ? Icon(Icons.check_rounded,
+                          size: 16, color: isDark ? cs.onPrimary : Colors.white)
+                      : Text(
+                          '${stepIndex + 1}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isActive
+                                ? (isDark ? cs.onPrimary : Colors.white)
+                                : (isDark
+                                    ? cs.onSurfaceVariant
+                                    : _DesignTokens.textTertiary),
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(height: _DesignTokens.spaceSM),
+              Text(
+                steps[stepIndex],
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
+                  color: isActive
+                      ? (isDark ? cs.primary : _DesignTokens.primary)
+                      : (isDark
+                          ? cs.onSurfaceVariant
+                          : _DesignTokens.textTertiary),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// BOTTOM ACTION BAR
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _BottomActionBar extends StatelessWidget {
+  final double price;
+  final int step;
+  final VoidCallback onBack;
+  final VoidCallback onNext;
+
+  const _BottomActionBar({
+    required this.price,
+    required this.step,
+    required this.onBack,
+    required this.onNext,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isCurrent = active && !completed;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 320),
-          curve: Curves.easeInOutCubic,
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: completed
-                ? cs.primary.withOpacity(0.85)
-                : active
-                    ? cs.surfaceContainerHighest
-                    : cs.surfaceContainerLowest,
-            border: Border.all(
-              color: isCurrent
-                  ? cs.primary.withOpacity(0.6)
-                  : completed
-                      ? cs.primary.withOpacity(0.5)
-                      : cs.outlineVariant.withOpacity(0.4),
-              width: 1,
-            ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        _DesignTokens.spaceLG,
+        _DesignTokens.spaceMD,
+        _DesignTokens.spaceLG,
+        bottomPadding + _DesignTokens.spaceMD,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? cs.surface : _DesignTokens.surfacePure,
+        border: Border(
+          top: BorderSide(
+            color: isDark
+                ? cs.outlineVariant.withOpacity(0.15)
+                : _DesignTokens.borderLight,
           ),
-          alignment: Alignment.center,
-          child: completed
-              ? Icon(Icons.check_rounded, size: 15, color: cs.onPrimary)
-              : Text(
-                  '$index',
-                  style: tt.labelMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: isCurrent
-                        ? cs.primary
-                        : cs.onSurfaceVariant.withOpacity(0.9),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Price
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'التكلفة التقديرية',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? cs.onSurfaceVariant
+                        : _DesignTokens.textTertiary,
                   ),
                 ),
-        ),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: tt.labelSmall?.copyWith(
-              fontWeight: FontWeight.w500,
-              color: active
-                  ? cs.onSurface.withOpacity(0.9)
-                  : cs.onSurfaceVariant.withOpacity(0.75),
+                const SizedBox(height: 2),
+                Text(
+                  'ر.ع ${price.toStringAsFixed(3)}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+
+          // Back button
+          _OutlinedButton(
+            label: step == 0 ? 'رجوع' : 'السابق',
+            onTap: onBack,
+          ),
+          const SizedBox(width: _DesignTokens.spaceMD),
+
+          // Next button
+          _FilledButton(
+            label: step == 2 ? 'إرسال الطلب' : 'التالي',
+            icon: step == 2 ? Icons.check_rounded : Icons.arrow_back_rounded,
+            onTap: onNext,
+          ),
+        ],
+      ),
     );
   }
 }
 
-/* ===================== خطوة القماش ===================== */
-class _FabricStep extends StatefulWidget {
+// ═══════════════════════════════════════════════════════════════════════════
+// STEP 1: FABRIC SELECTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _FabricSelectionStep extends StatelessWidget {
   final String tailorId;
   final String? selectedType;
   final String? selectedFabricId;
-  final void Function(String? type, String? imageThumb, String? fabricId)
-      onTypeChanged;
-  final VoidCallback? onNext;
+  final void Function(String? type, String? thumb, String? id) onFabricSelected;
 
-  const _FabricStep({
+  const _FabricSelectionStep({
     required this.tailorId,
     required this.selectedType,
-    this.selectedFabricId,
-    required this.onTypeChanged,
-    this.onNext,
+    required this.selectedFabricId,
+    required this.onFabricSelected,
   });
 
-  @override
-  State<_FabricStep> createState() => _FabricStepState();
-}
-
-class _FabricStepState extends State<_FabricStep> {
-  final ScrollController _fabricScrollController = ScrollController();
-  List<String> _favoriteFabricIds = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadFavorites();
-  }
-
-  Future<void> _loadFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
-    final favorites = prefs.getStringList('favorite_fabric_ids') ?? <String>[];
-    if (mounted) {
-      setState(() {
-        _favoriteFabricIds = favorites;
-      });
-    }
-  }
-
-  Future<void> _persistFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('favorite_fabric_ids', _favoriteFabricIds);
-  }
-
-  void _removeFavorite(String fabricId) async {
-    HapticFeedback.lightImpact();
-    setState(() {
-      _favoriteFabricIds.remove(fabricId);
-    });
-    await _persistFavorites();
-  }
-
-  void _onReorderFavorites(int oldIndex, int newIndex) async {
-    if (newIndex > oldIndex) newIndex -= 1;
-    setState(() {
-      final id = _favoriteFabricIds.removeAt(oldIndex);
-      _favoriteFabricIds.insert(newIndex, id);
-    });
-    await _persistFavorites();
-  }
-
-  Widget _fabricImage(String? path, ColorScheme cs) {
+  Widget _buildImage(String? path, ColorScheme cs) {
     if (path == null || path.isEmpty) {
       return Container(
         color: cs.surfaceContainerHighest,
-        child: Icon(Icons.image_outlined,
-            color: cs.onSurfaceVariant.withOpacity(0.6), size: 42),
+        child: Icon(Icons.image_outlined, color: cs.onSurfaceVariant, size: 32),
       );
     }
     if (_isNetworkPath(path)) {
       return CachedNetworkImage(
         imageUrl: path,
         fit: BoxFit.cover,
-        placeholder: (context, url) => Container(
+        placeholder: (_, __) => Container(
           color: cs.surfaceContainerHighest,
-          child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         ),
-        errorWidget: (context, url, error) => Container(
+        errorWidget: (_, __, ___) => Container(
           color: cs.surfaceContainerHighest,
-          child: Icon(Icons.image_not_supported_rounded,
-              color: cs.onSurfaceVariant),
+          child: Icon(Icons.broken_image_outlined, color: cs.onSurfaceVariant),
         ),
       );
     }
-    return Image.asset(
-      path,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => Container(
-        color: cs.surfaceContainerHighest,
-        child:
-            Icon(Icons.image_not_supported_rounded, color: cs.onSurfaceVariant),
-      ),
-    );
+    return Image.asset(path,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+              color: cs.surfaceContainerHighest,
+              child:
+                  Icon(Icons.broken_image_outlined, color: cs.onSurfaceVariant),
+            ));
   }
 
-  /// Premium fabric selection card: soft surface, subtle shadow, clear selection state.
-  Widget _PremiumFabricCard({
-    required Map<String, dynamic> fabric,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final imageUrl = fabric['imageUrl'] as String? ?? '';
-    final name = fabric['name'] as String? ?? 'قماش';
-    final type = fabric['type'] as String? ?? '—';
-    const radius = 18.0;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(radius),
-        splashColor: cs.primary.withOpacity(0.08),
-        highlightColor: cs.primary.withOpacity(0.04),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(radius),
-            color: selected
-                ? cs.primaryContainer.withOpacity(0.25)
-                : cs.surfaceContainerLow,
-            border: Border.all(
-              color:
-                  selected ? cs.primary.withOpacity(0.35) : Colors.transparent,
-              width: 1.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: cs.shadow.withOpacity(0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-              if (selected)
-                BoxShadow(
-                  color: cs.primary.withOpacity(0.12),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(radius),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(_DesignTokens.spaceLG),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          _SectionCard(
+            child: Row(
               children: [
-                Expanded(
-                  child: _fabricImage(imageUrl, cs),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: (isDark ? cs.primary : _DesignTokens.primary)
+                        .withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+                  ),
+                  child: Icon(
+                    Icons.style_outlined,
+                    color: isDark ? cs.primary : _DesignTokens.primary,
+                  ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+                const SizedBox(width: _DesignTokens.spaceMD),
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        name,
-                        style: tt.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: cs.onSurface,
+                        'اختر نوع القماش',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isDark ? cs.onSurface : _DesignTokens.textPrimary,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       Text(
-                        type,
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant.withOpacity(0.85),
-                          fontWeight: FontWeight.w400,
+                        'تصفح الأقمشة المتوفرة',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark
+                              ? cs.onSurfaceVariant
+                              : _DesignTokens.textTertiary,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -1160,1135 +974,1278 @@ class _FabricStepState extends State<_FabricStep> {
               ],
             ),
           ),
-        ),
+
+          const SizedBox(height: _DesignTokens.spaceLG),
+
+          // Fabric Grid
+          StreamBuilder<List<Map<String, dynamic>>>(
+            stream: FabricService.getTailorFabrics(tailorId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(_DesignTokens.space2XL),
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              }
+
+              final fabrics = snapshot.data ?? [];
+
+              if (fabrics.isEmpty) {
+                return _SectionCard(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.style_outlined,
+                        size: 48,
+                        color: isDark
+                            ? cs.onSurfaceVariant
+                            : _DesignTokens.textTertiary,
+                      ),
+                      const SizedBox(height: _DesignTokens.spaceMD),
+                      Text(
+                        'لا توجد أقمشة متاحة',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color:
+                              isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Show selected fabric detail
+              if (selectedFabricId != null) {
+                final selected = fabrics.firstWhere(
+                  (f) => f['id'] == selectedFabricId,
+                  orElse: () => <String, dynamic>{},
+                );
+                if (selected.isNotEmpty) {
+                  return _buildSelectedCard(selected, cs, isDark);
+                }
+              }
+
+              return _buildGrid(fabrics, cs, isDark);
+            },
+          ),
+        ],
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+  Widget _buildGrid(
+      List<Map<String, dynamic>> fabrics, ColorScheme cs, bool isDark) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: _DesignTokens.spaceMD,
+        mainAxisSpacing: _DesignTokens.spaceMD,
+        childAspectRatio: 0.82,
+      ),
+      itemCount: fabrics.length,
+      itemBuilder: (context, i) {
+        final fabric = fabrics[i];
+        final isSelected = selectedFabricId == fabric['id'];
+        final imageUrl = fabric['imageUrl'] as String? ?? '';
+        final price = (fabric['pricePerMeter'] as num?)?.toDouble() ?? 0.0;
 
-    // عرض بطاقة القماش المختار بالتفصيل
-    Widget buildSelectedFabricDetailCard(Map<String, dynamic> fabric) {
-      final availableColors =
-          fabric['availableColors'] as List<dynamic>? ?? <dynamic>[];
-      final heroTag = 'fabric-${fabric['id'] ?? fabric['name']}';
-      final imageUrl = fabric['imageUrl'] as String? ?? '';
-      final meta = <String>[
-        if ((fabric['material'] as String?)?.isNotEmpty ?? false)
-          'الخامة: ${fabric['material']}',
-        if ((fabric['origin'] as String?)?.isNotEmpty ?? false)
-          'المنشأ: ${fabric['origin']}',
-        if ((fabric['pattern'] as String?)?.isNotEmpty ?? false)
-          'النقشة: ${fabric['pattern']}',
-      ];
-      final isTablet = MediaQuery.of(context).size.width >= 600;
-
-      return AnimatedSwitcher(
-        duration: const Duration(milliseconds: 500),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInBack,
-        child: AnimatedContainer(
-          key: ValueKey<String>(heroTag),
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.all(isTablet ? 24 : 22),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                cs.surface,
-                cs.surfaceContainerLow.withOpacity(0.5),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: BorderRadius.circular(isTablet ? 24 : 22),
-            border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.25),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: cs.shadow.withOpacity(0.06),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
+        return Material(
+          color:
+              isDark ? cs.surfaceContainerHighest : _DesignTokens.surfacePure,
+          borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
+          child: InkWell(
+            onTap: () => onFabricSelected(
+                fabric['name'], fabric['imageUrl'], fabric['id']),
+            borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
+                border: Border.all(
+                  color: isSelected
+                      ? (isDark ? cs.primary : _DesignTokens.primary)
+                      : (isDark
+                          ? cs.outlineVariant.withOpacity(0.15)
+                          : _DesignTokens.borderLight),
+                  width: isSelected ? 2 : 1,
+                ),
               ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Hero(
-                    tag: heroTag,
+                  Expanded(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(isTablet ? 20 : 18),
-                      child: AspectRatio(
-                        aspectRatio: isTablet ? 16 / 6 : 16 / 9,
-                        child: _fabricImage(imageUrl, cs),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(_DesignTokens.radiusXL - 1),
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _buildImage(imageUrl, cs),
+                          if (isSelected)
+                            Positioned(
+                              top: _DesignTokens.spaceMD,
+                              right: _DesignTokens.spaceMD,
+                              child: Container(
+                                width: 28,
+                                height: 28,
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? cs.primary
+                                      : _DesignTokens.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.check_rounded,
+                                    color: Colors.white, size: 16),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 22),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
+                  Padding(
+                    padding: const EdgeInsets.all(_DesignTokens.spaceMD),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           fabric['name'] ?? 'قماش',
-                          style: tt.titleLarge?.copyWith(
+                          style: TextStyle(
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: cs.onSurface,
+                            color: isDark
+                                ? cs.onSurface
+                                : _DesignTokens.textPrimary,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        if ((fabric['type'] as String?)?.isNotEmpty ??
-                            false) ...[
-                          const SizedBox(height: 6),
-                          Text(
-                            fabric['type'] as String,
-                            style: tt.bodySmall?.copyWith(
-                              color: cs.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Text(
-                          fabric['shortDescription'] as String? ??
-                              'خيار مثالي لخياطة فاخرة',
-                          style: tt.bodySmall?.copyWith(
-                            color: cs.onSurfaceVariant.withOpacity(0.9),
-                            height: 1.45,
+                          'ر.ع ${price.toStringAsFixed(3)}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: isDark
+                                ? cs.primary
+                                : _DesignTokens.primaryLight,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  FilledButton.tonal(
-                    onPressed: () {
-                      widget.onTypeChanged(null, null, null);
-                      HapticFeedback.lightImpact();
-                    },
-                    style: FilledButton.styleFrom(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isTablet ? 18 : 14,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('تغيير'),
-                  ),
                 ],
-              ),
-              if (meta.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: meta
-                      .map(
-                        (item) => Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: cs.surfaceContainerHighest.withOpacity(0.8),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            item,
-                            style: tt.labelSmall?.copyWith(
-                              color: cs.onSurfaceVariant,
-                            ),
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              ],
-              if (availableColors.isNotEmpty) ...[
-                const SizedBox(height: 22),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'اللون *',
-                      style: tt.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    _ColorDropdown(
-                      colors: availableColors,
-                      onColorSelected: (colorData) {},
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'اختر اللون المناسب لهذا القماش قبل المتابعة',
-                      style: tt.labelSmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-        ),
-      );
-    }
-
-    Widget buildFabricList(List<Map<String, dynamic>> fabrics) {
-      final tt = Theme.of(context).textTheme;
-      final cs = Theme.of(context).colorScheme;
-      if (fabrics.isEmpty) {
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(48),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0.0, end: 1.0),
-              duration: const Duration(milliseconds: 800),
-              curve: Curves.easeOutBack,
-              builder: (context, value, child) => Transform.scale(
-                scale: value,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [
-                            cs.primary.withOpacity(0.1),
-                            cs.secondary.withOpacity(0.05),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: cs.primary.withOpacity(0.08),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
-                          ),
-                        ],
-                      ),
-                      child: Icon(Icons.checkroom_rounded,
-                          size: 96, color: cs.primary.withOpacity(0.7)),
-                    ),
-                    const SizedBox(height: 32),
-                    Text(
-                      'لا توجد أقمشة متاحة حالياً',
-                      textAlign: TextAlign.center,
-                      style: tt.headlineSmall?.copyWith(
-                        color: cs.onSurface,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'سيتم إضافة أقمشة جديدة قريباً',
-                      textAlign: TextAlign.center,
-                      style: tt.bodyLarge?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: const Text('تحديث'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32, vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
           ),
         );
-      }
-
-      return GridView.builder(
-        controller: _fabricScrollController,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-          childAspectRatio: 0.78,
-        ),
-        itemCount: fabrics.length,
-        itemBuilder: (_, i) {
-          final fabric = fabrics[i];
-          final sel = widget.selectedFabricId != null &&
-              widget.selectedFabricId == fabric['id'];
-
-          return _PremiumFabricCard(
-            fabric: fabric,
-            selected: sel,
-            onTap: () => widget.onTypeChanged(
-              fabric['name'],
-              fabric['imageUrl'],
-              fabric['id'],
-            ),
-          );
-        },
-      );
-    }
-
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 840),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Section title: clean, medium-bold, RTL-aligned
-                Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 20),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Text(
-                      'اختر نوع القماش من المتجر',
-                      style: tt.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ),
-                ),
-                // عرض القماش
-                StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: FabricService.getTailorFabrics(widget.tailorId),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(16),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-                    if (snapshot.hasError) {
-                      return _ElegantFrame(
-                        padding: const EdgeInsets.all(16),
-                        useBlur: false,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.error_outline_rounded, size: 18),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'حدث خطأ في تحميل الأقمشة',
-                                style: tt.bodySmall,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    final fabrics = snapshot.data ?? [];
-
-                    final selectedFabric = fabrics.firstWhere(
-                      (fabric) => fabric['id'] == widget.selectedFabricId,
-                      orElse: () => <String, dynamic>{},
-                    );
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 4),
-                        if (_favoriteFabricIds.isNotEmpty)
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              _buildFavoritesRow(fabrics, tt, cs),
-                              const SizedBox(height: 16),
-                            ],
-                          ),
-                        if (widget.selectedFabricId != null &&
-                            selectedFabric.isNotEmpty)
-                          buildSelectedFabricDetailCard(selectedFabric)
-                        else
-                          buildFabricList(fabrics),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 12),
-                // عرض القماش المختار
-                if (widget.selectedType != null && widget.onNext != null) ...[
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: widget.onNext,
-                      icon: const Icon(Icons.arrow_forward_rounded, size: 20),
-                      label: const Text('المتابعة إلى المقاسات'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-      ),
+      },
     );
   }
 
-  bool _isNetworkPath(String path) {
-    return path.startsWith('http://') || path.startsWith('https://');
-  }
+  Widget _buildSelectedCard(
+      Map<String, dynamic> fabric, ColorScheme cs, bool isDark) {
+    final imageUrl = fabric['imageUrl'] as String? ?? '';
+    final price = (fabric['pricePerMeter'] as num?)?.toDouble() ?? 0.0;
 
-  Widget _buildFavoritesRow(
-      List<Map<String, dynamic>> fabrics, TextTheme tt, ColorScheme cs) {
-    final favorites = _favoriteFabricIds
-        .map((id) => fabrics.firstWhere(
-              (fabric) => fabric['id'] == id,
-              orElse: () => <String, dynamic>{},
-            ))
-        .where((fabric) => fabric.isNotEmpty)
-        .toList();
-
-    if (favorites.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(Icons.favorite_rounded,
-                color: Theme.of(context).colorScheme.onPrimary),
-            const SizedBox(width: 8),
-            Text(
-              'مفضلاتي',
-              style: tt.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: cs.primary,
-              ),
+    return _SectionCard(
+      padding: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(_DesignTokens.radiusXL - 1),
             ),
-            const Spacer(),
-            if (_favoriteFabricIds.length > 1)
-              Text(
-                'اسحب لإعادة الترتيب',
-                style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-              ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 150,
-          child: ReorderableListView.builder(
-            key: ValueKey(_favoriteFabricIds.length),
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            onReorder: _onReorderFavorites,
-            itemCount: favorites.length,
-            buildDefaultDragHandles: false,
-            itemBuilder: (context, index) {
-              final fabric = favorites[index];
-              final fabricId = fabric['id'] as String? ?? 'fav_$index';
-              final selected = widget.selectedFabricId == fabricId;
-              final imageUrl = fabric['imageUrl'] as String? ?? '';
-
-              return Padding(
-                key: ValueKey(fabricId),
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(20),
-                    onTap: () {
-                      widget.onTypeChanged(
-                        fabric['name'],
-                        fabric['imageUrl'],
-                        fabric['id'],
-                      );
-                    },
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          width: 130,
-                          decoration: BoxDecoration(
-                            color: selected
-                                ? cs.primaryContainer.withOpacity(0.4)
-                                : cs.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: selected ? cs.primary : cs.outlineVariant,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: SizedBox(
-                                  height: 80,
-                                  width: double.infinity,
-                                  child: _fabricImage(imageUrl, cs),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                fabric['name'] ?? 'قماش',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: tt.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: selected ? cs.primary : cs.onSurface,
-                                ),
-                              ),
-                              Text(
-                                'ر.ع ${(fabric['pricePerMeter'] as num?)?.toStringAsFixed(3) ?? '0.000'}',
-                                style: tt.labelSmall?.copyWith(
-                                  color: cs.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Positioned(
-                          right: -6,
-                          top: -6,
-                          child: IconButton(
-                            tooltip: 'إزالة من المفضلات',
-                            onPressed: () => _removeFavorite(fabricId),
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            style: IconButton.styleFrom(
-                              backgroundColor: cs.surface,
-                              foregroundColor: cs.onSurfaceVariant,
-                              minimumSize: const Size(28, 28),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          left: 0,
-                          bottom: -12,
-                          child: ReorderableDragStartListener(
-                            index: index,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: cs.surfaceContainerHighest,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.drag_indicator,
-                                      size: 16, color: cs.onSurfaceVariant),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'اسحب',
-                                    style: tt.labelSmall?.copyWith(
-                                      color: cs.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/* ===================== صورة توضيحية متحركة للمقاس ===================== */
-class _AnimatedMeasurementGuide extends StatefulWidget {
-  final String measurementName;
-  final String imagePath;
-  final String description;
-
-  const _AnimatedMeasurementGuide({
-    required this.measurementName,
-    required this.imagePath,
-    required this.description,
-  });
-
-  @override
-  State<_AnimatedMeasurementGuide> createState() =>
-      _AnimatedMeasurementGuideState();
-}
-
-class _AnimatedMeasurementGuideState extends State<_AnimatedMeasurementGuide>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-  late Animation<double> _opacityAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _scaleAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-
-    _opacityAnimation = Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // العنوان
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: cs.primaryContainer,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.straighten_rounded, color: cs.primary),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    widget.measurementName,
-                    style: tt.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // الصورة المتحركة
-            Expanded(
-              child: AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: Opacity(
-                      opacity: _opacityAnimation.value,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: cs.primary, width: 2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: cs.primary.withOpacity(0.3),
-                              blurRadius: 20,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: Image.asset(
-                            widget.imagePath,
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => Container(
-                              color: cs.surfaceContainerHighest,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.image_not_supported_rounded,
-                                    size: 80,
-                                    color: cs.onSurfaceVariant,
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'صورة توضيحية',
-                                    style: tt.titleMedium?.copyWith(
-                                      color: cs.onSurfaceVariant,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // الوصف
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: cs.primaryContainer.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  Icon(Icons.info_outline_rounded, color: cs.primary, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      widget.description,
-                      style: tt.bodyMedium,
+                  _buildImage(imageUrl, cs),
+                  Positioned(
+                    top: _DesignTokens.spaceMD,
+                    right: _DesignTokens.spaceMD,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: _DesignTokens.spaceMD,
+                        vertical: _DesignTokens.spaceSM,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(_DesignTokens.radiusMD),
+                      ),
+                      child: Text(
+                        'ر.ع ${price.toStringAsFixed(3)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _DesignTokens.textPrimary,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(_DesignTokens.spaceLG),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 20,
+                            height: 20,
+                            decoration: const BoxDecoration(
+                              color: _DesignTokens.success,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check_rounded,
+                                color: Colors.white, size: 12),
+                          ),
+                          const SizedBox(width: _DesignTokens.spaceSM),
+                          const Text(
+                            'تم الاختيار',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _DesignTokens.success,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: _DesignTokens.spaceSM),
+                      Text(
+                        fabric['name'] ?? 'قماش',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                _OutlinedButton(
+                  label: 'تغيير',
+                  onTap: () => onFabricSelected(null, null, null),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/* ===================== قائمة منسدلة للألوان ===================== */
-class _ColorDropdown extends StatefulWidget {
-  final List<dynamic> colors;
-  final Function(Map<String, dynamic>) onColorSelected;
+// ═══════════════════════════════════════════════════════════════════════════
+// STEP 2: MEASUREMENTS
+// ═══════════════════════════════════════════════════════════════════════════
 
-  const _ColorDropdown({
-    required this.colors,
-    required this.onColorSelected,
+class _MeasurementControllers {
+  final TextEditingController length;
+  final TextEditingController shoulder;
+  final TextEditingController sleeve;
+  final TextEditingController upperSleeve;
+  final TextEditingController lowerSleeve;
+  final TextEditingController chest;
+  final TextEditingController waist;
+  final TextEditingController neck;
+  final TextEditingController embroidery;
+  final TextEditingController notes;
+
+  _MeasurementControllers({
+    required this.length,
+    required this.shoulder,
+    required this.sleeve,
+    required this.upperSleeve,
+    required this.lowerSleeve,
+    required this.chest,
+    required this.waist,
+    required this.neck,
+    required this.embroidery,
+    required this.notes,
   });
-
-  @override
-  State<_ColorDropdown> createState() => _ColorDropdownState();
 }
 
-class _ColorDropdownState extends State<_ColorDropdown> {
-  Map<String, dynamic>? _selectedColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: cs.surfaceContainerHighest.withOpacity(0.6),
-            border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.4),
-              width: 1,
-            ),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<Map<String, dynamic>>(
-              isExpanded: true,
-              value: _selectedColor,
-              hint: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Text(
-                  'اختر اللون',
-                  style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
-                ),
-              ),
-              icon: Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Icon(Icons.arrow_drop_down, color: cs.onSurfaceVariant),
-              ),
-              items: widget.colors.map((colorData) {
-                final colorName =
-                    colorData['colorName'] as String? ?? 'غير محدد';
-                final colorHex = colorData['colorHex'] as String? ?? '#CCCCCC';
-
-                Color color;
-                try {
-                  color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
-                } catch (e) {
-                  color = Colors.grey;
-                }
-                final isSelected = colorData == _selectedColor;
-
-                return DropdownMenuItem<Map<String, dynamic>>(
-                  value: colorData,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? cs.primary.withOpacity(0.1)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 28,
-                          height: 28,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: color,
-                            border: Border.all(
-                              color:
-                                  isSelected ? cs.primary : cs.outlineVariant,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: color.computeLuminance() > 0.9
-                              ? Icon(
-                                  Icons.circle_outlined,
-                                  color: cs.onSurfaceVariant,
-                                  size: 18,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            colorName,
-                            style: tt.bodyMedium?.copyWith(
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-              onChanged: (colorData) {
-                setState(() {
-                  _selectedColor = colorData;
-                });
-                if (colorData != null) {
-                  widget.onColorSelected(colorData);
-                }
-              },
-              borderRadius: BorderRadius.circular(12),
-              dropdownColor: cs.surface,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/* ===================== خطوة المقاسات + اللون (مدمجة) ===================== */
-class _MeasurementsAndColorStep extends StatefulWidget {
-  final String fabricId;
+class _MeasurementsStep extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final MeasurementUnit unit;
   final ValueChanged<MeasurementUnit> onUnitChanged;
-  final VoidCallback? onNext;
+  final _MeasurementControllers controllers;
 
-  // المقاسات الثمانية فقط
-  final TextEditingController lengthCtrl,
-      shoulderCtrl,
-      neckCtrl,
-      armLengthCtrl,
-      wristWidthCtrl,
-      chestWidthCtrl,
-      bottomWidthCtrl,
-      patternLengthCtrl;
-
-  const _MeasurementsAndColorStep({
-    required this.fabricId,
+  const _MeasurementsStep({
     required this.formKey,
     required this.unit,
     required this.onUnitChanged,
-    this.onNext,
-    required this.lengthCtrl,
-    required this.shoulderCtrl,
-    required this.neckCtrl,
-    required this.armLengthCtrl,
-    required this.wristWidthCtrl,
-    required this.chestWidthCtrl,
-    required this.bottomWidthCtrl,
-    required this.patternLengthCtrl,
+    required this.controllers,
   });
 
   @override
-  State<_MeasurementsAndColorStep> createState() =>
-      _MeasurementsAndColorStepState();
+  State<_MeasurementsStep> createState() => _MeasurementsStepState();
 }
 
-class _MeasurementsAndColorStepState extends State<_MeasurementsAndColorStep>
+class _MeasurementsStepState extends State<_MeasurementsStep>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
-  double toUnit(double cm) =>
+  double _toUnit(double cm) =>
       widget.unit == MeasurementUnit.inch ? cm / _cmPerInch : cm;
-  double step() => widget.unit == MeasurementUnit.inch ? 0.50 : 0.5;
+
+  double get _step => widget.unit == MeasurementUnit.inch ? 0.5 : 0.5;
+  int get _decimals => widget.unit == MeasurementUnit.inch ? 2 : 1;
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final decimals = widget.unit == MeasurementUnit.inch ? 2 : 1;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+    final c = widget.controllers;
 
-    final rows = <_RowSpec>[
-      _RowSpec('الطول', widget.lengthCtrl, toUnit(100), toUnit(200)),
-      _RowSpec('الكتف', widget.shoulderCtrl, toUnit(30), toUnit(60)),
-      _RowSpec('الرقبة', widget.neckCtrl, toUnit(28), toUnit(52)),
-      _RowSpec('طول الذراع', widget.armLengthCtrl, toUnit(40), toUnit(90)),
-      _RowSpec('عرض المعصم', widget.wristWidthCtrl, toUnit(12), toUnit(28)),
-      _RowSpec('عرض الصدر مع الجانبيين', widget.chestWidthCtrl, toUnit(70),
-          toUnit(150)),
-      _RowSpec('الوسع السفلي', widget.bottomWidthCtrl, toUnit(50), toUnit(120)),
-      _RowSpec('طول النقشة', widget.patternLengthCtrl, toUnit(5), toUnit(50)),
+    final measurements = [
+      _MeasurementSpec(
+          'الطول', c.length, _toUnit(110), _toUnit(170), Icons.height_rounded),
+      _MeasurementSpec('الكتف', c.shoulder, _toUnit(38), _toUnit(56),
+          Icons.straighten_rounded),
+      _MeasurementSpec(
+          'الرقبة', c.neck, _toUnit(34), _toUnit(48), Icons.circle_outlined),
+      _MeasurementSpec('طول الذراع', c.sleeve, _toUnit(45), _toUnit(75),
+          Icons.back_hand_outlined),
+      _MeasurementSpec('الصدر', c.chest, _toUnit(80), _toUnit(140),
+          Icons.favorite_border_rounded),
+      _MeasurementSpec('الخصر', c.waist, _toUnit(70), _toUnit(130),
+          Icons.horizontal_rule_rounded),
     ];
 
     return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 840),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
-            child: Form(
-              key: widget.formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(_DesignTokens.spaceLG),
+      child: Form(
+        key: widget.formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Unit selector
+            _SectionCard(
+              child: Row(
                 children: [
-                  // ========== قسم المقاسات ==========
-                  // زر حفظ/استعادة المقاسات
-                  _SavedMeasurementsSection(
-                    onLoadProfile: (profile) {
-                      widget.lengthCtrl.text =
-                          profile.measurements['الطول']?.toString() ?? '';
-                      widget.shoulderCtrl.text =
-                          profile.measurements['الكتف']?.toString() ?? '';
-                      widget.neckCtrl.text =
-                          profile.measurements['الرقبة']?.toString() ?? '';
-                      widget.armLengthCtrl.text =
-                          profile.measurements['طول الذراع']?.toString() ?? '';
-                      widget.wristWidthCtrl.text =
-                          profile.measurements['عرض المعصم']?.toString() ?? '';
-                      widget.chestWidthCtrl.text = profile
-                              .measurements['عرض الصدر مع الجانبيين']
-                              ?.toString() ??
-                          '';
-                      widget.bottomWidthCtrl.text =
-                          profile.measurements['الوسع السفلي']?.toString() ??
-                              '';
-                      widget.patternLengthCtrl.text =
-                          profile.measurements['طول النقشة']?.toString() ?? '';
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content:
-                              Text('✅ تم تحميل مقاسات "${profile.name}" بنجاح'),
-                          backgroundColor: Colors.green,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                  Icon(
+                    Icons.straighten_rounded,
+                    color: isDark ? cs.primary : _DesignTokens.primary,
+                    size: 20,
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(width: _DesignTokens.spaceMD),
+                  Expanded(
+                    child: Text(
+                      'وحدة القياس',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color:
+                            isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                      ),
+                    ),
+                  ),
+                  _UnitToggle(
+                      unit: widget.unit, onChanged: widget.onUnitChanged),
+                ],
+              ),
+            ),
 
-                  // التبديل بين الوحدات — تصميم احترافي هادئ
-                  Builder(
-                    builder: (context) {
-                      final cs = Theme.of(context).colorScheme;
-                      final tt = Theme.of(context).textTheme;
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 6),
+            const SizedBox(height: _DesignTokens.spaceLG),
+
+            // Measurement fields
+            ...measurements.map((m) => Padding(
+                  padding: const EdgeInsets.only(bottom: _DesignTokens.spaceMD),
+                  child: _MeasurementField(
+                    label: m.label,
+                    controller: m.controller,
+                    min: m.min,
+                    max: m.max,
+                    step: _step,
+                    unit: widget.unit.labelAr,
+                    decimals: _decimals,
+                    icon: m.icon,
+                  ),
+                )),
+
+            // Notes
+            _SectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'ملاحظات إضافية',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: _DesignTokens.spaceMD),
+                  TextField(
+                    controller: c.notes,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'أدخل أي تفاصيل إضافية...',
+                      hintStyle: TextStyle(
+                        color: isDark
+                            ? cs.onSurfaceVariant
+                            : _DesignTokens.textTertiary,
+                      ),
+                      filled: true,
+                      fillColor:
+                          isDark ? cs.surface : _DesignTokens.surfaceMuted,
+                      border: OutlineInputBorder(
+                        borderRadius:
+                            BorderRadius.circular(_DesignTokens.radiusMD),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding:
+                          const EdgeInsets.all(_DesignTokens.spaceMD),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MeasurementSpec {
+  final String label;
+  final TextEditingController controller;
+  final double min, max;
+  final IconData icon;
+  _MeasurementSpec(this.label, this.controller, this.min, this.max, this.icon);
+}
+
+class _UnitToggle extends StatelessWidget {
+  final MeasurementUnit unit;
+  final ValueChanged<MeasurementUnit> onChanged;
+
+  const _UnitToggle({required this.unit, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? cs.surface : _DesignTokens.surfaceMuted,
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusSM),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildOption('سم', MeasurementUnit.cm, isDark, cs),
+          _buildOption('إنش', MeasurementUnit.inch, isDark, cs),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOption(
+      String label, MeasurementUnit value, bool isDark, ColorScheme cs) {
+    final isSelected = unit == value;
+    return GestureDetector(
+      onTap: () => onChanged(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(
+          horizontal: _DesignTokens.spaceMD,
+          vertical: _DesignTokens.spaceSM,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? cs.primary : _DesignTokens.primary)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(_DesignTokens.radiusSM - 2),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: isSelected
+                ? Colors.white
+                : (isDark ? cs.onSurfaceVariant : _DesignTokens.textSecondary),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MeasurementField extends StatefulWidget {
+  final String label;
+  final TextEditingController controller;
+  final double min, max, step;
+  final String unit;
+  final int decimals;
+  final IconData icon;
+
+  const _MeasurementField({
+    required this.label,
+    required this.controller,
+    required this.min,
+    required this.max,
+    required this.step,
+    required this.unit,
+    required this.decimals,
+    required this.icon,
+  });
+
+  @override
+  State<_MeasurementField> createState() => _MeasurementFieldState();
+}
+
+class _MeasurementFieldState extends State<_MeasurementField> {
+  double _parse(String v) {
+    if (v.trim().isEmpty) return widget.min;
+    final d = double.tryParse(v.replaceAll(',', '.'));
+    return (d ?? widget.min).clamp(widget.min, widget.max);
+  }
+
+  void _set(double value) {
+    if (!mounted) return;
+    final snapped = (value / widget.step).round() * widget.step;
+    final v = snapped.toStringAsFixed(widget.decimals);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      widget.controller.value = TextEditingValue(
+        text: v,
+        selection: TextSelection.collapsed(offset: v.length),
+      );
+    });
+    setState(() {});
+  }
+
+  void _increment() {
+    HapticFeedback.selectionClick();
+    _set((_parse(widget.controller.text) + widget.step)
+        .clamp(widget.min, widget.max));
+  }
+
+  void _decrement() {
+    HapticFeedback.selectionClick();
+    _set((_parse(widget.controller.text) - widget.step)
+        .clamp(widget.min, widget.max));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(_DesignTokens.spaceMD),
+      decoration: BoxDecoration(
+        color: isDark ? cs.surfaceContainerHighest : _DesignTokens.surfacePure,
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
+        border: Border.all(
+          color: isDark
+              ? cs.outlineVariant.withOpacity(0.15)
+              : _DesignTokens.borderLight,
+        ),
+      ),
+      child: Row(
+        children: [
+          // Icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: (isDark ? cs.primary : _DesignTokens.primary)
+                  .withOpacity(0.08),
+              borderRadius: BorderRadius.circular(_DesignTokens.radiusSM),
+            ),
+            child: Icon(
+              widget.icon,
+              size: 20,
+              color: isDark ? cs.primary : _DesignTokens.primaryLight,
+            ),
+          ),
+          const SizedBox(width: _DesignTokens.spaceMD),
+
+          // Label
+          Expanded(
+            child: Text(
+              widget.label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+              ),
+            ),
+          ),
+
+          // Controls
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark ? cs.surface : _DesignTokens.surfaceMuted,
+                borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _ControlBtn(icon: Icons.remove_rounded, onTap: _decrement),
+                  SizedBox(
+                    width: 52,
+                    child: TextFormField(
+                      controller: widget.controller,
+                      textAlign: TextAlign.center,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                      ),
+                      decoration: const InputDecoration(
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      validator: (v) {
+                        if ((v ?? '').trim().isEmpty) return '';
+                        final val = _parse(v ?? '');
+                        if (val < widget.min || val > widget.max) return '';
+                        return null;
+                      },
+                    ),
+                  ),
+                  _ControlBtn(icon: Icons.add_rounded, onTap: _increment),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: _DesignTokens.spaceMD),
+
+          // Unit
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: _DesignTokens.spaceSM + 2,
+              vertical: _DesignTokens.spaceXS + 2,
+            ),
+            decoration: BoxDecoration(
+              color: (isDark ? cs.primary : _DesignTokens.primary)
+                  .withOpacity(0.08),
+              borderRadius: BorderRadius.circular(_DesignTokens.radiusSM),
+            ),
+            child: Text(
+              widget.unit,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDark ? cs.primary : _DesignTokens.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ControlBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ControlBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return InkResponse(
+      onTap: onTap,
+      radius: 20,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color:
+              isDark ? cs.surfaceContainerHighest : _DesignTokens.surfacePure,
+          borderRadius: BorderRadius.circular(_DesignTokens.radiusSM),
+        ),
+        child: Icon(
+          icon,
+          size: 18,
+          color: isDark ? cs.onSurfaceVariant : _DesignTokens.textSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STEP 3: EMBROIDERY
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _EmbroideryStep extends StatelessWidget {
+  final String tailorId;
+  final Color color;
+  final int lines;
+  final EmbroideryDesign? selectedDesign;
+  final ValueChanged<Color> onColorChanged;
+  final ValueChanged<int> onLinesChanged;
+  final ValueChanged<EmbroideryDesign?> onDesignChanged;
+
+  const _EmbroideryStep({
+    required this.tailorId,
+    required this.color,
+    required this.lines,
+    required this.selectedDesign,
+    required this.onColorChanged,
+    required this.onLinesChanged,
+    required this.onDesignChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    final colors = [
+      const Color(0xFF1A2F4B),
+      const Color(0xFF4A5568),
+      const Color(0xFF38A169),
+      const Color(0xFFB8860B),
+      const Color(0xFF8B4513),
+      const Color(0xFF553C9A),
+      const Color(0xFF1A1F2E),
+      const Color(0xFFC0C0C0),
+    ];
+
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(_DesignTokens.spaceLG),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Embroidery designs
+          _EmbroideryDesignsCard(
+            tailorId: tailorId,
+            selectedDesign: selectedDesign,
+            onSelected: onDesignChanged,
+          ),
+
+          const SizedBox(height: _DesignTokens.spaceLG),
+
+          // Thread color
+          _SectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'لون خيط التطريز',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: _DesignTokens.spaceMD),
+                Wrap(
+                  spacing: _DesignTokens.spaceMD,
+                  runSpacing: _DesignTokens.spaceMD,
+                  children: colors.map((c) {
+                    final isSelected = c.value == color.value;
+                    return GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        onColorChanged(c);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: 44,
+                        height: 44,
                         decoration: BoxDecoration(
-                          color: cs.surfaceContainerLowest.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(20),
+                          color: c,
+                          shape: BoxShape.circle,
                           border: Border.all(
-                            color: cs.outlineVariant.withOpacity(0.4),
-                            width: 1,
+                            color: isSelected
+                                ? (isDark ? cs.primary : _DesignTokens.primary)
+                                : Colors.white,
+                            width: isSelected ? 3 : 2,
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: cs.shadow.withOpacity(0.03),
+                              color: c.withOpacity(0.25),
                               blurRadius: 8,
-                              offset: const Offset(0, 2),
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                        child: SegmentedButton<MeasurementUnit>(
-                          segments: [
-                            ButtonSegment<MeasurementUnit>(
-                              value: MeasurementUnit.cm,
-                              label: Text(
-                                'سنتيمتر (cm)',
-                                style: tt.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              icon: Icon(
-                                Icons.straighten_rounded,
-                                size: 18,
-                                color: widget.unit == MeasurementUnit.cm
-                                    ? cs.onPrimary
-                                    : cs.onSurfaceVariant,
-                              ),
-                            ),
-                            ButtonSegment<MeasurementUnit>(
-                              value: MeasurementUnit.inch,
-                              label: Text(
-                                'إنش (in)',
-                                style: tt.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              icon: Icon(
-                                Icons.straighten_rounded,
-                                size: 18,
-                                color: widget.unit == MeasurementUnit.inch
-                                    ? cs.onPrimary
-                                    : cs.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                          selected: {widget.unit},
-                          onSelectionChanged:
-                              (Set<MeasurementUnit> newSelection) {
-                            widget.onUnitChanged(newSelection.first);
-                          },
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.resolveWith(
-                              (states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return cs.primary.withOpacity(0.92);
-                                }
-                                return Colors.transparent;
-                              },
-                            ),
-                            foregroundColor: WidgetStateProperty.resolveWith(
-                              (states) {
-                                if (states.contains(WidgetState.selected)) {
-                                  return cs.onPrimary;
-                                }
-                                return cs.onSurfaceVariant;
-                              },
-                            ),
-                            padding: WidgetStateProperty.all(
-                              const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 14),
-                            ),
-                            shape: WidgetStateProperty.all(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            elevation: WidgetStateProperty.all(0),
-                            shadowColor: WidgetStateProperty.all(
-                              Colors.transparent,
-                            ),
-                            side: WidgetStateProperty.all(BorderSide.none),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 22),
-
-                  // الحقول
-                  ...rows.map((r) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _PrettyLineField(
-                        label: r.label,
-                        controller: r.ctrl,
-                        min: r.min,
-                        max: r.max,
-                        step: step(),
-                        unitLabel:
-                            widget.unit == MeasurementUnit.cm ? 'سم' : 'إنش',
-                        decimals: decimals,
+                        child: isSelected
+                            ? Icon(
+                                Icons.check_rounded,
+                                color: c.computeLuminance() > 0.5
+                                    ? Colors.black
+                                    : Colors.white,
+                                size: 20,
+                              )
+                            : null,
                       ),
                     );
-                  }),
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
 
-                  const SizedBox(height: 24),
+          const SizedBox(height: _DesignTokens.spaceMD),
 
-                  // ===== زر التالي =====
-                  if (widget.onNext != null)
-                    FilledButton.icon(
-                      onPressed: widget.onNext,
-                      icon: const Icon(Icons.arrow_forward_rounded),
-                      label: const Text('التالي - اختيار التطريز'),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+          // Decorative lines
+          _SectionCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'الخطوط الزخرفية',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color:
+                              isDark ? cs.onSurface : _DesignTokens.textPrimary,
                         ),
                       ),
-                    ),
-                ],
+                      const SizedBox(height: 4),
+                      Text(
+                        '+0.250 ر.ع لكل خط',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? cs.onSurfaceVariant
+                              : _DesignTokens.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? cs.surface : _DesignTokens.surfaceMuted,
+                    borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+                  ),
+                  child: Row(
+                    children: [
+                      _ControlBtn(
+                        icon: Icons.remove_rounded,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onLinesChanged((lines - 1).clamp(0, 3));
+                        },
+                      ),
+                      SizedBox(
+                        width: 44,
+                        child: Center(
+                          child: Text(
+                            '$lines',
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? cs.onSurface
+                                  : _DesignTokens.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      _ControlBtn(
+                        icon: Icons.add_rounded,
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onLinesChanged((lines + 1).clamp(0, 3));
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmbroideryDesignsCard extends StatelessWidget {
+  final String tailorId;
+  final EmbroideryDesign? selectedDesign;
+  final ValueChanged<EmbroideryDesign?> onSelected;
+
+  const _EmbroideryDesignsCard({
+    required this.tailorId,
+    required this.selectedDesign,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+    final service = EmbroideryService();
+
+    return FutureBuilder<List<EmbroideryDesign>>(
+      future: service.getEmbroideryDesigns(tailorId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const _SectionCard(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.all(_DesignTokens.spaceLG),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          );
+        }
+
+        final designs = snapshot.data ?? [];
+
+        if (designs.isEmpty) {
+          return _SectionCard(
+            child: Row(
+              children: [
+                Icon(Icons.info_outline,
+                    color: isDark
+                        ? cs.onSurfaceVariant
+                        : _DesignTokens.textTertiary),
+                const SizedBox(width: _DesignTokens.spaceMD),
+                Text(
+                  'لا توجد تصاميم متاحة',
+                  style: TextStyle(
+                      color: isDark
+                          ? cs.onSurfaceVariant
+                          : _DesignTokens.textTertiary),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return _SectionCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'تصاميم التطريز',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                ),
+              ),
+              const SizedBox(height: _DesignTokens.spaceMD),
+              SizedBox(
+                height: 130,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: designs.length,
+                  itemBuilder: (_, i) {
+                    final design = designs[i];
+                    final isSelected = selectedDesign?.id == design.id;
+
+                    return Padding(
+                      padding: EdgeInsets.only(
+                          left: i < designs.length - 1
+                              ? _DesignTokens.spaceMD
+                              : 0),
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onSelected(isSelected ? null : design);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 100,
+                          decoration: BoxDecoration(
+                            borderRadius:
+                                BorderRadius.circular(_DesignTokens.radiusMD),
+                            border: Border.all(
+                              color: isSelected
+                                  ? (isDark
+                                      ? cs.primary
+                                      : _DesignTokens.primary)
+                                  : (isDark
+                                      ? cs.outlineVariant.withOpacity(0.2)
+                                      : _DesignTokens.borderDefault),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(
+                                        _DesignTokens.radiusMD - 1),
+                                  ),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      CachedNetworkImage(
+                                        imageUrl: design.imageUrl,
+                                        fit: BoxFit.cover,
+                                        placeholder: (_, __) => Container(
+                                          color: isDark
+                                              ? cs.surfaceContainerHighest
+                                              : _DesignTokens.surfaceMuted,
+                                        ),
+                                        errorWidget: (_, __, ___) => Container(
+                                          color: isDark
+                                              ? cs.surfaceContainerHighest
+                                              : _DesignTokens.surfaceMuted,
+                                          child: Icon(Icons.image_outlined,
+                                              color: cs.onSurfaceVariant),
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Positioned(
+                                          top: _DesignTokens.spaceXS,
+                                          right: _DesignTokens.spaceXS,
+                                          child: Container(
+                                            width: 20,
+                                            height: 20,
+                                            decoration: BoxDecoration(
+                                              color: isDark
+                                                  ? cs.primary
+                                                  : _DesignTokens.primary,
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                                Icons.check_rounded,
+                                                color: Colors.white,
+                                                size: 12),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.all(_DesignTokens.spaceSM),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      design.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark
+                                            ? cs.onSurface
+                                            : _DesignTokens.textPrimary,
+                                      ),
+                                    ),
+                                    if (design.price > 0) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '+${design.price.toStringAsFixed(3)}',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w500,
+                                          color: isDark
+                                              ? cs.primary
+                                              : _DesignTokens.primaryLight,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SHARED COMPONENTS
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _SectionCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets? padding;
+
+  const _SectionCard({required this.child, this.padding});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: padding ?? const EdgeInsets.all(_DesignTokens.spaceLG),
+      decoration: BoxDecoration(
+        color: isDark ? cs.surfaceContainerHighest : _DesignTokens.surfacePure,
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
+        border: Border.all(
+          color: isDark
+              ? cs.outlineVariant.withOpacity(0.15)
+              : _DesignTokens.borderLight,
+        ),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _IconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _IconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return Material(
+      color: isDark ? cs.surfaceContainerHighest : _DesignTokens.surfaceMuted,
+      borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(
+            icon,
+            size: 20,
+            color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FilledButton extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final VoidCallback onTap;
+
+  const _FilledButton({required this.label, this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return Material(
+      color: isDark ? cs.primary : _DesignTokens.primary,
+      borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+        child: Container(
+          height: 48,
+          padding:
+              const EdgeInsets.symmetric(horizontal: _DesignTokens.spaceLG),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? cs.onPrimary : Colors.white,
+                ),
+              ),
+              if (icon != null) ...[
+                const SizedBox(width: _DesignTokens.spaceSM),
+                Icon(icon,
+                    size: 18, color: isDark ? cs.onPrimary : Colors.white),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OutlinedButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _OutlinedButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+        child: Container(
+          height: 48,
+          padding:
+              const EdgeInsets.symmetric(horizontal: _DesignTokens.spaceLG),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
+            border: Border.all(
+              color: isDark ? cs.outlineVariant : _DesignTokens.borderDefault,
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
               ),
             ),
           ),
@@ -2298,13 +2255,138 @@ class _MeasurementsAndColorStepState extends State<_MeasurementsAndColorStep>
   }
 }
 
-/* ===================== خطوة المقاسات (رجالي) ===================== */
-class _MenMeasurementsStep extends StatefulWidget {
-  final GlobalKey<FormState> formKey;
-  final MeasurementUnit unit;
-  final ValueChanged<MeasurementUnit> onUnitChanged;
+// ═══════════════════════════════════════════════════════════════════════════
+// DIALOGS & OVERLAYS
+// ═══════════════════════════════════════════════════════════════════════════
 
-  // controllers
+class _LoadingOverlay extends StatelessWidget {
+  const _LoadingOverlay();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(_DesignTokens.spaceXL),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
+        ),
+        child: const CircularProgressIndicator(),
+      ),
+    );
+  }
+}
+
+class _SuccessDialog extends StatelessWidget {
+  final String orderId;
+  final String tailorName;
+  final double price;
+  final VoidCallback onDismiss;
+
+  const _SuccessDialog({
+    required this.orderId,
+    required this.tailorName,
+    required this.price,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cs = Theme.of(context).colorScheme;
+
+    return Dialog(
+      backgroundColor: isDark ? cs.surface : _DesignTokens.surfacePure,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_DesignTokens.radius2XL),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(_DesignTokens.spaceXL),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: _DesignTokens.success.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check_circle_outline_rounded,
+                size: 36,
+                color: _DesignTokens.success,
+              ),
+            ),
+            const SizedBox(height: _DesignTokens.spaceLG),
+            Text(
+              'تم إرسال الطلب بنجاح',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+              ),
+            ),
+            const SizedBox(height: _DesignTokens.spaceLG),
+            _buildRow('رقم الطلب', orderId, isDark, cs),
+            _buildRow('الخياط', tailorName, isDark, cs),
+            _buildRow(
+                'الإجمالي', 'ر.ع ${price.toStringAsFixed(3)}', isDark, cs),
+            const SizedBox(height: _DesignTokens.spaceMD),
+            Text(
+              'سيتم التواصل معك قريباً',
+              style: TextStyle(
+                fontSize: 13,
+                color:
+                    isDark ? cs.onSurfaceVariant : _DesignTokens.textTertiary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: _DesignTokens.spaceLG),
+            SizedBox(
+              width: double.infinity,
+              child: _FilledButton(label: 'موافق', onTap: onDismiss),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRow(String label, String value, bool isDark, ColorScheme cs) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: _DesignTokens.spaceXS + 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              color: isDark ? cs.onSurfaceVariant : _DesignTokens.textTertiary,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _OrderReviewSheet extends StatelessWidget {
+  final String tailorName;
+  final String? fabricType;
+  final String? fabricThumb;
+  final Color embroideryColor;
+  final int embroideryLines;
+  final EmbroideryDesign? selectedEmbroidery;
   final TextEditingController lengthCtrl,
       shoulderCtrl,
       sleeveCtrl,
@@ -2315,11 +2397,22 @@ class _MenMeasurementsStep extends StatefulWidget {
       neckCtrl,
       embroideryCtrl,
       notesCtrl;
+  final MeasurementUnit unit;
+  final double price;
+  final String Function(Color) getColorName;
+  final bool isGift;
+  final GiftRecipientDetails? giftRecipientDetails;
+  final void Function(bool) onGiftToggle;
+  final VoidCallback onEditGiftRecipient;
+  final VoidCallback onConfirm;
 
-  const _MenMeasurementsStep({
-    required this.formKey,
-    required this.unit,
-    required this.onUnitChanged,
+  const _OrderReviewSheet({
+    required this.tailorName,
+    required this.fabricType,
+    required this.fabricThumb,
+    required this.embroideryColor,
+    required this.embroideryLines,
+    required this.selectedEmbroidery,
     required this.lengthCtrl,
     required this.shoulderCtrl,
     required this.sleeveCtrl,
@@ -2330,1050 +2423,151 @@ class _MenMeasurementsStep extends StatefulWidget {
     required this.neckCtrl,
     required this.embroideryCtrl,
     required this.notesCtrl,
+    required this.unit,
+    required this.price,
+    required this.getColorName,
+    required this.isGift,
+    this.giftRecipientDetails,
+    required this.onGiftToggle,
+    required this.onEditGiftRecipient,
+    required this.onConfirm,
   });
 
   @override
-  State<_MenMeasurementsStep> createState() => _MenMeasurementsStepState();
-}
-
-class _MenMeasurementsStepState extends State<_MenMeasurementsStep>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  double toUnit(double cm) =>
-      widget.unit == MeasurementUnit.inch ? cm / _cmPerInch : cm;
-  double step() => widget.unit == MeasurementUnit.inch ? 0.50 : 0.5;
-
-  @override
   Widget build(BuildContext context) {
-    super.build(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final decimals = widget.unit == MeasurementUnit.inch ? 2 : 1;
-
-    final rows = <_RowSpec>[
-      _RowSpec('الطول الكلي', widget.lengthCtrl, toUnit(110), toUnit(170)),
-      _RowSpec('الكتف', widget.shoulderCtrl, toUnit(38), toUnit(56)),
-      _RowSpec('طول الكم', widget.sleeveCtrl, toUnit(45), toUnit(75)),
-      _RowSpec(
-          'محيط الكم العلوي', widget.upperSleeveCtrl, toUnit(24), toUnit(48)),
-      _RowSpec(
-          'محيط الكم السفلي', widget.lowerSleeveCtrl, toUnit(14), toUnit(24)),
-      _RowSpec('الصدر', widget.chestCtrl, toUnit(80), toUnit(140)),
-      _RowSpec('الخصر', widget.waistCtrl, toUnit(70), toUnit(130)),
-      _RowSpec('محيط الرقبة', widget.neckCtrl, toUnit(34), toUnit(48)),
-      _RowSpec(
-          'التطريز الامامي', widget.embroideryCtrl, toUnit(10), toUnit(30)),
-    ];
-
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 840),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-            child: Form(
-              key: widget.formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // زر حفظ/استعادة المقاسات
-                  _SavedMeasurementsSection(
-                    onLoadProfile: (profile) {
-                      final m = profile.measurements;
-                      widget.lengthCtrl.text =
-                          (m['الطول الكلي'] ?? 0).toStringAsFixed(1);
-                      widget.shoulderCtrl.text =
-                          (m['الكتف'] ?? 0).toStringAsFixed(1);
-                      widget.sleeveCtrl.text =
-                          (m['طول الكم'] ?? 0).toStringAsFixed(1);
-                      widget.upperSleeveCtrl.text =
-                          (m['محيط الكم العلوي'] ?? 0).toStringAsFixed(1);
-                      widget.lowerSleeveCtrl.text =
-                          (m['محيط الكم السفلي'] ?? 0).toStringAsFixed(1);
-                      widget.chestCtrl.text =
-                          (m['الصدر'] ?? 0).toStringAsFixed(1);
-                      widget.waistCtrl.text =
-                          (m['الخصر'] ?? 0).toStringAsFixed(1);
-                      widget.neckCtrl.text =
-                          (m['محيط الرقبة'] ?? 0).toStringAsFixed(1);
-                      widget.embroideryCtrl.text =
-                          (m['التطريز الامامي'] ?? 0).toStringAsFixed(1);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('✅ تم تحميل مقاسات "${profile.name}"'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // شريط تبديل الوحدة
-                  _ElegantFrame(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 10),
-                    useBlur: false,
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'الوحدة: ${widget.unit.labelAr}',
-                            style: tt.bodyMedium?.copyWith(
-                              color: cs.onSurfaceVariant,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        ToggleButtons(
-                          isSelected: [
-                            widget.unit == MeasurementUnit.cm,
-                            widget.unit == MeasurementUnit.inch,
-                          ],
-                          onPressed: (i) => widget.onUnitChanged(i == 0
-                              ? MeasurementUnit.cm
-                              : MeasurementUnit.inch),
-                          borderRadius: BorderRadius.circular(10),
-                          selectedBorderColor: cs.primary,
-                          selectedColor: cs.onPrimary,
-                          fillColor: cs.primary,
-                          children: const [
-                            Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: Text('سم')),
-                            Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: Text('إنش')),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // كروت جميلة لكل قياس
-                  ...rows.map(
-                    (r) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _PrettyLineField(
-                        label: r.label,
-                        controller: r.ctrl,
-                        min: r.min,
-                        max: r.max,
-                        step: step(),
-                        unitLabel: widget.unit.labelAr,
-                        decimals: decimals,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 6),
-                  _ElegantFrame(
-                    useBlur: false,
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('ملاحظات إضافية',
-                            style: tt.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w800)),
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: widget.notesCtrl,
-                          minLines: 3,
-                          maxLines: 6,
-                          decoration: const InputDecoration(
-                            hintText: 'أدخل أي تفاصيل يريدها الخياط…',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // زر حفظ المقاسات
-                  _SaveMeasurementsButton(
-                    measurements: {
-                      'الطول الكلي': _parseDouble(widget.lengthCtrl.text),
-                      'الكتف': _parseDouble(widget.shoulderCtrl.text),
-                      'طول الكم': _parseDouble(widget.sleeveCtrl.text),
-                      'محيط الكم العلوي':
-                          _parseDouble(widget.upperSleeveCtrl.text),
-                      'محيط الكم السفلي':
-                          _parseDouble(widget.lowerSleeveCtrl.text),
-                      'الصدر': _parseDouble(widget.chestCtrl.text),
-                      'الخصر': _parseDouble(widget.waistCtrl.text),
-                      'محيط الرقبة': _parseDouble(widget.neckCtrl.text),
-                      'التطريز الامامي':
-                          _parseDouble(widget.embroideryCtrl.text),
-                    },
-                    notes: widget.notesCtrl.text.trim(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  double _parseDouble(String value) {
-    return double.tryParse(value.trim()) ?? 0.0;
-  }
-}
-
-class _RowSpec {
-  final String label;
-  final TextEditingController ctrl;
-  final double min, max;
-  _RowSpec(this.label, this.ctrl, this.min, this.max);
-}
-
-/// صف قياس بكارت أنيق: عنوان يمين + مجموعة تحكم يسار
-// معلومات الصور التوضيحية للمقاسات (صورة الدشداشة)
-const String _measurementGuideImage = 'assets/thobe/simple.jpg';
-const Map<String, Map<String, String>> _measurementGuides = {
-  'الطول': {
-    'image': _measurementGuideImage,
-    'description': 'قس من أعلى الكتف إلى الأسفل حتى الطول المطلوب',
-  },
-  'الكتف': {
-    'image': _measurementGuideImage,
-    'description': 'قس عرض الكتفين من نهاية كتف إلى الآخر',
-  },
-  'الرقبة': {
-    'image': _measurementGuideImage,
-    'description': 'قس محيط الرقبة عند قاعدتها',
-  },
-  'طول الذراع': {
-    'image': _measurementGuideImage,
-    'description': 'قس من الكتف إلى المعصم',
-  },
-  'عرض المعصم': {
-    'image': _measurementGuideImage,
-    'description': 'قس عرض المعصم',
-  },
-  'عرض الصدر مع الجانبيين': {
-    'image': _measurementGuideImage,
-    'description': 'قس عرض الصدر مع الجانبيين',
-  },
-  'الوسع السفلي': {
-    'image': _measurementGuideImage,
-    'description': 'قس الوسع السفلي',
-  },
-  'طول النقشة': {
-    'image': _measurementGuideImage,
-    'description': 'طول النقشة أو التطريز',
-  },
-};
-
-class _PrettyLineField extends StatefulWidget {
-  final String label;
-  final TextEditingController controller;
-  final double min, max, step;
-  final String unitLabel;
-  final int decimals;
-  const _PrettyLineField({
-    required this.label,
-    required this.controller,
-    required this.min,
-    required this.max,
-    required this.step,
-    required this.unitLabel,
-    required this.decimals,
-  });
-
-  @override
-  State<_PrettyLineField> createState() => _PrettyLineFieldState();
-}
-
-class _PrettyLineFieldState extends State<_PrettyLineField> {
-  double _parse(String v) {
-    if (v.trim().isEmpty) return widget.min;
-    final t = v.replaceAll(',', '.');
-    final d = double.tryParse(t);
-    return (d ?? widget.min).clamp(widget.min, widget.max);
-  }
-
-  // تحديث آمن للـ controller لتفادي أخطاء "deactivated ancestor"
-  void _set(double value) {
-    if (!mounted) return;
-    final snapped = (value / widget.step).round() * widget.step;
-    final v = snapped.toStringAsFixed(widget.decimals);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      widget.controller.value = TextEditingValue(
-        text: v,
-        selection: TextSelection.collapsed(offset: v.length),
-      );
-    });
-
-    if (mounted) setState(() {});
-  }
-
-  void _inc() {
-    if (!mounted) return;
-    HapticFeedback.selectionClick();
-    _set((_parse(widget.controller.text) + widget.step)
-        .clamp(widget.min, widget.max));
-  }
-
-  void _dec() {
-    if (!mounted) return;
-    HapticFeedback.selectionClick();
-    _set((_parse(widget.controller.text) - widget.step)
-        .clamp(widget.min, widget.max));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
+    String fmt(TextEditingController c) =>
+        c.text.isEmpty ? '—' : '${c.text} ${unit.labelAr}';
 
     return Container(
-      height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.35)),
-      ),
-      child: Row(
-        children: [
-          // ===== صورة الدليل =====
-          if (_measurementGuides.containsKey(widget.label))
-            GestureDetector(
-              onTap: () {
-                final guide = _measurementGuides[widget.label]!;
-                showDialog(
-                  context: context,
-                  builder: (_) => _AnimatedMeasurementGuide(
-                    measurementName: widget.label,
-                    imagePath: guide['image']!,
-                    description: guide['description']!,
-                  ),
-                );
-              },
-              child: Container(
-                width: 36,
-                height: 36,
-                margin: const EdgeInsetsDirectional.only(end: 10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: cs.outlineVariant.withOpacity(0.3)),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: Image.asset(
-                    _measurementGuideImage,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Icon(Icons.straighten, size: 18, color: cs.primary),
-                  ),
-                ),
-              ),
-            ),
-
-          // ===== اسم المقاس =====
-          Expanded(
-            child: Text(
-              widget.label,
-              style: tt.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                color: cs.onSurface,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-
-          // ===== عناصر التحكم =====
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Container(
-              height: 40,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              decoration: BoxDecoration(
-                color: cs.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: cs.outlineVariant.withOpacity(0.4)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // زر −
-                  _MiniBtn(icon: Icons.remove, onTap: _dec),
-                  // القيمة
-                  SizedBox(
-                    width: 50,
-                    child: TextFormField(
-                      controller: widget.controller,
-                      textAlign: TextAlign.center,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      style: tt.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface,
-                      ),
-                      decoration: const InputDecoration(
-                        isDense: true,
-                        border: InputBorder.none,
-                        hintText: '0',
-                        contentPadding: EdgeInsets.symmetric(vertical: 8),
-                      ),
-                      onEditingComplete: () =>
-                          _set(_parse(widget.controller.text)),
-                      validator: (v) {
-                        if ((v ?? '').trim().isEmpty) return '';
-                        final val = _parse(v ?? '');
-                        if (val < widget.min || val > widget.max) return '';
-                        return null;
-                      },
-                    ),
-                  ),
-                  // زر +
-                  _MiniBtn(icon: Icons.add, onTap: _inc),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // ===== الوحدة =====
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: cs.primaryContainer.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              widget.unitLabel,
-              style: tt.labelSmall?.copyWith(
-                color: cs.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniBtn extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _MiniBtn({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          child: Icon(icon, size: 18, color: cs.onSurfaceVariant),
+        color: isDark ? cs.surface : _DesignTokens.surfacePure,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(_DesignTokens.radius2XL),
         ),
       ),
-    );
-  }
-}
-
-/* ===================== خطوة التطريز (تصميم احترافي) ===================== */
-class _EmbroideryStep extends StatefulWidget {
-  final Color color;
-  final int lines;
-  final void Function(Color color, int lines) onChanged;
-  final String tailorId;
-  final EmbroideryDesign? selectedEmbroidery;
-  final ValueChanged<EmbroideryDesign?> onEmbroideryChanged;
-  final VoidCallback? onSubmitOrder;
-  final double totalPrice;
-  final String tailorName;
-
-  const _EmbroideryStep({
-    required this.color,
-    required this.lines,
-    required this.onChanged,
-    required this.tailorId,
-    required this.selectedEmbroidery,
-    required this.onEmbroideryChanged,
-    this.onSubmitOrder,
-    this.totalPrice = 0.0,
-    this.tailorName = '',
-  });
-
-  @override
-  State<_EmbroideryStep> createState() => _EmbroideryStepState();
-}
-
-class _EmbroideryStepState extends State<_EmbroideryStep> {
-  List<EmbroideryDesign> _designs = [];
-  List<ThreadColor> _threadColors = [];
-  bool _loadingDesigns = true;
-  bool _loadingColors = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    final service = EmbroideryService();
-    try {
-      final designs = await service.getEmbroideryDesigns(widget.tailorId);
-      final colors = await service.getThreadColors(widget.tailorId);
-      if (mounted) {
-        setState(() {
-          _designs = designs;
-          _threadColors = colors;
-          _loadingDesigns = false;
-          _loadingColors = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading embroidery data: $e');
-      if (mounted) {
-        setState(() {
-          _loadingDesigns = false;
-          _loadingColors = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 840),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(_DesignTokens.spaceLG),
+          child: Directionality(
+            textDirection: TextDirection.rtl,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ===== قسم تصميم التطريز (قائمة منسدلة) =====
-                _buildSectionCard(
-                  context,
-                  icon: Icons.auto_awesome_rounded,
-                  title: 'تصميم التطريز',
-                  subtitle: 'اختر نمط التطريز المفضل',
-                  child: _loadingDesigns
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
-                      : _designs.isEmpty
-                          ? Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                'لا توجد تصاميم متاحة',
-                                style: tt.bodyMedium
-                                    ?.copyWith(color: cs.onSurfaceVariant),
-                                textAlign: TextAlign.center,
-                              ),
-                            )
-                          : Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    // القائمة المنسدلة
-                                    Expanded(
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: cs.surfaceContainerLowest,
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          border: Border.all(
-                                              color: cs.outlineVariant
-                                                  .withOpacity(0.5)),
-                                        ),
-                                        child: DropdownButtonHideUnderline(
-                                          child:
-                                              DropdownButton<EmbroideryDesign>(
-                                            value: widget.selectedEmbroidery,
-                                            hint: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 16),
-                                              child: Text('اختر تصميم التطريز',
-                                                  style: tt.bodyMedium?.copyWith(
-                                                      color:
-                                                          cs.onSurfaceVariant)),
-                                            ),
-                                            isExpanded: true,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12, vertical: 4),
-                                            icon: Icon(
-                                                Icons
-                                                    .keyboard_arrow_down_rounded,
-                                                color: cs.primary),
-                                            items: _designs.map((design) {
-                                              return DropdownMenuItem<
-                                                  EmbroideryDesign>(
-                                                value: design,
-                                                child: Row(
-                                                  children: [
-                                                    ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              8),
-                                                      child: Image.network(
-                                                        design.imageUrl,
-                                                        width: 48,
-                                                        height: 48,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder:
-                                                            (_, __, ___) =>
-                                                                Container(
-                                                          width: 48,
-                                                          height: 48,
-                                                          color: cs
-                                                              .surfaceContainerHighest,
-                                                          child: Icon(
-                                                              Icons
-                                                                  .design_services,
-                                                              color: cs
-                                                                  .onSurfaceVariant),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        mainAxisSize:
-                                                            MainAxisSize.min,
-                                                        children: [
-                                                          Text(
-                                                            design.name,
-                                                            style: tt.bodyMedium
-                                                                ?.copyWith(
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600),
-                                                          ),
-                                                          if (design.price > 0)
-                                                            Text(
-                                                              '+${design.price.toStringAsFixed(3)} ر.ع',
-                                                              style: tt
-                                                                  .bodySmall
-                                                                  ?.copyWith(
-                                                                      color: cs
-                                                                          .primary),
-                                                            ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            }).toList(),
-                                            onChanged:
-                                                widget.onEmbroideryChanged,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    // زر المعاينة
-                                    const SizedBox(width: 12),
-                                    Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: widget.selectedEmbroidery != null
-                                            ? () => _showEmbroideryPreview(
-                                                context,
-                                                widget.selectedEmbroidery!)
-                                            : null,
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Container(
-                                          width: 56,
-                                          height: 56,
-                                          decoration: BoxDecoration(
-                                            color: widget.selectedEmbroidery !=
-                                                    null
-                                                ? cs.primaryContainer
-                                                : cs.surfaceContainerHighest,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            border: Border.all(
-                                              color: widget
-                                                          .selectedEmbroidery !=
-                                                      null
-                                                  ? cs.primary.withOpacity(0.3)
-                                                  : cs.outlineVariant
-                                                      .withOpacity(0.5),
-                                            ),
-                                          ),
-                                          child: Icon(
-                                            Icons.visibility_rounded,
-                                            color: widget.selectedEmbroidery !=
-                                                    null
-                                                ? cs.onPrimaryContainer
-                                                : cs.onSurfaceVariant
-                                                    .withOpacity(0.5),
-                                            size: 24,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-
-                                // نص تلميحي
-                                if (widget.selectedEmbroidery == null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Text(
-                                      'اختر تصميماً لمعاينته',
-                                      style: tt.bodySmall?.copyWith(
-                                        color: cs.onSurfaceVariant
-                                            .withOpacity(0.7),
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ===== قسم لون خيط التطريز (من Firebase) =====
-                _buildSectionCard(
-                  context,
-                  icon: Icons.palette_rounded,
-                  title: 'لون خيط التطريز',
-                  subtitle: 'اختر اللون المناسب',
-                  child: _loadingColors
-                      ? const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
-                      : Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: _threadColors.map((threadColor) {
-                            final isSelected =
-                                threadColor.color.value == widget.color.value;
-                            return GestureDetector(
-                              onTap: () => widget.onChanged(
-                                  threadColor.color, widget.lines),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: threadColor.color,
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? cs.primary
-                                            : cs.outlineVariant,
-                                        width: isSelected ? 3 : 1.5,
-                                      ),
-                                      boxShadow: isSelected
-                                          ? [
-                                              BoxShadow(
-                                                color: threadColor.color
-                                                    .withOpacity(0.4),
-                                                blurRadius: 12,
-                                                offset: const Offset(0, 4),
-                                              )
-                                            ]
-                                          : null,
-                                    ),
-                                    child: isSelected
-                                        ? Icon(
-                                            Icons.check_rounded,
-                                            color: threadColor.color
-                                                        .computeLuminance() >
-                                                    0.5
-                                                ? Colors.black87
-                                                : Colors.white,
-                                            size: 22,
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    threadColor.name,
-                                    style: tt.labelSmall?.copyWith(
-                                      color: isSelected
-                                          ? cs.primary
-                                          : cs.onSurfaceVariant,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // ===== قسم عدد الخطوط =====
-                _buildSectionCard(
-                  context,
-                  icon: Icons.format_list_numbered_rounded,
-                  title: 'عدد الخطوط الزخرفية',
-                  subtitle: '+0.250 ر.ع لكل خط إضافي',
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                'اختر ${widget.lines == 0 ? "بدون" : widget.lines} خط',
-                                style: tt.bodyMedium
-                                    ?.copyWith(color: cs.onSurfaceVariant)),
-                            const SizedBox(height: 8),
-                            Text('(حد أقصى 3)', style: tt.bodySmall),
-                          ],
-                        ),
-                      ),
-                      _circleBtn(context, icon: Icons.remove_rounded,
-                          onTap: () {
-                        final v = (widget.lines - 1).clamp(0, 3);
-                        widget.onChanged(widget.color, v);
-                        HapticFeedback.selectionClick();
-                      }),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('${widget.lines}',
-                            style: tt.titleLarge
-                                ?.copyWith(fontWeight: FontWeight.w900)),
-                      ),
-                      _circleBtn(context, icon: Icons.add_rounded, onTap: () {
-                        final v = (widget.lines + 1).clamp(0, 3);
-                        widget.onChanged(widget.color, v);
-                        HapticFeedback.selectionClick();
-                      }),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 28),
-
-                // ===== ملخص الطلب وزر الإرسال =====
-                if (widget.onSubmitOrder != null) ...[
-                  // ملخص السعر
-                  Container(
-                    padding: const EdgeInsets.all(16),
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          cs.primaryContainer.withOpacity(0.4),
-                          cs.secondaryContainer.withOpacity(0.3),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: cs.primary.withOpacity(0.3),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.receipt_long_rounded,
-                                color: cs.primary, size: 24),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'ملخص الطلب',
-                                style: tt.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: cs.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: cs.surface,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('الخياط:',
-                                      style: tt.bodyMedium?.copyWith(
-                                          color: cs.onSurfaceVariant)),
-                                  Text(widget.tailorName,
-                                      style: tt.bodyMedium?.copyWith(
-                                          fontWeight: FontWeight.w600)),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              if (widget.selectedEmbroidery != null) ...[
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('التطريز:',
-                                        style: tt.bodyMedium?.copyWith(
-                                            color: cs.onSurfaceVariant)),
-                                    Text(widget.selectedEmbroidery!.name,
-                                        style: tt.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600)),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              if (widget.lines > 0) ...[
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('الخطوط الزخرفية:',
-                                        style: tt.bodyMedium?.copyWith(
-                                            color: cs.onSurfaceVariant)),
-                                    Text('${widget.lines} خط',
-                                        style: tt.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600)),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                              const Divider(),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('الإجمالي:',
-                                      style: tt.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: cs.primary,
-                                      )),
-                                  Text(
-                                    'ر.ع ${widget.totalPrice.toStringAsFixed(3)}',
-                                    style: tt.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: cs.primary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      color: isDark
+                          ? cs.outlineVariant
+                          : _DesignTokens.borderDefault,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
+                ),
+                const SizedBox(height: _DesignTokens.spaceLG),
 
-                  const SizedBox(height: 20),
-
-                  // زر إرسال الطلب
-                  Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      onTap: () {
-                        HapticFeedback.mediumImpact();
-                        widget.onSubmitOrder!();
-                      },
-                      borderRadius: BorderRadius.circular(16),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 18),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              cs.primary,
-                              cs.primary.withBlue(
-                                  (cs.primary.blue + 30).clamp(0, 255)),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: cs.primary.withOpacity(0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.send_rounded,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'إرسال الطلب للخياط',
-                              style: tt.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                // Title
+                Text(
+                  'مراجعة الطلب',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
                   ),
+                ),
+                const SizedBox(height: _DesignTokens.spaceLG),
 
-                  const SizedBox(height: 12),
+                // Sections
+                _ReviewSection(title: 'الخياط', rows: [
+                  _ReviewItem('الاسم', tailorName),
+                  _ReviewItem('المدينة', 'مسقط'),
+                ]),
+                _ReviewSection(title: 'القماش', rows: [
+                  _ReviewItem('النوع', fabricType ?? '—'),
+                ]),
+                _ReviewSection(title: 'التطريز', rows: [
+                  _ReviewItem('التصميم', selectedEmbroidery?.name ?? 'لا يوجد'),
+                  _ReviewItem('لون الخيط', getColorName(embroideryColor)),
+                  _ReviewItem('الخطوط', '$embroideryLines'),
+                ]),
+                _ReviewSection(title: 'المقاسات', rows: [
+                  _ReviewItem('الطول', fmt(lengthCtrl)),
+                  _ReviewItem('الكتف', fmt(shoulderCtrl)),
+                  _ReviewItem('الذراع', fmt(sleeveCtrl)),
+                  _ReviewItem('الصدر', fmt(chestCtrl)),
+                  _ReviewItem('الخصر', fmt(waistCtrl)),
+                  _ReviewItem('الرقبة', fmt(neckCtrl)),
+                ]),
 
-                  // نص تأكيدي
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                // Gift Section
+                _buildGiftSection(context, isDark, cs),
+
+                // Total
+                Container(
+                  padding: const EdgeInsets.all(_DesignTokens.spaceLG),
+                  decoration: BoxDecoration(
+                    color: (isDark ? cs.primary : _DesignTokens.primary)
+                        .withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.info_outline_rounded,
-                          size: 16, color: cs.onSurfaceVariant),
-                      const SizedBox(width: 6),
                       Text(
-                        'سيتم التواصل معك لتأكيد الطلب',
-                        style: tt.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
+                        'الإجمالي',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'ر.ع ${price.toStringAsFixed(3)}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? cs.primary : _DesignTokens.primary,
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
+
+                const SizedBox(height: _DesignTokens.spaceLG),
+
+                // Actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: _OutlinedButton(
+                        label: 'رجوع',
+                        onTap: () => Navigator.pop(context),
+                      ),
+                    ),
+                    const SizedBox(width: _DesignTokens.spaceMD),
+                    Expanded(
+                      flex: 2,
+                      child: _FilledButton(
+                        label: 'تأكيد الإرسال',
+                        icon: Icons.send_rounded,
+                        onTap: () {
+                          Navigator.pop(context);
+                          onConfirm();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -3382,945 +2576,177 @@ class _EmbroideryStepState extends State<_EmbroideryStep> {
     );
   }
 
-  /// بناء حاوية قسم احترافية
-  Widget _buildSectionCard(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Widget child,
-  }) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cs.outlineVariant.withOpacity(0.4)),
-        boxShadow: [
-          BoxShadow(
-            color: cs.shadow.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+  Widget _buildGiftSection(BuildContext context, bool isDark, ColorScheme cs) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: _DesignTokens.spaceLG),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: cs.onPrimaryContainer, size: 22),
+          // Gift toggle
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: isGift
+                  ? LinearGradient(
+                      colors: [
+                        _DesignTokens.accent.withOpacity(0.1),
+                        _DesignTokens.accentLight.withOpacity(0.05),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: isGift
+                  ? null
+                  : (isDark ? cs.surfaceContainerLow : _DesignTokens.surfaceMuted),
+              borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
+              border: Border.all(
+                color: isGift
+                    ? _DesignTokens.accent.withOpacity(0.5)
+                    : (isDark ? cs.outlineVariant : _DesignTokens.borderDefault),
+                width: isGift ? 2 : 1,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: tt.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: tt.bodySmall?.copyWith(
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _circleBtn(BuildContext context,
-      {required IconData icon, required VoidCallback onTap}) {
-    final cs = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        splashColor: cs.primary.withOpacity(0.1),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: cs.primaryContainer,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: cs.onPrimaryContainer, size: 22),
-        ),
-      ),
-    );
-  }
-
-  /// عرض معاينة التطريز المكبرة
-  void _showEmbroideryPreview(BuildContext context, EmbroideryDesign design) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(20),
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // العنوان وزر الإغلاق
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer.withOpacity(0.3),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(24),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isGift
+                        ? _DesignTokens.accent.withOpacity(0.2)
+                        : (isDark ? cs.surfaceContainerHigh : _DesignTokens.surfaceDim),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.card_giftcard_rounded,
+                    color: isGift
+                        ? _DesignTokens.accent
+                        : (isDark ? cs.onSurfaceVariant : _DesignTokens.textTertiary),
+                    size: 24,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: cs.primary,
-                        borderRadius: BorderRadius.circular(10),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n?.sendAsGift ?? 'إرسال كهدية',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: isGift
+                              ? _DesignTokens.accent
+                              : (isDark ? cs.onSurface : _DesignTokens.textPrimary),
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.auto_awesome_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'معاينة التطريز',
-                            style: tt.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: cs.primary,
-                            ),
-                          ),
-                          Text(
-                            design.name,
-                            style: tt.bodySmall?.copyWith(
-                              color: cs.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon:
-                          Icon(Icons.close_rounded, color: cs.onSurfaceVariant),
-                      style: IconButton.styleFrom(
-                        backgroundColor: cs.surfaceContainerHighest,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // الصورة المكبرة
-              Flexible(
-                child: Container(
-                  margin: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: cs.outlineVariant.withOpacity(0.5),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: cs.shadow.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n?.thisOrderIsAGift ?? 'هذا الطلب هدية',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark ? cs.onSurfaceVariant : _DesignTokens.textTertiary,
+                        ),
                       ),
                     ],
                   ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: InteractiveViewer(
-                      minScale: 0.5,
-                      maxScale: 4.0,
-                      child: Image.network(
-                        design.imageUrl,
-                        fit: BoxFit.contain,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 300,
-                            color: cs.surfaceContainerHighest,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes !=
-                                        null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 300,
-                          color: cs.errorContainer,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.broken_image_rounded,
-                                  size: 64, color: cs.error),
-                              const SizedBox(height: 12),
-                              Text(
-                                'تعذر تحميل الصورة',
-                                style: tt.bodyMedium?.copyWith(
-                                  color: cs.onErrorContainer,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
-              ),
-
-              // معلومات إضافية
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  children: [
-                    // السعر الإضافي
-                    if (design.price > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: cs.primaryContainer.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.add_circle_outline_rounded,
-                                color: cs.primary, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${design.price.toStringAsFixed(3)} ر.ع إضافية',
-                              style: tt.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: cs.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                    const SizedBox(height: 12),
-
-                    // تلميح التكبير
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.pinch_rounded,
-                            size: 16, color: cs.onSurfaceVariant),
-                        const SizedBox(width: 6),
-                        Text(
-                          'استخدم إصبعين للتكبير والتصغير',
-                          style: tt.bodySmall?.copyWith(
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/* ===================== عناصر مساعدة ===================== */
-
-class _KV extends StatelessWidget {
-  final String k, v;
-  const _KV(this.k, this.v);
-  @override
-  Widget build(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-              child: Text(k,
-                  style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant))),
-          Text(v, style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
-        ],
-      ),
-    );
-  }
-}
-
-/// كادر أنيق (بدون تأثير زجاجي إذا useBlur=false)
-class _ElegantFrame extends StatelessWidget {
-  final Widget child;
-  final EdgeInsets padding;
-  final bool useBlur;
-  const _ElegantFrame({
-    required this.child,
-    this.padding = const EdgeInsets.all(14),
-    this.useBlur = true,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final gradBorder = LinearGradient(
-      colors: [cs.primary.withOpacity(.18), cs.tertiary.withOpacity(.18)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-    const radius = 16.0;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(radius),
-        gradient: gradBorder,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.05),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(radius - 1),
-        child: Stack(
-          children: [
-            if (useBlur)
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: const SizedBox(),
-                ),
-              ),
-            Container(
-              padding: padding,
-              color: Theme.of(context).colorScheme.surface.withOpacity(.96),
-              child: child,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// قسم المقاسات المحفوظة
-class _SavedMeasurementsSection extends StatelessWidget {
-  final Function(MeasurementProfile) onLoadProfile;
-
-  const _SavedMeasurementsSection({required this.onLoadProfile});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth >= 600;
-
-    return StreamBuilder<List<MeasurementProfile>>(
-      stream: MeasurementService().streamProfiles(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final profiles = snapshot.data!;
-        final defaultProfile = profiles.firstWhere(
-          (p) => p.isDefault,
-          orElse: () => profiles.first,
-        );
-
-        return Container(
-          padding: EdgeInsets.all(isTablet ? 18 : 16),
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerLowest.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.5),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: cs.shadow.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(isTablet ? 12 : 10),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: cs.primary.withOpacity(0.12),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  Icons.person_pin_circle_rounded,
-                  color: cs.onPrimaryContainer,
-                  size: isTablet ? 26 : 22,
-                ),
-              ),
-              SizedBox(width: isTablet ? 14 : 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.check_circle,
-                                  color: Colors.green, size: 14),
-                              const SizedBox(width: 4),
-                              Text(
-                                'محفوظ',
-                                style: tt.labelSmall?.copyWith(
-                                  color: Colors.green.shade700,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            defaultProfile.name,
-                            style: tt.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              fontSize: isTablet ? 16 : 14,
-                              color: cs.secondary,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isTablet ? 4 : 3),
-                    Row(
-                      children: [
-                        Icon(Icons.access_time_rounded,
-                            size: isTablet ? 14 : 12,
-                            color: cs.onSurfaceVariant),
-                        const SizedBox(width: 4),
-                        Text(
-                          _formatDate(defaultProfile.updatedAt ??
-                              defaultProfile.createdAt),
-                          style: tt.bodySmall?.copyWith(
-                            color: cs.onSurfaceVariant,
-                            fontSize: isTablet ? 12 : 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: isTablet ? 10 : 8),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => onLoadProfile(defaultProfile),
-                  borderRadius: BorderRadius.circular(14),
-                  splashColor: cs.primary.withOpacity(0.12),
-                  highlightColor: cs.primary.withOpacity(0.06),
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isTablet ? 18 : 16,
-                      vertical: isTablet ? 12 : 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: cs.primary,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: cs.primary.withOpacity(0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.download_rounded,
-                            color: cs.onPrimary, size: isTablet ? 20 : 18),
-                        SizedBox(width: isTablet ? 8 : 6),
-                        Text(
-                          'تحميل',
-                          style: tt.labelLarge?.copyWith(
-                            color: cs.onPrimary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: isTablet ? 15 : 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = now.difference(date);
-
-    if (diff.inDays == 0) {
-      return 'اليوم';
-    } else if (diff.inDays == 1) {
-      return 'أمس';
-    } else if (diff.inDays < 7) {
-      return 'قبل ${diff.inDays} أيام';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
-  }
-}
-
-/// زر حفظ المقاسات
-class _SaveMeasurementsButton extends StatelessWidget {
-  final Map<String, double> measurements;
-  final String? notes;
-
-  const _SaveMeasurementsButton({
-    required this.measurements,
-    this.notes,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth >= 600;
-
-    // التحقق من صحة المقاسات
-    final validationError =
-        MeasurementProfile.validateMeasurements(measurements);
-    final hasData = measurements.values.any((v) => v > 0);
-
-    if (!hasData) return const SizedBox.shrink();
-
-    return Container(
-      decoration: BoxDecoration(
-        color: validationError == null
-            ? cs.primaryContainer.withOpacity(0.4)
-            : Colors.orange.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: validationError == null
-              ? cs.primary.withOpacity(0.4)
-              : Colors.orange.withOpacity(0.5),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: cs.shadow.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => _showSaveDialog(context),
-          borderRadius: BorderRadius.circular(18),
-          splashColor: (validationError == null ? cs.primary : Colors.orange)
-              .withOpacity(0.1),
-          highlightColor: (validationError == null ? cs.primary : Colors.orange)
-              .withOpacity(0.06),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              vertical: isTablet ? 16 : 14,
-              horizontal: isTablet ? 20 : 16,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  validationError == null
-                      ? Icons.save_outlined
-                      : Icons.warning_amber_rounded,
-                  size: isTablet ? 24 : 22,
-                  color: validationError == null ? cs.primary : Colors.orange,
-                ),
-                SizedBox(width: isTablet ? 12 : 10),
-                Text(
-                  validationError == null
-                      ? 'حفظ مقاساتي للمستقبل'
-                      : 'حفظ (مع تحذيرات)',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontSize: isTablet ? 17 : 15,
-                        fontWeight: FontWeight.w600,
-                        color: validationError == null
-                            ? cs.onPrimaryContainer
-                            : Colors.orange.shade800,
-                      ),
+                Switch.adaptive(
+                  value: isGift,
+                  onChanged: onGiftToggle,
+                  activeColor: _DesignTokens.accent,
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
 
-  Future<void> _showSaveDialog(BuildContext context) async {
-    // التحقق من المقاسات
-    final validationError =
-        MeasurementProfile.validateMeasurements(measurements);
-    if (validationError != null) {
-      await showDialog(
-        context: context,
-        builder: (context) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            icon: const Icon(Icons.warning_amber_rounded,
-                color: Colors.orange, size: 48),
-            title: const Text('تحذير في المقاسات'),
-            content: Text(validationError),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('تعديل'),
-              ),
-              FilledButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _proceedToSave(context);
-                },
-                style: FilledButton.styleFrom(backgroundColor: Colors.orange),
-                child: const Text('متابعة الحفظ'),
-              ),
-            ],
-          ),
-        ),
-      );
-      return;
-    }
-
-    await _proceedToSave(context);
-  }
-
-  Future<void> _proceedToSave(BuildContext context) async {
-    final nameController = TextEditingController(text: 'مقاساتي الرسمية');
-
-    final result = await showDialog<String>(
-      context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: const Text('حفظ المقاسات'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'اسم ملف المقاسات',
-                  hintText: 'مثال: رسمي، يومي، رياضي',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text('سيتم حفظ هذه المقاسات لاستخدامها في الطلبات القادمة'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('إلغاء'),
-            ),
-            FilledButton.icon(
-              onPressed: () =>
-                  Navigator.pop(context, nameController.text.trim()),
-              icon: const Icon(Icons.save_rounded),
-              label: const Text('حفظ'),
+          // Gift recipient summary
+          if (isGift && giftRecipientDetails != null) ...[
+            const SizedBox(height: 12),
+            GiftRecipientSummaryCard(
+              details: giftRecipientDetails!,
+              onEdit: onEditGiftRecipient,
             ),
           ],
-        ),
+        ],
       ),
     );
-
-    if (result != null && result.isNotEmpty && context.mounted) {
-      final profile = MeasurementProfile(
-        id: '',
-        userId: '',
-        name: result,
-        measurements: measurements,
-        createdAt: DateTime.now(),
-        isDefault: true,
-        notes: notes,
-      );
-
-      try {
-        await MeasurementService().saveProfile(profile);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ تم حفظ المقاسات باسم "$result"'),
-              backgroundColor: Colors.green,
-              action: SnackBarAction(
-                label: 'عرض',
-                textColor: Colors.white,
-                onPressed: () {
-                  // يمكن فتح صفحة إدارة المقاسات
-                },
-              ),
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ فشل حفظ المقاسات: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
   }
 }
 
-/// دائرة اختيار اللون (مثل تصميم العبايات)
-class _ColorSwatch extends StatefulWidget {
-  final Color color;
-  final String colorName;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isTablet;
+class _ReviewSection extends StatelessWidget {
+  final String title;
+  final List<_ReviewItem> rows;
 
-  const _ColorSwatch({
-    required this.color,
-    required this.colorName,
-    required this.isSelected,
-    required this.onTap,
-    required this.isTablet,
-  });
-
-  @override
-  State<_ColorSwatch> createState() => _ColorSwatchState();
-}
-
-class _ColorSwatchState extends State<_ColorSwatch>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  const _ReviewSection({required this.title, required this.rows});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final size = widget.isTablet ? 56.0 : 48.0;
 
-    // تحديد لون الحلقة حسب سطوع اللون
-    final brightness = widget.color.computeLuminance();
-    final ringColor = widget.isSelected
-        ? cs.primary
-        : (brightness > 0.5 ? Colors.grey.shade400 : Colors.grey.shade300);
-
-    return GestureDetector(
-      onTapDown: (_) => _controller.forward(),
-      onTapUp: (_) => _controller.reverse(),
-      onTapCancel: () => _controller.reverse(),
-      onTap: widget.onTap,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: widget.isSelected
-                        ? cs.primary.withOpacity(0.25)
-                        : Colors.black.withOpacity(0.08),
-                    blurRadius: widget.isSelected ? 12 : 6,
-                    offset: Offset(0, widget.isSelected ? 4 : 2),
-                  ),
-                ],
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // الدائرة الخارجية (الحلقة)
-                  Container(
-                    width: size,
-                    height: size,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: ringColor,
-                        width: widget.isSelected ? 3.0 : 2.0,
-                      ),
-                    ),
-                  ),
-                  // الدائرة الداخلية (اللون)
-                  Container(
-                    width: size - (widget.isSelected ? 10 : 8),
-                    height: size - (widget.isSelected ? 10 : 8),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: widget.color,
-                      boxShadow: [
-                        BoxShadow(
-                          color: widget.color.withOpacity(0.4),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // علامة التحديد
-                  if (widget.isSelected)
-                    Container(
-                      width: size - 10,
-                      height: size - 10,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.9),
-                          width: 2,
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.check_rounded,
-                        color: brightness > 0.5 ? Colors.black87 : Colors.white,
-                        size: widget.isTablet ? 24 : 20,
-                      ),
-                    ),
-                ],
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: _DesignTokens.spaceLG),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: isDark ? cs.primary : _DesignTokens.primaryLight,
+              letterSpacing: 0.5,
             ),
-            if (widget.colorName.isNotEmpty) ...[
-              SizedBox(height: widget.isTablet ? 6 : 4),
-              Text(
-                widget.colorName,
-                style: tt.bodySmall?.copyWith(
-                  fontSize: widget.isTablet ? 12 : 10,
-                  color: widget.isSelected ? cs.primary : cs.onSurfaceVariant,
-                  fontWeight:
-                      widget.isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+          const SizedBox(height: _DesignTokens.spaceMD),
+          ...rows.map((r) => Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: _DesignTokens.spaceXS + 2),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      r.label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDark
+                            ? cs.onSurfaceVariant
+                            : _DesignTokens.textTertiary,
+                      ),
+                    ),
+                    Text(
+                      r.value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color:
+                            isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                      ),
+                    ),
+                  ],
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ],
-        ),
+              )),
+        ],
       ),
     );
   }
 }
 
-/// نموذج القماش
+class _ReviewItem {
+  final String label;
+  final String value;
+  _ReviewItem(this.label, this.value);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODELS
+// ═══════════════════════════════════════════════════════════════════════════
+
 class FabricItem {
-  final String title; // مثل: صيفي، شتوي، فاخر...
-  final String image; // مسار asset أو رابط
-  final String? tag; // شارة اختيارية
+  final String title;
+  final String image;
+  final String? tag;
   const FabricItem(this.title, this.image, {this.tag});
 }

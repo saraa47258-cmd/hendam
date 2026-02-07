@@ -6,9 +6,12 @@ import 'package:provider/provider.dart';
 import '../../features/catalog/models/abaya_item.dart';
 import '../../features/catalog/services/abaya_service.dart';
 import '../../features/orders/services/order_service.dart';
+import '../../features/orders/models/order_model.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../core/state/cart_scope.dart';
 import '../../shared/widgets/any_image.dart';
+import '../../shared/widgets/gift_recipient_bottom_sheet.dart';
+import '../../l10n/app_localizations.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Design System
@@ -89,6 +92,10 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   final _abayaService = AbayaService();
   bool _isSubmitting = false;
 
+  // Gift state
+  bool _isGift = false;
+  GiftRecipientDetails? _giftRecipientDetails;
+
   // Controllers
   final _lengthC = TextEditingController();
   final _sleeveC = TextEditingController();
@@ -124,10 +131,11 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context)!;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     if (!authProvider.isAuthenticated || authProvider.currentUser == null) {
-      _showSnackBar('يرجى تسجيل الدخول أولاً', isError: true);
+      _showSnackBar(l10n.pleaseSignInFirst, isError: true);
       return;
     }
 
@@ -141,7 +149,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
       final customerPhone = user.phoneNumber ?? '';
 
       String? traderId;
-      String traderName = 'متجر العبايات';
+      String traderName = l10n.abayaStore;
 
       try {
         traderId = await _abayaService.getTraderIdByProductId(widget.item.id);
@@ -165,7 +173,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
 
       // إضافة المقاسات بالإنش للملاحظات
       final inchNote =
-          'المقاسات بالإنش: الطول $lengthInch in، الكم $sleeveInch in، العرض $widthInch in';
+          l10n.measurementsInInch(lengthInch.toString(), sleeveInch.toString(), widthInch.toString());
       final finalNotes = _notesC.text.trim().isEmpty
           ? inchNote
           : '${_notesC.text.trim()}\n\n$inchNote';
@@ -185,12 +193,14 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
         selectedColor: widget.selectedColor != null
             ? '#${widget.selectedColor!.value.toRadixString(16).substring(2).toUpperCase()}'
             : null,
+        isGift: _isGift,
+        giftRecipientDetails: _giftRecipientDetails,
       );
 
       if (!mounted) return;
 
       if (orderId != null) {
-        _showSnackBar('تم إرسال الطلب بنجاح!', isSuccess: true);
+        _showSnackBar(l10n.orderSentSuccessfully, isSuccess: true);
 
         final m = AbayaMeasurements(
           length: _inchToCm(lengthInch),
@@ -201,12 +211,12 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
 
         Navigator.pop(context, m);
       } else {
-        _showSnackBar('فشل إرسال الطلب. يرجى المحاولة مرة أخرى.',
+        _showSnackBar(l10n.failedToSendOrder,
             isError: true);
       }
     } catch (e) {
       if (!mounted) return;
-      _showSnackBar('حدث خطأ غير متوقع', isError: true);
+      _showSnackBar(l10n.unexpectedError, isError: true);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -216,6 +226,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   void _addToCart() {
     if (!_formKey.currentState!.validate()) return;
 
+    final l10n = AppLocalizations.of(context)!;
     HapticFeedback.mediumImpact();
 
     try {
@@ -247,14 +258,14 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
       );
 
       _showSnackBar(
-        'تمت إضافة ${widget.item.title} للسلة مع اللون والمقاسات',
+        l10n.addedWithMeasurements(widget.item.title),
         isSuccess: true,
       );
 
       // العودة للصفحة السابقة
       Navigator.pop(context);
     } catch (e) {
-      _showSnackBar('حدث خطأ', isError: true);
+      _showSnackBar(l10n.errorOccurred, isError: true);
     }
   }
 
@@ -282,6 +293,156 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(_DS.radiusMd)),
         margin: const EdgeInsets.all(_DS.lg),
+      ),
+    );
+  }
+
+  /// بناء قسم الهدية
+  Widget _buildGiftSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    return Container(
+      padding: const EdgeInsets.all(_DS.lg),
+      decoration: BoxDecoration(
+        color: _DS.cardBg,
+        borderRadius: BorderRadius.circular(_DS.radiusMd),
+        border: Border.all(
+          color: _isGift ? _DS.primaryBrown.withOpacity(0.3) : _DS.border,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Gift Toggle Row
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(_DS.radiusSm),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() => _isGift = !_isGift);
+                
+                if (_isGift && _giftRecipientDetails == null) {
+                  _showGiftBottomSheet();
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: _DS.sm),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        gradient: _isGift
+                            ? LinearGradient(
+                                colors: [
+                                  _DS.primaryBrown,
+                                  _DS.primaryBrown.withOpacity(0.8),
+                                ],
+                              )
+                            : null,
+                        color: _isGift ? null : const Color(0xFFF3F4F6),
+                        borderRadius: BorderRadius.circular(_DS.radiusSm),
+                      ),
+                      child: Icon(
+                        Icons.card_giftcard_rounded,
+                        size: 20,
+                        color: _isGift ? Colors.white : _DS.mediumText,
+                      ),
+                    ),
+                    const SizedBox(width: _DS.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.sendAsGift,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: _DS.darkText,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            l10n.thisOrderIsAGift,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: _DS.mediumText,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: _isGift,
+                      onChanged: (val) {
+                        HapticFeedback.lightImpact();
+                        setState(() => _isGift = val);
+                        
+                        if (val && _giftRecipientDetails == null) {
+                          _showGiftBottomSheet();
+                        }
+                      },
+                      activeColor: _DS.primaryBrown,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          
+          // Gift Recipient Summary
+          if (_isGift && _giftRecipientDetails != null) ...[
+            const SizedBox(height: _DS.md),
+            GiftRecipientSummaryCard(
+              details: _giftRecipientDetails!,
+              onEdit: _showGiftBottomSheet,
+            ),
+          ],
+          
+          // Add recipient button if gift enabled but no details
+          if (_isGift && _giftRecipientDetails == null) ...[
+            const SizedBox(height: _DS.md),
+            OutlinedButton.icon(
+              onPressed: _showGiftBottomSheet,
+              icon: const Icon(Icons.person_add_rounded, size: 18),
+              label: Text(l10n.recipientName),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: _DS.primaryBrown,
+                side: BorderSide(color: _DS.primaryBrown.withOpacity(0.5)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(_DS.radiusSm),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// عرض Bottom Sheet لإدخال بيانات المستلم
+  void _showGiftBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => GiftRecipientBottomSheet(
+        initialData: _giftRecipientDetails,
+        onSave: (details) {
+          setState(() {
+            _giftRecipientDetails = details;
+          });
+        },
       ),
     );
   }
@@ -340,6 +501,10 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                             controller: _notesC,
                             focusNode: _notesFocus,
                           ),
+                          const SizedBox(height: _DS.xl),
+
+                          // Gift Section
+                          _buildGiftSection(context),
                         ],
                       ),
                     ),
@@ -377,6 +542,7 @@ class _MeasurementsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -385,23 +551,23 @@ class _MeasurementsHeader extends StatelessWidget {
           children: [
             _GlassBackButton(onTap: onBack),
             const SizedBox(width: _DS.lg),
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'مقاسات العباية',
-                    style: TextStyle(
+                    l10n.abayaMeasurements,
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                       color: _DS.darkText,
                       letterSpacing: -0.5,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'أدخل المقاسات بالإنش',
-                    style: TextStyle(
+                    l10n.enterMeasurementsInInch,
+                    style: const TextStyle(
                       fontSize: 13,
                       color: _DS.mediumText,
                       fontWeight: FontWeight.w500,
@@ -514,6 +680,7 @@ class _SelectedProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(_DS.lg),
       decoration: BoxDecoration(
@@ -565,7 +732,9 @@ class _SelectedProductCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(_DS.radiusSm),
                   ),
                   child: Text(
-                    item.subtitle.isNotEmpty ? item.subtitle : 'عباية',
+                    item.subtitle.isNotEmpty
+                        ? item.subtitle
+                        : l10n.abayaFallback,
                     style: const TextStyle(
                       color: _DS.primaryBrown,
                       fontSize: 10,
@@ -595,16 +764,16 @@ class _SelectedProductCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${item.price.toStringAsFixed(item.price == item.price.truncateToDouble() ? 0 : 2)}',
+                item.price.toStringAsFixed(item.price == item.price.truncateToDouble() ? 0 : 2),
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: _DS.primaryBrown,
                 ),
               ),
-              const Text(
-                'ر.ع',
-                style: TextStyle(
+              Text(
+                l10n.omr,
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: _DS.mediumText,
@@ -634,15 +803,23 @@ class _MeasurementGuideSegment extends StatefulWidget {
 class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
   int _selected = 0;
 
-  static const _labels = ['الطول', 'الكم', 'العرض'];
-  static const _tips = [
-    'الطول: قيسي من أعلى الكتف حتى أسفل العباية المطلوب.',
-    'الكم: من بداية فتحة الرقبة مرورًا بالكتف حتى نهاية الكم.',
-    'العرض: المسافة الأفقية بين الجانبين عند مستوى الصدر.',
-  ];
+  List<String> _getLabels(AppLocalizations l10n) => [
+        l10n.lengthMeasure,
+        l10n.sleeveMeasure,
+        l10n.widthMeasure,
+      ];
+
+  List<String> _getTips(AppLocalizations l10n) => [
+        l10n.lengthTip,
+        l10n.sleeveTip,
+        l10n.widthTip,
+      ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final labels = _getLabels(l10n);
+    final tips = _getTips(l10n);
     return Container(
       padding: const EdgeInsets.all(_DS.xl),
       decoration: BoxDecoration(
@@ -669,9 +846,9 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
                 color: _DS.primaryBrown,
               ),
               const SizedBox(width: _DS.sm),
-              const Text(
-                'دليل القياس',
-                style: TextStyle(
+              Text(
+                l10n.measurementGuide,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: _DS.darkText,
@@ -709,7 +886,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
               borderRadius: BorderRadius.circular(_DS.radiusMd),
             ),
             child: Row(
-              children: List.generate(_labels.length, (i) {
+              children: List.generate(labels.length, (i) {
                 final isSelected = i == _selected;
                 return Expanded(
                   child: GestureDetector(
@@ -735,7 +912,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
                       ),
                       child: Center(
                         child: Text(
-                          _labels[i],
+                          labels[i],
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight:
@@ -777,7 +954,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
                       ),
                       const SizedBox(height: _DS.sm),
                       Text(
-                        'صورة الدليل غير متوفرة',
+                        l10n.guideImageNotAvailable,
                         style: TextStyle(
                           color: Colors.grey[500],
                           fontSize: 13,
@@ -816,7 +993,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
                   const SizedBox(width: _DS.sm),
                   Expanded(
                     child: Text(
-                      _tips[_selected],
+                      tips[_selected],
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -860,6 +1037,7 @@ class _MeasurementsForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(_DS.xl),
       decoration: BoxDecoration(
@@ -878,17 +1056,17 @@ class _MeasurementsForm extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.straighten_rounded,
                 size: 20,
                 color: _DS.primaryBrown,
               ),
-              SizedBox(width: _DS.sm),
+              const SizedBox(width: _DS.sm),
               Text(
-                'المقاسات الأساسية',
-                style: TextStyle(
+                l10n.basicMeasurements,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: _DS.darkText,
@@ -897,9 +1075,9 @@ class _MeasurementsForm extends StatelessWidget {
             ],
           ),
           const SizedBox(height: _DS.sm),
-          const Text(
-            'جميع المقاسات بالإنش (inch)',
-            style: TextStyle(
+          Text(
+            l10n.allMeasurementsInInch,
+            style: const TextStyle(
               fontSize: 12,
               color: _DS.mediumText,
               fontWeight: FontWeight.w500,
@@ -909,8 +1087,8 @@ class _MeasurementsForm extends StatelessWidget {
 
           // Fields
           _InchInputField(
-            label: 'الطول',
-            hint: 'مثال: 54',
+            label: l10n.lengthMeasure,
+            hint: l10n.exampleLength,
             controller: lengthController,
             focusNode: lengthFocus,
             nextFocus: sleeveFocus,
@@ -919,8 +1097,8 @@ class _MeasurementsForm extends StatelessWidget {
           const SizedBox(height: _DS.lg),
 
           _InchInputField(
-            label: 'طول الكم',
-            hint: 'مثال: 23',
+            label: l10n.sleeveLengthLabel,
+            hint: l10n.exampleSleeve,
             controller: sleeveController,
             focusNode: sleeveFocus,
             nextFocus: widthFocus,
@@ -929,8 +1107,8 @@ class _MeasurementsForm extends StatelessWidget {
           const SizedBox(height: _DS.lg),
 
           _InchInputField(
-            label: 'العرض',
-            hint: 'مثال: 24',
+            label: l10n.widthMeasure,
+            hint: l10n.exampleWidth,
             controller: widthController,
             focusNode: widthFocus,
             nextFocus: notesFocus,
@@ -968,6 +1146,7 @@ class _InchInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1046,8 +1225,8 @@ class _InchInputField extends StatelessWidget {
           ),
           validator: (v) {
             final n = _toNum();
-            if (n <= 0) return 'يرجى إدخال قيمة صحيحة';
-            if (n > 100) return 'القيمة كبيرة جداً';
+            if (n <= 0) return l10n.pleaseEnterValidValue;
+            if (n > 100) return l10n.valueTooLarge;
             return null;
           },
         ),
@@ -1071,6 +1250,7 @@ class _NotesField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(_DS.xl),
       decoration: BoxDecoration(
@@ -1089,26 +1269,26 @@ class _NotesField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
-          const Row(
+          Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.edit_note_rounded,
                 size: 20,
                 color: _DS.primaryBrown,
               ),
-              SizedBox(width: _DS.sm),
+              const SizedBox(width: _DS.sm),
               Text(
-                'ملاحظات إضافية',
-                style: TextStyle(
+                l10n.additionalNotes,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: _DS.darkText,
                 ),
               ),
-              SizedBox(width: _DS.sm),
+              const SizedBox(width: _DS.sm),
               Text(
-                '(اختياري)',
-                style: TextStyle(
+                l10n.optionalLabel,
+                style: const TextStyle(
                   fontSize: 12,
                   color: _DS.lightText,
                   fontWeight: FontWeight.w500,
@@ -1129,7 +1309,7 @@ class _NotesField extends StatelessWidget {
               height: 1.5,
             ),
             decoration: InputDecoration(
-              hintText: 'مثال: أريدها واسعة قليلاً من الأكمام...',
+              hintText: l10n.measurementsHintExample,
               hintStyle: TextStyle(
                 color: _DS.lightText.withOpacity(0.7),
                 fontWeight: FontWeight.w400,
@@ -1177,6 +1357,7 @@ class _StickyConfirmBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return Container(
@@ -1199,7 +1380,7 @@ class _StickyConfirmBar extends StatelessWidget {
       child: isAddToCartMode
           // وضع الإضافة للسلة - زر واحد فقط
           ? _ActionButton(
-              label: 'تأكيد المقاسات وإضافة للسلة',
+              label: l10n.confirmMeasurementsAddCart,
               icon: Icons.shopping_bag_outlined,
               isLoading: isLoading,
               isPrimary: true,
@@ -1207,7 +1388,7 @@ class _StickyConfirmBar extends StatelessWidget {
             )
           // وضع الطلب المباشر - زر واحد فقط
           : _ActionButton(
-              label: 'تأكيد المقاسات ومتابعة الطلب',
+              label: l10n.confirmMeasurementsProceed,
               icon: Icons.check_circle_outline_rounded,
               isLoading: isLoading,
               isPrimary: true,

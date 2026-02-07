@@ -1,8 +1,11 @@
 // lib/features/orders/presentation/order_tracking_screen.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import '../services/order_service.dart';
 import '../models/order_model.dart';
+import '../../../core/providers/locale_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 class OrderTrackingScreen extends StatelessWidget {
   final String orderId;
@@ -16,13 +19,17 @@ class OrderTrackingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final localeProvider = context.watch<LocaleProvider>();
+    final l10n = AppLocalizations.of(context)!;
+    final textDirection =
+        localeProvider.isRtl ? TextDirection.rtl : TextDirection.ltr;
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
-          title: Text('تتبع الطلب #$orderId'),
+          title: Text('${l10n.trackOrderTitle} #$orderId'),
           centerTitle: true,
         ),
         body: StreamBuilder<OrderModel?>(
@@ -42,7 +49,7 @@ class OrderTrackingScreen extends StatelessWidget {
                     Icon(Icons.error_outline, size: 64, color: cs.error),
                     const SizedBox(height: 16),
                     Text(
-                      'حدث خطأ في تحميل بيانات الطلب',
+                      l10n.errorLoadingOrder,
                       style: tt.bodyLarge,
                     ),
                     const SizedBox(height: 8),
@@ -57,7 +64,7 @@ class OrderTrackingScreen extends StatelessWidget {
                     FilledButton.icon(
                       onPressed: () => context.pop(),
                       icon: const Icon(Icons.arrow_back),
-                      label: const Text('العودة'),
+                      label: Text(l10n.back),
                     ),
                   ],
                 ),
@@ -77,14 +84,14 @@ class OrderTrackingScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'الطلب غير موجود',
+                      l10n.orderNotFound,
                       style: tt.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'لا يمكن العثور على الطلب المطلوب',
+                      l10n.cannotFindOrder,
                       style: tt.bodyMedium?.copyWith(
                         color: cs.onSurfaceVariant,
                       ),
@@ -93,7 +100,7 @@ class OrderTrackingScreen extends StatelessWidget {
                     FilledButton.icon(
                       onPressed: () => context.pop(),
                       icon: const Icon(Icons.arrow_back),
-                      label: const Text('العودة'),
+                      label: Text(l10n.back),
                     ),
                   ],
                 ),
@@ -106,15 +113,15 @@ class OrderTrackingScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // معلومات الطلب الأساسية
-                  _OrderInfoCard(order: order, cs: cs, tt: tt),
+                  _OrderInfoCard(order: order, cs: cs, tt: tt, l10n: l10n),
                   const SizedBox(height: 20),
 
                   // خطوات التتبع
-                  _TrackingSteps(order: order, cs: cs, tt: tt),
+                  _TrackingSteps(order: order, cs: cs, tt: tt, l10n: l10n),
                   const SizedBox(height: 20),
 
                   // معلومات إضافية
-                  _AdditionalInfoCard(order: order, cs: cs, tt: tt),
+                  _AdditionalInfoCard(order: order, cs: cs, tt: tt, l10n: l10n),
                 ],
               ),
             );
@@ -129,11 +136,13 @@ class _OrderInfoCard extends StatelessWidget {
   final OrderModel order;
   final ColorScheme cs;
   final TextTheme tt;
+  final AppLocalizations l10n;
 
   const _OrderInfoCard({
     required this.order,
     required this.cs,
     required this.tt,
+    required this.l10n,
   });
 
   @override
@@ -169,14 +178,14 @@ class _OrderInfoCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'طلب #${order.id}',
+                        '${l10n.order} #${order.id}',
                         style: tt.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'تاريخ الطلب: ${_formatDate(order.createdAt)}',
+                        '${l10n.orderDate}: ${_formatDate(order.createdAt)}',
                         style: tt.bodySmall?.copyWith(
                           color: cs.onSurfaceVariant,
                         ),
@@ -193,13 +202,13 @@ class _OrderInfoCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'الإجمالي',
+                  l10n.total,
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
-                  '${order.totalPrice.toStringAsFixed(3)} ر.ع',
+                  '${order.totalPrice.toStringAsFixed(3)} ${l10n.omr}',
                   style: tt.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: cs.primary,
@@ -222,39 +231,41 @@ class _TrackingSteps extends StatelessWidget {
   final OrderModel order;
   final ColorScheme cs;
   final TextTheme tt;
+  final AppLocalizations l10n;
 
   const _TrackingSteps({
     required this.order,
     required this.cs,
     required this.tt,
+    required this.l10n,
   });
 
   @override
   Widget build(BuildContext context) {
     final steps = [
       {
-        'title': 'في الانتظار',
+        'title': l10n.waitingStatus,
         'status': OrderStatus.pending,
         'icon': Icons.access_time,
-        'description': 'تم استلام الطلب وهو في انتظار المراجعة',
+        'description': l10n.orderReceivedWaiting,
       },
       {
-        'title': 'مقبول',
+        'title': l10n.acceptedStatus,
         'status': OrderStatus.accepted,
         'icon': Icons.check_circle_outline,
-        'description': 'تم قبول الطلب وبدء التحضير',
+        'description': l10n.orderAcceptedPreparing,
       },
       {
-        'title': 'قيد التنفيذ',
+        'title': l10n.inProgressStatus,
         'status': OrderStatus.inProgress,
         'icon': Icons.build,
-        'description': 'الطلب قيد التنفيذ والتجهيز',
+        'description': l10n.orderInProgressProcessing,
       },
       {
-        'title': 'مكتمل',
+        'title': l10n.completedStatus,
         'status': OrderStatus.completed,
         'icon': Icons.done_all,
-        'description': 'تم إكمال الطلب بنجاح',
+        'description': l10n.orderCompletedSuccess,
       },
     ];
 
@@ -289,7 +300,7 @@ class _TrackingSteps extends StatelessWidget {
                 Icon(Icons.local_shipping, color: cs.primary, size: 24),
                 const SizedBox(width: 12),
                 Text(
-                  'تتبع الطلب',
+                  l10n.trackOrderTitle,
                   style: tt.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -316,7 +327,9 @@ class _TrackingSteps extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isRejected ? 'الطلب مرفوض' : 'الطلب ملغي',
+                            isRejected
+                                ? l10n.orderRejected
+                                : l10n.orderCancelled,
                             style: tt.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: cs.onErrorContainer,
@@ -343,9 +356,8 @@ class _TrackingSteps extends StatelessWidget {
             ...List.generate(steps.length, (index) {
               final step = steps[index];
               final isCompleted = index < currentStepIndex;
-              final isCurrent = index == currentStepIndex &&
-                  !isRejected &&
-                  !isCancelled;
+              final isCurrent =
+                  index == currentStepIndex && !isRejected && !isCancelled;
               final isPending = index > currentStepIndex;
 
               return _TrackingStepItem(
@@ -413,9 +425,7 @@ class _TrackingStepItem extends StatelessWidget {
                         ? activeColor
                         : cs.surfaceContainerHighest,
                 border: Border.all(
-                  color: isCompleted || isCurrent
-                      ? activeColor
-                      : inactiveColor,
+                  color: isCompleted || isCurrent ? activeColor : inactiveColor,
                   width: 2,
                 ),
               ),
@@ -425,9 +435,7 @@ class _TrackingStepItem extends StatelessWidget {
                     : isCurrent
                         ? icon
                         : icon,
-                color: isCompleted || isCurrent
-                    ? activeColor
-                    : inactiveColor,
+                color: isCompleted || isCurrent ? activeColor : inactiveColor,
                 size: 20,
               ),
             ),
@@ -452,9 +460,8 @@ class _TrackingStepItem extends StatelessWidget {
                     fontWeight: isCurrent || isCompleted
                         ? FontWeight.bold
                         : FontWeight.normal,
-                    color: isCurrent || isCompleted
-                        ? activeColor
-                        : inactiveColor,
+                    color:
+                        isCurrent || isCompleted ? activeColor : inactiveColor,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -477,11 +484,13 @@ class _AdditionalInfoCard extends StatelessWidget {
   final OrderModel order;
   final ColorScheme cs;
   final TextTheme tt;
+  final AppLocalizations l10n;
 
   const _AdditionalInfoCard({
     required this.order,
     required this.cs,
     required this.tt,
+    required this.l10n,
   });
 
   @override
@@ -498,7 +507,7 @@ class _AdditionalInfoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'معلومات إضافية',
+              l10n.additionalInfo,
               style: tt.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -506,7 +515,7 @@ class _AdditionalInfoCard extends StatelessWidget {
             const SizedBox(height: 16),
             _InfoRow(
               icon: Icons.person,
-              label: 'الخياط',
+              label: l10n.tailor,
               value: order.tailorName,
               cs: cs,
               tt: tt,
@@ -514,7 +523,7 @@ class _AdditionalInfoCard extends StatelessWidget {
             const SizedBox(height: 12),
             _InfoRow(
               icon: Icons.inventory_2,
-              label: 'القماش',
+              label: l10n.fabric,
               value: order.fabricName,
               cs: cs,
               tt: tt,
@@ -523,7 +532,7 @@ class _AdditionalInfoCard extends StatelessWidget {
               const SizedBox(height: 12),
               _InfoRow(
                 icon: Icons.note,
-                label: 'ملاحظات',
+                label: l10n.notes,
                 value: order.notes,
                 cs: cs,
                 tt: tt,
@@ -533,7 +542,7 @@ class _AdditionalInfoCard extends StatelessWidget {
               const SizedBox(height: 12),
               _InfoRow(
                 icon: Icons.event_available,
-                label: 'تاريخ الإكمال',
+                label: l10n.completionDate,
                 value: _formatDate(order.completedAt!),
                 cs: cs,
                 tt: tt,
@@ -589,5 +598,3 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
-
-
