@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/tailor.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 class TailorTile extends StatelessWidget {
   final Tailor tailor;
@@ -63,7 +64,7 @@ class TailorTile extends StatelessWidget {
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
-                              isOpen ? 'مفتوح' : 'مغلق',
+                              isOpen ? l10n.open : l10n.closed,
                               style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600),
                             ),
                           ),

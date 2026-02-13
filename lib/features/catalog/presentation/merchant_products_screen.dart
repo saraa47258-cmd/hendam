@@ -10,7 +10,6 @@ import '../../orders/presentation/my_orders_screen.dart';
 import '../../orders/services/order_service.dart';
 import '../../orders/models/order_model.dart';
 import '../../../shared/widgets/gift_recipient_bottom_sheet.dart';
-import '../../../shared/widgets/skeletons.dart';
 
 /// موديل المنتج (مستقل عن أي موديلات أخرى)
 class MerchantProduct {
@@ -321,215 +320,215 @@ class _MerchantProductsScreenState extends State<MerchantProductsScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_rounded),
             onPressed: () => Navigator.maybePop(context),
           ),
           title: Text(widget.shop.name, overflow: TextOverflow.ellipsis),
         ),
-        body: _isLoading
-            ? const MerchantProductsSkeleton()
-            : RefreshIndicator(
-                onRefresh: _loadData,
-                child: CustomScrollView(
-                  slivers: [
-                    // هيدر معلومات المحل
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: _ShopHeader(
-                          shop: widget.shop,
-                          img: _img(widget.shop.imageUrl, fit: BoxFit.cover),
-                        ),
-                      ),
-                    ),
-                    // بحث/فرز/شرائح
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    onChanged: (v) {
-                                      _query = v.trim();
-                                      _applyFilters();
-                                    },
-                                    decoration: InputDecoration(
-                                      hintText:
-                                          l10n.searchInShop(widget.shop.name),
-                                      prefixIcon:
-                                          const Icon(Icons.search_rounded),
-                                      filled: true,
-                                      fillColor: cs.surfaceContainerHighest
-                                          .withOpacity(.7),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                              vertical: 12),
-                                      border: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: cs.outlineVariant),
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: cs.outlineVariant),
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: cs.primary, width: 1.2),
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                _SortButton(
-                                  current: _sort,
-                                  onSelect: (v) {
-                                    _sort = v;
-                                    _applyFilters();
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            _ChipsRow(
-                              chips: _chips,
-                              selectedIndex: _selectedChip,
-                              onChanged: (i) {
-                                _selectedChip = i;
-                                _applyFilters();
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    // حالة الخطأ
-                    if (_error != null)
-                      SliverFillRemaining(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                size: 64,
-                                color: cs.error,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                l10n.failedToLoadProducts,
-                                style: TextStyle(
-                                  color: cs.onSurfaceVariant,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              FilledButton.icon(
-                                onPressed: _loadData,
-                                icon: const Icon(Icons.refresh_rounded),
-                                label: Text(l10n.retry),
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFF6D4C41),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    // حالة القائمة فارغة
-                    else if (_shown.isEmpty)
-                      SliverFillRemaining(
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.inventory_2_outlined,
-                                size: 64,
-                                color: cs.onSurfaceVariant.withOpacity(0.5),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                l10n.noProductsAvailable,
-                                style: TextStyle(
-                                  color: cs.onSurfaceVariant,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                l10n.tryChangingSearchCriteria,
-                                style: TextStyle(
-                                  color: cs.onSurfaceVariant.withOpacity(0.7),
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    // شبكة المنتجات
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
-                        sliver: SliverGrid(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 14,
-                            crossAxisSpacing: 14,
-                            childAspectRatio: .62,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                            (context, i) {
-                              final item = _shown[i];
-                              final hero = 'mprod-${widget.shop.id}-${item.id}';
-                              return _ProductCard(
-                                item: item,
-                                heroTag: hero,
-                                imageBuilder: (src) =>
-                                    _img(src, fit: BoxFit.cover),
-                                priceText: _price(item.price, l10n),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    PageRouteBuilder(
-                                      transitionDuration:
-                                          const Duration(milliseconds: 280),
-                                      reverseTransitionDuration:
-                                          const Duration(milliseconds: 220),
-                                      pageBuilder: (_, __, ___) =>
-                                          MerchantProductPreviewScreen(
-                                        product: item,
-                                        shop: widget.shop,
-                                        heroTag: hero,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                            childCount: _shown.length,
-                          ),
-                        ),
-                      ),
-                  ],
+        body: RefreshIndicator(
+          onRefresh: _loadData,
+          child: CustomScrollView(
+            slivers: [
+              // هيدر معلومات المحل
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _ShopHeader(
+                    shop: widget.shop,
+                    img: _img(widget.shop.imageUrl, fit: BoxFit.cover),
+                  ),
                 ),
               ),
-      ),
-    );
+              // بحث/فرز/شرائح
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              onChanged: (v) {
+                                _query = v.trim();
+                                _applyFilters();
+                              },
+                              decoration: InputDecoration(
+                                hintText: l10n.searchInShop(widget.shop.name),
+                                prefixIcon: const Icon(Icons.search_rounded),
+                                filled: true,
+                                fillColor:
+                                    cs.surfaceContainerHighest.withOpacity(.7),
+                                contentPadding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                border: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: cs.outlineVariant),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: cs.outlineVariant),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide:
+                                      BorderSide(color: cs.primary, width: 1.2),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _SortButton(
+                            current: _sort,
+                            onSelect: (v) {
+                              _sort = v;
+                              _applyFilters();
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _ChipsRow(
+                        chips: _chips,
+                        selectedIndex: _selectedChip,
+                        onChanged: (i) {
+                          _selectedChip = i;
+                          _applyFilters();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // حالة التحميل
+              if (_isLoading)
+                const SliverFillRemaining(
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Color(0xFF6D4C41),
+                    ),
+                  ),
+                )
+              // حالة الخطأ
+              else if (_error != null)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 64,
+                          color: cs.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.failedToLoadProducts,
+                          style: TextStyle(
+                            color: cs.onSurfaceVariant,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        FilledButton.icon(
+                          onPressed: _loadData,
+                          icon: const Icon(Icons.refresh_rounded),
+                          label: Text(l10n.retry),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFF6D4C41),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              // حالة القائمة فارغة
+              else if (_shown.isEmpty)
+                SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.inventory_2_outlined,
+                          size: 64,
+                          color: cs.onSurfaceVariant.withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.noProductsAvailable,
+                          style: TextStyle(
+                            color: cs.onSurfaceVariant,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.tryChangingSearchCriteria,
+                          style: TextStyle(
+                            color: cs.onSurfaceVariant.withOpacity(0.7),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              // شبكة المنتجات
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: .62,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, i) {
+                        final item = _shown[i];
+                        final hero = 'mprod-${widget.shop.id}-${item.id}';
+                        return _ProductCard(
+                          item: item,
+                          heroTag: hero,
+                          imageBuilder: (src) => _img(src, fit: BoxFit.cover),
+                          priceText: _price(item.price, l10n),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                transitionDuration:
+                                    const Duration(milliseconds: 280),
+                                reverseTransitionDuration:
+                                    const Duration(milliseconds: 220),
+                                pageBuilder: (_, __, ___) =>
+                                    MerchantProductPreviewScreen(
+                                  product: item,
+                                  shop: widget.shop,
+                                  heroTag: hero,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      childCount: _shown.length,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
   }
 }
 
@@ -1234,14 +1233,12 @@ class _MerchantProductPreviewScreenState
         ? [widget.product.imageUrl]
         : widget.product.gallery;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Stack(
-          children: [
-            // Main content
-            CustomScrollView(
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Main content
+          CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
                 // Immersive image header
@@ -1670,8 +1667,7 @@ class _MerchantProductPreviewScreenState
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildCircleButton({
@@ -1745,7 +1741,9 @@ class _MerchantProductPreviewScreenState
             color: _isGift ? null : Colors.grey[50],
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: _isGift ? _goldAccent.withOpacity(0.5) : Colors.grey[200]!,
+              color: _isGift
+                  ? _goldAccent.withOpacity(0.5)
+                  : Colors.grey[200]!,
               width: _isGift ? 2 : 1,
             ),
           ),
@@ -1754,8 +1752,9 @@ class _MerchantProductPreviewScreenState
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color:
-                      _isGift ? _goldAccent.withOpacity(0.2) : Colors.grey[100],
+                  color: _isGift
+                      ? _goldAccent.withOpacity(0.2)
+                      : Colors.grey[100],
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(

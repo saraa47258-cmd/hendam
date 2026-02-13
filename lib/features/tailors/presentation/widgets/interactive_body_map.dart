@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 /// Interactive Body Map Widget
 /// خريطة جسم تفاعلية لإدخال المقاسات
@@ -57,8 +58,9 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
   }
 
   void _showMeasurementDialog(String partKey, String label) {
+    final l10n = AppLocalizations.of(context)!;
     final currentValue = widget.measurements[partKey] ?? 0.0;
-    final unitLabel = widget.unit == MeasurementUnit.cm ? 'سم' : 'إنش';
+    final unitLabel = widget.unit == MeasurementUnit.cm ? l10n.cm : l10n.inch;
     final minValue = widget.unit == MeasurementUnit.cm ? 30.0 : 12.0;
     final maxValue = widget.unit == MeasurementUnit.cm ? 200.0 : 80.0;
     final step = widget.unit == MeasurementUnit.cm ? 0.5 : 0.25;
@@ -89,6 +91,7 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = widget.colorScheme;
     final isSelected = _selectedPart != null;
 
@@ -112,7 +115,7 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
       child: Column(
         children: [
           Text(
-            'اضغط على الجزء لإدخال المقاس',
+            l10n.tapPartToEnterMeasurement,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: cs.primary,
@@ -129,7 +132,7 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
               ),
               child: GestureDetector(
                 onTapDown: (details) {
-                  final part = _getPartAtPosition(details.localPosition);
+                  final part = _getPartAtPosition(details.localPosition, l10n);
                   if (part != null) {
                     _onPartTap(part['key'] as String, part['label'] as String);
                   }
@@ -139,24 +142,24 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
             ),
           ),
           const SizedBox(height: 16),
-          _buildMeasurementLegend(cs),
+          _buildMeasurementLegend(cs, l10n),
         ],
       ),
     );
   }
 
-  Map<String, dynamic>? _getPartAtPosition(Offset position) {
+  Map<String, dynamic>? _getPartAtPosition(Offset position, AppLocalizations l10n) {
     // منطق تحديد الجزء بناءً على الموضع
     // يمكن تحسينه باستخدام Path.contains()
     final parts = <Map<String, dynamic>>[
-      {'key': 'neck', 'label': 'محيط الرقبة', 'bounds': const Rect.fromLTWH(100, 50, 80, 40)},
-      {'key': 'shoulder', 'label': 'الكتف', 'bounds': const Rect.fromLTWH(60, 90, 160, 30)},
-      {'key': 'chest', 'label': 'الصدر', 'bounds': const Rect.fromLTWH(70, 120, 140, 60)},
-      {'key': 'waist', 'label': 'الخصر', 'bounds': const Rect.fromLTWH(80, 180, 120, 40)},
-      {'key': 'sleeve', 'label': 'طول الكم', 'bounds': const Rect.fromLTWH(20, 100, 40, 100)},
-      {'key': 'upperSleeve', 'label': 'محيط الكم العلوي', 'bounds': const Rect.fromLTWH(15, 110, 30, 30)},
-      {'key': 'lowerSleeve', 'label': 'محيط الكم السفلي', 'bounds': const Rect.fromLTWH(15, 170, 30, 30)},
-      {'key': 'length', 'label': 'الطول الكلي', 'bounds': const Rect.fromLTWH(90, 50, 100, 200)},
+      {'key': 'neck', 'label': l10n.neckCircumference, 'bounds': const Rect.fromLTWH(100, 50, 80, 40)},
+      {'key': 'shoulder', 'label': l10n.shoulder, 'bounds': const Rect.fromLTWH(60, 90, 160, 30)},
+      {'key': 'chest', 'label': l10n.chest, 'bounds': const Rect.fromLTWH(70, 120, 140, 60)},
+      {'key': 'waist', 'label': l10n.waist, 'bounds': const Rect.fromLTWH(80, 180, 120, 40)},
+      {'key': 'sleeve', 'label': l10n.sleeveLength, 'bounds': const Rect.fromLTWH(20, 100, 40, 100)},
+      {'key': 'upperSleeve', 'label': l10n.upperSleeve, 'bounds': const Rect.fromLTWH(15, 110, 30, 30)},
+      {'key': 'lowerSleeve', 'label': l10n.lowerSleeve, 'bounds': const Rect.fromLTWH(15, 170, 30, 30)},
+      {'key': 'length', 'label': l10n.totalLength, 'bounds': const Rect.fromLTWH(90, 50, 100, 200)},
     ];
 
     for (var part in parts) {
@@ -167,7 +170,7 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
     return null;
   }
 
-  Widget _buildMeasurementLegend(ColorScheme cs) {
+  Widget _buildMeasurementLegend(ColorScheme cs, AppLocalizations l10n) {
     final entries = widget.measurements.entries
         .where((e) => e.value != null && e.value! > 0)
         .toList();
@@ -181,14 +184,14 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
       runSpacing: 8,
       children: entries.map((entry) {
         final partNames = {
-          'neck': 'الرقبة',
-          'shoulder': 'الكتف',
-          'chest': 'الصدر',
-          'waist': 'الخصر',
-          'sleeve': 'الكم',
-          'upperSleeve': 'الكم العلوي',
-          'lowerSleeve': 'الكم السفلي',
-          'length': 'الطول',
+          'neck': l10n.neck,
+          'shoulder': l10n.shoulder,
+          'chest': l10n.chest,
+          'waist': l10n.waist,
+          'sleeve': l10n.sleeveLength,
+          'upperSleeve': l10n.upperSleeve,
+          'lowerSleeve': l10n.lowerSleeve,
+          'length': l10n.length,
         };
 
         return Chip(
@@ -198,7 +201,7 @@ class _InteractiveBodyMapState extends State<InteractiveBodyMap>
             child: Icon(Icons.check, size: 14, color: cs.onPrimaryContainer),
           ),
           label: Text(
-            '${partNames[entry.key] ?? entry.key}: ${entry.value!.toStringAsFixed(widget.unit == MeasurementUnit.cm ? 1 : 2)} ${widget.unit == MeasurementUnit.cm ? 'سم' : 'إنش'}',
+            '${partNames[entry.key] ?? entry.key}: ${entry.value!.toStringAsFixed(widget.unit == MeasurementUnit.cm ? 1 : 2)} ${widget.unit == MeasurementUnit.cm ? l10n.cm : l10n.inch}',
             style: Theme.of(context).textTheme.labelSmall,
           ),
           backgroundColor: cs.primaryContainer.withOpacity(0.5),
@@ -386,6 +389,7 @@ class _MeasurementBottomSheetState extends State<_MeasurementBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = widget.colorScheme;
     final tt = Theme.of(context).textTheme;
 
@@ -482,7 +486,7 @@ class _MeasurementBottomSheetState extends State<_MeasurementBottomSheet> {
               style: FilledButton.styleFrom(
                 minimumSize: const Size(double.infinity, 50),
               ),
-              child: const Text('تأكيد'),
+              child: Text(l10n.confirm),
             ),
           ],
         ),
@@ -495,7 +499,7 @@ class _MeasurementBottomSheetState extends State<_MeasurementBottomSheet> {
 enum MeasurementUnit { cm, inch }
 
 extension MeasurementUnitX on MeasurementUnit {
-  String get labelAr => this == MeasurementUnit.cm ? 'سم' : 'إنش';
+  String localizedLabel(AppLocalizations l10n) => this == MeasurementUnit.cm ? l10n.cm : l10n.inch;
   String get labelEn => this == MeasurementUnit.cm ? 'cm' : 'in';
 }
 

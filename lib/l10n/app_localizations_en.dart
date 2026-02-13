@@ -1040,7 +1040,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get cameraPermissionRequired => 'Camera permission required';
   @override
+  String get cameraAccessNeeded => 'We need camera access to take a photo for your profile.';
+  @override
   String get galleryPermissionRequired => 'Gallery access permission required';
+  @override
+  String get galleryAccessNeeded => 'We need gallery access to select a photo for your profile.';
   @override
   String get permissionDenied => 'Permission denied';
   @override
@@ -1794,4 +1798,133 @@ class AppLocalizationsEn extends AppLocalizations {
   String get giftOptionEnabled => 'Gift option enabled';
   @override
   String get giftInfoSaved => 'Recipient info saved';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Additional Keys for Remaining Hardcoded Strings
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailor names/labels
+  @override
+  String get tailorElegance => 'Elegance Tailor';
+  @override
+  String get fineTailoring => 'Fine Tailoring';
+  
+  // Shop/Store related
+  @override
+  String get failedToUpdateList => 'Failed to update list';
+  @override
+  String get errorLoadingShops => 'Error loading shops';
+  @override
+  String get noRegisteredShops => 'No registered shops currently';
+  @override
+  String get threeOMR => '3 OMR';
+  @override
+  String get onTailoring => 'on tailoring';
+  @override
+  String get discoverNewTailors => 'Discover new tailors or try shops you haven\'t ordered from';
+  @override
+  String get currentlyClosed => 'Currently Closed';
+  @override
+  String get theStore => 'Store';
+  @override
+  String get callLabel => 'Call';
+  @override
+  String get mapLabel => 'Map';
+  
+  // Measurements form
+  @override
+  String get showTraditionalForm => 'Show Traditional Form';
+  @override
+  String get showBodyMap => 'Show Body Map';
+  @override
+  String get totalLength => 'Total Length';
+  @override
+  String get upperSleeve => 'Upper Sleeve';
+  @override
+  String get lowerSleeve => 'Lower Sleeve';
+  @override
+  String get chest => 'Chest';
+  @override
+  String get waist => 'Waist';
+  @override
+  String get frontEmbroidery => 'Front Embroidery';
+  @override
+  String get addNotesHint => 'Add any notes or special requirements...';
+  @override
+  String get measurementsSavedSuccess => 'Measurements saved successfully';
+  @override
+  String get errorSaving => 'Error saving';
+  @override
+  String get saveMeasurements => 'Save Measurements';
+  @override
+  String get tapPartToEnterMeasurement => 'Tap the part to enter measurement';
+  @override
+  String get inch => 'inch';
+  @override
+  String get measurementsForm => 'Measurements Form';
+  @override
+  String get enterAtLeastOneMeasurement => 'Please enter at least one measurement';
+  @override
+  String get bottomCircumference => 'Bottom Circumference';
+  
+  // Embroidery
+  @override
+  String get selectEmbroideryColor => 'Select Embroidery Color';
+  @override
+  String get embroideryLinesCount => 'Embroidery Lines Count';
+  @override
+  String get oneLine => 'One Line';
+  @override
+  String get twoLines => 'Two Lines';
+  @override
+  String get threeLines => 'Three Lines';
+  @override
+  String get errorLoadingEmbroideryDesigns => 'Error loading embroidery designs';
+  @override
+  String get noEmbroideryDesignsAvailable => 'No embroidery designs available';
+  @override
+  String get embroideryLabel => 'Embroidery';
+  
+  // Fabrics
+  @override
+  String get searchFabricHint => 'Search for fabric type or name';
+  @override
+  String get price => 'Price';
+  @override
+  String get kidsDishdashaService => 'Children\'s Dishdasha Tailoring';
+  @override
+  String get searchInside => 'Search inside';
+  @override
+  String get specialButtons => 'Special Buttons';
+  @override
+  String get readyCollars => 'Ready Collars';
+  @override
+  String get classicCottonFabric => 'Classic Cotton Fabric';
+  @override
+  String get manageFabrics => 'Manage Fabrics';
+  @override
+  String get colorsLabel => 'Colors';
+  @override
+  String get addColor => 'Add Color';
+  @override
+  String get noFabricsRegistered => 'No fabrics registered';
+  @override
+  String get pressAddToAddFabric => 'Press the add button to add a new fabric';
+  @override
+  String get errorLoadingColors => 'Error loading colors';
+  @override
+  String get colorLabel => 'Color';
+  @override
+  String get colorOliveGreen => 'Olive Green';
+  
+  // Abaya measurements
+  @override
+  String get notesExample => 'Example: I want it a bit wider, with internal pockets';
+  @override
+  String get confirmMeasurementsAndProceed => 'Confirm measurements and proceed';
+  @override
+  String get imageNotFound => 'Image not found';
+  @override
+  String get measurementGuideZoom => 'Measurement Guide — Zoom';
+  @override
+  String get enlargeImage => 'Enlarge Image';
 }

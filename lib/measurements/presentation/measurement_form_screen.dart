@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../core/styles/responsive.dart';
+import '../../l10n/app_localizations.dart';
+import '../../core/state/draft_store.dart';
 
 class MeasurementFormScreen extends StatefulWidget {
   const MeasurementFormScreen({super.key});
@@ -11,25 +15,67 @@ class MeasurementFormScreen extends StatefulWidget {
 class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
   // قائمة المقاسات العشرة
   final List<MeasurementField> measurements = [
-    MeasurementField(id: 1, label: 'الطول الكلي', value: ''),
-    MeasurementField(id: 2, label: 'الكتف', value: ''),
-    MeasurementField(id: 3, label: 'طول الكم', value: ''),
-    MeasurementField(id: 4, label: 'محيط الكم العلوي', value: ''),
-    MeasurementField(id: 5, label: 'محيط الكم السفلي', value: ''),
-    MeasurementField(id: 6, label: 'الصدر', value: ''),
-    MeasurementField(id: 7, label: 'الخصر', value: ''),
-    MeasurementField(id: 8, label: 'المحيط السفلي', value: ''),
-    MeasurementField(id: 9, label: 'محيط الرقبة', value: ''),
-    MeasurementField(id: 10, label: 'التطريز الامامي', value: ''),
+    MeasurementField(id: 1, value: ''),
+    MeasurementField(id: 2, value: ''),
+    MeasurementField(id: 3, value: ''),
+    MeasurementField(id: 4, value: ''),
+    MeasurementField(id: 5, value: ''),
+    MeasurementField(id: 6, value: ''),
+    MeasurementField(id: 7, value: ''),
+    MeasurementField(id: 8, value: ''),
+    MeasurementField(id: 9, value: ''),
+    MeasurementField(id: 10, value: ''),
   ];
+  static const String _draftKey = 'measurement-form';
+  late final List<TextEditingController> _controllers;
+  Timer? _draftTimer;
+  bool _restoringDraft = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(measurements.length, (i) {
+      final controller = TextEditingController(text: measurements[i].value);
+      controller.addListener(() {
+        measurements[i].value = controller.text;
+        _scheduleDraftSave();
+      });
+      return controller;
+    });
+    Future.microtask(_loadDraft);
+  }
+
+  @override
+  void dispose() {
+    _draftTimer?.cancel();
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  String _getMeasurementLabel(int id, AppLocalizations l10n) {
+    switch (id) {
+      case 1: return l10n.totalLength;
+      case 2: return l10n.shoulder;
+      case 3: return l10n.sleeveLength;
+      case 4: return l10n.upperSleeve;
+      case 5: return l10n.lowerSleeve;
+      case 6: return l10n.chest;
+      case 7: return l10n.waist;
+      case 8: return l10n.bottomCircumference;
+      case 9: return l10n.neckCircumference;
+      case 10: return l10n.frontEmbroidery;
+      default: return '';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFF8B0000), // لون أحمر داكن
-        body: SafeArea(
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      backgroundColor: const Color(0xFF8B0000), // لون أحمر داكن
+      body: SafeArea(
           child: Column(
             children: [
               // العنوان
@@ -37,7 +83,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                 width: double.infinity,
                 padding: EdgeInsets.all(context.responsivePadding()),
                 child: Text(
-                  'استمارة المقاسات',
+                  l10n.measurementsForm,
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white,
@@ -56,7 +102,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                     borderRadius:
                         BorderRadius.circular(context.responsiveRadius()),
                   ),
-                  child: _buildMeasurementsGrid(context),
+                  child: _buildMeasurementsGrid(context, l10n),
                 ),
               ),
 
@@ -76,7 +122,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                           ),
                         ),
                         child: Text(
-                          'إلغاء',
+                          l10n.cancel,
                           style: TextStyle(
                             fontSize: context.responsiveFontSize(16.0),
                             fontWeight: FontWeight.bold,
@@ -96,7 +142,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                           ),
                         ),
                         child: Text(
-                          'حفظ',
+                          l10n.save,
                           style: TextStyle(
                             fontSize: context.responsiveFontSize(16.0),
                             fontWeight: FontWeight.bold,
@@ -114,7 +160,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
     );
   }
 
-  Widget _buildMeasurementsGrid(BuildContext context) {
+  Widget _buildMeasurementsGrid(BuildContext context, AppLocalizations l10n) {
     return Container(
       padding: EdgeInsets.all(context.responsivePadding()),
       child: Column(
@@ -127,8 +173,10 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                 Expanded(
                   child: _buildMeasurementsList(
                     context,
+                    l10n,
                     measurements.take(5).toList(),
                     isRight: true,
+                    startIndex: 0,
                   ),
                 ),
                 // خط فاصل
@@ -142,8 +190,10 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                 Expanded(
                   child: _buildMeasurementsList(
                     context,
+                    l10n,
                     measurements.skip(5).take(5).toList(),
                     isRight: false,
+                    startIndex: 5,
                   ),
                 ),
               ],
@@ -155,10 +205,16 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
   }
 
   Widget _buildMeasurementsList(
-      BuildContext context, List<MeasurementField> measurementsList,
-      {required bool isRight}) {
+      BuildContext context,
+      AppLocalizations l10n,
+      List<MeasurementField> measurementsList,
+      {required bool isRight,
+      required int startIndex}) {
     return Column(
-      children: measurementsList.map((measurement) {
+      children: measurementsList.asMap().entries.map((entry) {
+        final index = startIndex + entry.key;
+        final measurement = entry.value;
+        final controller = _controllers[index];
         return Expanded(
           child: Container(
             margin: EdgeInsets.symmetric(
@@ -197,7 +253,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                       horizontal: context.responsiveMargin(),
                     ),
                     child: Text(
-                      measurement.label,
+                      _getMeasurementLabel(measurement.id, l10n),
                       style: TextStyle(
                         fontSize: context.responsiveFontSize(14.0),
                         fontWeight: FontWeight.w600,
@@ -214,7 +270,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                     color: Colors.grey[50],
                   ),
                   child: TextField(
-                    controller: TextEditingController(text: measurement.value),
+                    controller: controller,
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,
                     style: TextStyle(
@@ -225,9 +281,6 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(horizontal: 8),
                     ),
-                    onChanged: (value) {
-                      measurement.value = value;
-                    },
                   ),
                 ),
               ],
@@ -238,8 +291,9 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
     );
   }
 
-  void _saveMeasurements() {
+  Future<void> _saveMeasurements() async {
     // حفظ المقاسات
+    final l10n = AppLocalizations.of(context)!;
     final filledMeasurements =
         measurements.where((m) => m.value.isNotEmpty).toList();
 
@@ -247,7 +301,7 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'يرجى إدخال مقاس واحد على الأقل',
+            l10n.enterAtLeastOneMeasurement,
             style: TextStyle(fontSize: context.responsiveFontSize(14.0)),
           ),
           backgroundColor: const Color(0xFF8B0000),
@@ -257,27 +311,58 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
     }
 
     // إغلاق الشاشة مع النتائج
+    await _clearDraft();
     Navigator.of(context).pop({
       'measurements': filledMeasurements.map((m) => m.toMap()).toList(),
     });
+  }
+
+  Future<void> _loadDraft() async {
+    final data = await DraftStore.read(_draftKey);
+    if (data == null) return;
+    _restoringDraft = true;
+    final values = data['values'];
+    if (values is Map) {
+      for (var i = 0; i < measurements.length; i++) {
+        final key = measurements[i].id.toString();
+        final v = values[key];
+        if (v is String) {
+          measurements[i].value = v;
+          _controllers[i].text = v;
+        }
+      }
+    }
+    _restoringDraft = false;
+  }
+
+  void _scheduleDraftSave() {
+    if (_restoringDraft) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 300), () {
+      final values = <String, String>{
+        for (final m in measurements) m.id.toString(): m.value,
+      };
+      DraftStore.write(_draftKey, {'values': values});
+    });
+  }
+
+  Future<void> _clearDraft() async {
+    await DraftStore.clear(_draftKey);
   }
 }
 
 class MeasurementField {
   final int id;
-  final String label;
   String value;
 
   MeasurementField({
     required this.id,
-    required this.label,
     required this.value,
   });
 
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'label': label,
       'value': value,
     };
   }

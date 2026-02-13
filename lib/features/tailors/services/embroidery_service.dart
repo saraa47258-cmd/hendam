@@ -54,32 +54,34 @@ class EmbroideryService {
           '📂 [Embroidery] Firestore path: $fullPath1 | documents: $count | time: ${stopwatch.elapsedMilliseconds}ms');
 
       if (displayedSnapshot.docs.isNotEmpty) {
-        // جلب تفاصيل التصاميم من embroidery_images دفعة واحدة (whereIn حد 10 لكل استعلام)
-        final ids = displayedSnapshot.docs.map((d) => d.id).toList();
-        final Map<String, Map<String, dynamic>> idToData = {};
-        const int chunkSize = 10;
-        for (int i = 0; i < ids.length; i += chunkSize) {
-          final chunk = ids.skip(i).take(chunkSize).toList();
-          final snapshot = await _firestore
-              .collection('embroidery_images')
-              .where(FieldPath.documentId, whereIn: chunk)
-              .get(options);
-          for (final doc in snapshot.docs) {
-            if (doc.data().isNotEmpty) {
-              idToData[doc.id] = doc.data();
-            }
-          }
-        }
+        // displayed_embroidery تحتوي مراجع فقط، نجلب التفاصيل من embroidery_images
         final List<EmbroideryDesign> designs = [];
+        
         for (final doc in displayedSnapshot.docs) {
-          final data = idToData[doc.id];
-          if (data != null) {
-            designs.add(EmbroideryDesign.fromMap(data, doc.id));
+          final embroideryId = doc.id;
+          
+          try {
+            // جلب تفاصيل التصميم من embroidery_images
+            final embroideryDoc = await _firestore
+                .collection('embroidery_images')
+                .doc(embroideryId)
+                .get(options);
+            
+            if (embroideryDoc.exists && embroideryDoc.data() != null) {
+              final data = embroideryDoc.data()!;
+              debugPrint('📂 [Embroidery] Found design $embroideryId: ${data.keys.toList()}');
+              designs.add(EmbroideryDesign.fromMap(data, embroideryId));
+            } else {
+              debugPrint('📂 [Embroidery] Design $embroideryId not found in embroidery_images');
+            }
+          } catch (e) {
+            debugPrint('📂 [Embroidery] Error fetching design $embroideryId: $e');
           }
         }
+        
         stopwatch.stop();
-        debugPrint(
-            '📂 [Embroidery] Total designs loaded: ${designs.length} | time: ${stopwatch.elapsedMilliseconds}ms');
+        debugPrint('📂 [Embroidery] Total designs loaded: ${designs.length} | time: ${stopwatch.elapsedMilliseconds}ms');
+        
         if (designs.isNotEmpty) {
           return designs;
         }
@@ -336,6 +338,7 @@ class EmbroideryService {
       // إذا لم تكن موجودة، جلب الألوان العامة
       final globalSnapshot =
           await _firestore.collection('settings').doc('threadColors').get();
+
       if (globalSnapshot.exists) {
         final data = globalSnapshot.data();
         final colorsList = data?['colors'] as List<dynamic>? ?? [];
@@ -396,8 +399,7 @@ class ThreadColor {
   final String id;
   final String name;
   final String hexCode;
-  final int order;
-  const ThreadColor({
+  final int order;  const ThreadColor({
     required this.id,
     required this.name,
     required this.hexCode,

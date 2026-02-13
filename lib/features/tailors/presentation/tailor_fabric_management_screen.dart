@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/tailor_fabric_service.dart';
 import '../models/tailor_fabric.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 /// شاشة إدارة أقمشة وألوان الخياط
 class TailorFabricManagementScreen extends StatefulWidget {
@@ -41,47 +42,38 @@ class _TailorFabricManagementScreenState
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
-          // بالعربي: الرجوع → سهم لليمين
-          leading: IconButton(
-            icon: Icon(Directionality.of(context) == TextDirection.rtl
-                ? Icons.arrow_forward_rounded
-                : Icons.arrow_back_rounded),
-            onPressed: () => Navigator.pop(context),
-          ),
-          title: Text('إدارة أقمشة ${widget.tailorName}'),
-          centerTitle: true,
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const [
-              Tab(text: 'الأقمشة', icon: Icon(Icons.texture)),
-              Tab(text: 'الألوان', icon: Icon(Icons.palette)),
-            ],
-          ),
-        ),
-        body: TabBarView(
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        title: Text('${l10n.manageFabrics} ${widget.tailorName}'),
+        centerTitle: true,
+        bottom: TabBar(
           controller: _tabController,
-          children: [
-            _FabricsTab(tailorId: widget.tailorId),
-            _ColorsTab(tailorId: widget.tailorId),
+          tabs: [
+            Tab(text: l10n.fabrics, icon: const Icon(Icons.texture)),
+            Tab(text: l10n.colorsLabel, icon: const Icon(Icons.palette)),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            if (_tabController.index == 0) {
-              _showAddFabricDialog();
-            } else {
-              _showAddColorDialog();
-            }
-          },
-          icon: const Icon(Icons.add),
-          label: Text(_tabController.index == 0 ? 'إضافة قماش' : 'إضافة لون'),
-        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _FabricsTab(tailorId: widget.tailorId),
+          _ColorsTab(tailorId: widget.tailorId),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          if (_tabController.index == 0) {
+            _showAddFabricDialog();
+          } else {
+            _showAddColorDialog();
+          }
+        },
+        icon: const Icon(Icons.add),
+        label: Text(_tabController.index == 0 ? l10n.addFabric : l10n.addColor),
       ),
     );
   }
@@ -111,6 +103,7 @@ class _FabricsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return StreamBuilder<List<TailorFabric>>(
       stream: TailorFabricService.getTailorFabrics(tailorId),
@@ -127,7 +120,7 @@ class _FabricsTab extends StatelessWidget {
                 Icon(Icons.error_outline, size: 64, color: cs.error),
                 const SizedBox(height: 16),
                 Text(
-                  'حدث خطأ في تحميل الأقمشة',
+                  l10n.errorLoadingFabrics,
                   style: tt.titleMedium?.copyWith(color: cs.error),
                 ),
               ],
@@ -144,12 +137,12 @@ class _FabricsTab extends StatelessWidget {
                 Icon(Icons.texture, size: 64, color: cs.onSurfaceVariant),
                 const SizedBox(height: 16),
                 Text(
-                  'لا توجد أقمشة مسجلة',
+                  l10n.noFabricsRegistered,
                   style: tt.titleMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'اضغط على زر الإضافة لإضافة قماش جديد',
+                  l10n.pressAddToAddFabric,
                   style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
               ],
@@ -180,6 +173,7 @@ class _ColorsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return StreamBuilder<List<FabricColor>>(
       stream: TailorFabricService.getTailorColors(tailorId),
@@ -196,7 +190,7 @@ class _ColorsTab extends StatelessWidget {
                 Icon(Icons.error_outline, size: 64, color: cs.error),
                 const SizedBox(height: 16),
                 Text(
-                  'حدث خطأ في تحميل الألوان',
+                  l10n.errorLoadingColors,
                   style: tt.titleMedium?.copyWith(color: cs.error),
                 ),
               ],

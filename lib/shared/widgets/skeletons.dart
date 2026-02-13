@@ -265,19 +265,19 @@ class ProductPreviewSkeleton extends StatelessWidget {
                   const SizedBox(height: 16),
                   SkeletonLine(width: width * 0.35, height: 24),
                   const SizedBox(height: 24),
-                  Row(
+                  const Row(
                     children: [
                       SkeletonBlock(width: 48, height: 48),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       SkeletonBlock(width: 48, height: 48),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       SkeletonLine(width: 80, height: 16),
                     ],
                   ),
                   const SizedBox(height: 20),
-                  SkeletonLine(width: double.infinity, height: 14),
+                  const SkeletonLine(width: double.infinity, height: 14),
                   const SizedBox(height: 8),
-                  SkeletonLine(width: double.infinity, height: 14),
+                  const SkeletonLine(width: double.infinity, height: 14),
                   const SizedBox(height: 8),
                   SkeletonLine(width: width * 0.6, height: 14),
                 ],
@@ -372,10 +372,10 @@ class ShopCardSkeleton extends StatelessWidget {
                 const SizedBox(height: 6),
                 SkeletonLine(width: maxWidth * 0.25, height: 12),
                 const SizedBox(height: 8),
-                Row(
+                const Row(
                   children: [
                     SkeletonLine(width: 60, height: 20),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     SkeletonLine(width: 50, height: 20),
                   ],
                 ),
@@ -439,8 +439,8 @@ class AbayaServicesSkeleton extends StatelessWidget {
             child: Row(
               children: List.generate(
                   5,
-                  (_) => Padding(
-                        padding: const EdgeInsets.only(left: 8),
+                  (_) => const Padding(
+                        padding: EdgeInsets.only(left: 8),
                         child: SkeletonLine(width: 72, height: 36),
                       )),
             ),
@@ -454,7 +454,7 @@ class AbayaServicesSkeleton extends StatelessWidget {
               children: [
                 SkeletonLine(width: width * 0.5, height: 28),
                 const SizedBox(height: 4),
-                SkeletonLine(width: 120, height: 16),
+                const SkeletonLine(width: 120, height: 16),
               ],
             ),
           ),
@@ -476,9 +476,9 @@ class MerchantProductsSkeleton extends StatelessWidget {
     return CustomScrollView(
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(
+        const SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -486,21 +486,21 @@ class MerchantProductsSkeleton extends StatelessWidget {
                   width: 120,
                   height: 96,
                   borderRadius:
-                      const BorderRadius.horizontal(left: Radius.circular(16)),
+                      BorderRadius.horizontal(left: Radius.circular(16)),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SkeletonLine(width: 140, height: 18),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       SkeletonLine(width: 100, height: 14),
-                      const SizedBox(height: 8),
+                      SizedBox(height: 8),
                       Row(
                         children: [
                           SkeletonLine(width: 56, height: 24),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           SkeletonLine(width: 56, height: 24),
                         ],
                       ),
@@ -517,8 +517,8 @@ class MerchantProductsSkeleton extends StatelessWidget {
             child: Row(
               children: List.generate(
                   4,
-                  (_) => Padding(
-                        padding: const EdgeInsets.only(left: 8),
+                  (_) => const Padding(
+                        padding: EdgeInsets.only(left: 8),
                         child: SkeletonLine(width: 64, height: 32),
                       )),
             ),

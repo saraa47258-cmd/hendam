@@ -21,40 +21,37 @@ class CustomerOrdersScreen extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
-          title: Text(l10n.customerOrdersTitle(customerName)),
-          centerTitle: true,
-        ),
-        body: SafeArea(
-          child: StreamBuilder<List<OrderModel>>(
-            stream: OrderService.getCustomerOrders(customerId),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const OrderSkeletonList();
-              }
-              if (snapshot.hasError) {
-                return Center(
-                    child:
-                        Text(l10n.errorWithDetails(snapshot.error.toString())));
-              }
-              final orders = snapshot.data ?? [];
-              if (orders.isEmpty) {
-                return _EmptyOrdersView(customerName: customerName);
-              }
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: orders.length,
-                itemBuilder: (context, index) {
-                  final order = orders[index];
-                  return _OrderCard(order: order);
-                },
-              );
-            },
-          ),
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        title: Text(l10n.customerOrdersTitle(customerName)),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: StreamBuilder<List<OrderModel>>(
+          stream: OrderService.getCustomerOrders(customerId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const OrderSkeletonList();
+            }
+            if (snapshot.hasError) {
+              return Center(
+                  child:
+                      Text(l10n.errorWithDetails(snapshot.error.toString())));
+            }
+            final orders = snapshot.data ?? [];
+            if (orders.isEmpty) {
+              return _EmptyOrdersView(customerName: customerName);
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: orders.length,
+              itemBuilder: (context, index) {
+                final order = orders[index];
+                return _OrderCard(order: order);
+              },
+            );
+          },
         ),
       ),
     );
@@ -367,136 +364,133 @@ class _OrderCard extends StatelessWidget {
 
     showDialog(
       context: context,
-      builder: (context) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              Icons.receipt_long_rounded,
+              color: cs.primary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                l10n.orderDetails,
+                style: tt.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.receipt_long_rounded,
-                color: cs.primary,
+              _DetailRow(
+                icon: Icons.tag_rounded,
+                label: l10n.orderNumber,
+                value: order.id.length >= 12
+                    ? order.id.substring(0, 12)
+                    : order.id,
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  l10n.orderDetails,
-                  style: tt.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              _DetailRow(
+                icon: Icons.storefront_rounded,
+                label: l10n.tailorLabel,
+                value: order.tailorName,
+              ),
+              _DetailRow(
+                icon: Icons.checkroom_rounded,
+                label: l10n.fabric,
+                value: order.fabricName,
+              ),
+              _DetailRow(
+                icon: Icons.palette_rounded,
+                label: l10n.color,
+                value: order.fabricColorHex,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '${l10n.measurementsLabel}:',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
                 ),
               ),
-            ],
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _DetailRow(
-                  icon: Icons.tag_rounded,
-                  label: l10n.orderNumber,
-                  value: order.id.length >= 12
-                      ? order.id.substring(0, 12)
-                      : order.id,
-                ),
-                _DetailRow(
-                  icon: Icons.storefront_rounded,
-                  label: l10n.tailorLabel,
-                  value: order.tailorName,
-                ),
-                _DetailRow(
-                  icon: Icons.checkroom_rounded,
-                  label: l10n.fabric,
-                  value: order.fabricName,
-                ),
-                _DetailRow(
-                  icon: Icons.palette_rounded,
-                  label: l10n.color,
-                  value: order.fabricColorHex,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '${l10n.measurementsLabel}:',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...order.measurements.entries.map(
-                  (entry) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(entry.key),
-                        Text(
-                          '${entry.value} ${l10n.cmLabel}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (order.notes.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Text(
-                    l10n.notes,
-                    style: tt.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: cs.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(order.notes),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: cs.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+              const SizedBox(height: 8),
+              ...order.measurements.entries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Text(entry.key),
                       Text(
-                        '${l10n.totalPriceLabel}:',
-                        style: tt.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'ر.ع ${order.totalPrice.toStringAsFixed(3)}',
-                        style: tt.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: cs.primary,
+                        '${entry.value} ${l10n.cmLabel}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
                 ),
+              ),
+              if (order.notes.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  l10n.notes,
+                  style: tt.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(order.notes),
+                ),
               ],
-            ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '${l10n.totalPriceLabel}:',
+                      style: tt.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'ر.ع ${order.totalPrice.toStringAsFixed(3)}',
+                      style: tt.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: cs.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.close),
-            ),
-          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.close),
+          ),
+        ],
       ),
     );
   }

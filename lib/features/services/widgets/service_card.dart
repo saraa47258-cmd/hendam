@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../models/service.dart';
 
 class ServiceCard extends StatelessWidget {
@@ -19,18 +20,17 @@ class ServiceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Card(
-        margin: EdgeInsets.zero,
-        elevation: 3,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: cs.outlineVariant.withOpacity(.7)),
-        ),
-        child: InkWell(
+    return Card(
+      margin: EdgeInsets.zero,
+      elevation: 3,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: cs.outlineVariant.withOpacity(.7)),
+      ),
+      child: InkWell(
           onTap: onSelect,
           splashColor: cs.primary.withOpacity(0.06),
           highlightColor: cs.primary.withOpacity(0.02),
@@ -61,7 +61,7 @@ class ServiceCard extends StatelessWidget {
                           OutlinedButton.icon(
                             onPressed: onInfo,
                             icon: const Icon(Icons.info_outline, size: 18),
-                            label: const Text('تفاصيل'),
+                            label: Text(l10n.details),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                               shape: RoundedRectangleBorder(
@@ -86,7 +86,7 @@ class ServiceCard extends StatelessWidget {
                                   letterSpacing: .1,
                                 ),
                               ),
-                              child: const Text('اختيار'),
+                            child: Text(l10n.select),
                             ),
                           ),
                         ),
@@ -99,7 +99,7 @@ class ServiceCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    )
   }
 }
 

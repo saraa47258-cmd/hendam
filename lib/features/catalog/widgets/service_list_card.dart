@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../models/service_item.dart';
 
 class ServiceListCard extends StatefulWidget {
@@ -19,6 +20,7 @@ class _ServiceListCardState extends State<ServiceListCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return InkWell(
       onTap: () {},
@@ -110,7 +112,7 @@ class _ServiceListCardState extends State<ServiceListCard> {
                         FilledButton.icon(
                           onPressed: widget.onAdd,
                           icon: const Icon(Icons.add_shopping_cart_rounded, size: 18),
-                          label: const Text('أضف'),
+                          label: Text(l10n.add),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size(0, 40),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

@@ -1,4 +1,6 @@
 // lib/features/auth/presentation/edit_profile_screen.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,6 +8,7 @@ import 'package:hindam/features/auth/providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hindam/l10n/app_localizations.dart';
 import 'package:hindam/core/providers/locale_provider.dart';
+import 'package:hindam/core/state/draft_store.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -19,17 +22,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late final TextEditingController _phoneController;
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  Timer? _draftTimer;
+  String? _draftKey;
+  bool _restoringDraft = false;
 
   @override
   void initState() {
     super.initState();
     final user = context.read<AuthProvider>().currentUser;
+    _draftKey = DraftStore.scopedKey('edit-profile', userId: user?.uid);
     _nameController = TextEditingController(text: user?.name ?? '');
     _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
+    _nameController.addListener(_scheduleDraftSave);
+    _phoneController.addListener(_scheduleDraftSave);
+    Future.microtask(_loadDraft);
   }
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
     _nameController.dispose();
     _phoneController.dispose();
     super.dispose();
@@ -60,6 +71,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       final l10n = AppLocalizations.of(context)!;
       if (success && mounted) {
+        await _clearDraft();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(
@@ -111,6 +123,38 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _loadDraft() async {
+    final key = _draftKey;
+    if (key == null) return;
+    final data = await DraftStore.read(key);
+    if (data == null) return;
+    _restoringDraft = true;
+    final name = data['name'];
+    final phone = data['phone'];
+    if (name is String) _nameController.text = name;
+    if (phone is String) _phoneController.text = phone;
+    _restoringDraft = false;
+  }
+
+  void _scheduleDraftSave() {
+    if (_restoringDraft) return;
+    final key = _draftKey;
+    if (key == null) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 300), () {
+      DraftStore.write(key, {
+        'name': _nameController.text,
+        'phone': _phoneController.text,
+      });
+    });
+  }
+
+  Future<void> _clearDraft() async {
+    final key = _draftKey;
+    if (key == null) return;
+    await DraftStore.clear(key);
   }
 
   String _initials(String name) {

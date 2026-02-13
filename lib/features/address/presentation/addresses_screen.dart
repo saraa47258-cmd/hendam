@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,7 @@ import '../services/address_service.dart';
 import '../../../shared/widgets/skeletons.dart';
 import '../../../core/providers/locale_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/state/draft_store.dart';
 
 class AddressesScreen extends StatefulWidget {
   const AddressesScreen({super.key});
@@ -541,11 +544,19 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
   bool _isDefault = false;
   bool _processing = false;
   bool _initialized = false;
+  Timer? _draftTimer;
+  String? _draftKey;
+  bool _restoringDraft = false;
 
   @override
   void initState() {
     super.initState();
     final existing = widget.existing;
+    final userId = context.read<AuthProvider>().currentUser?.uid;
+    _draftKey = DraftStore.scopedKey(
+      'address:${existing?.id ?? 'new'}',
+      userId: userId,
+    );
     _labelCtrl = TextEditingController(text: existing?.label ?? '');
     _nameCtrl = TextEditingController(text: existing?.recipientName ?? '');
     _phoneCtrl = TextEditingController(text: existing?.phone ?? '');
@@ -556,6 +567,19 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
     _directionsCtrl =
         TextEditingController(text: existing?.additionalDirections ?? '');
     _isDefault = existing?.isDefault ?? false;
+    for (final controller in [
+      _labelCtrl,
+      _nameCtrl,
+      _phoneCtrl,
+      _cityCtrl,
+      _areaCtrl,
+      _streetCtrl,
+      _buildingCtrl,
+      _directionsCtrl,
+    ]) {
+      controller.addListener(_scheduleDraftSave);
+    }
+    Future.microtask(_loadDraft);
   }
 
   @override
@@ -572,6 +596,7 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
     _labelCtrl.dispose();
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
@@ -697,7 +722,10 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
                 contentPadding: EdgeInsets.zero,
                 value: _isDefault,
                 title: Text(l10n.setAsDefaultAddress),
-                onChanged: (value) => setState(() => _isDefault = value),
+                onChanged: (value) {
+                  setState(() => _isDefault = value);
+                  _scheduleDraftSave();
+                },
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -787,9 +815,64 @@ class _AddressFormSheetState extends State<_AddressFormSheet> {
       } else {
         await widget.service.updateAddress(base);
       }
+      await _clearDraft();
       if (mounted) Navigator.pop(context, true);
     } finally {
       if (mounted) setState(() => _processing = false);
     }
+  }
+
+  Future<void> _loadDraft() async {
+    final key = _draftKey;
+    if (key == null) return;
+    final data = await DraftStore.read(key);
+    if (data == null) return;
+    _restoringDraft = true;
+    final label = data['label'];
+    final name = data['name'];
+    final phone = data['phone'];
+    final city = data['city'];
+    final area = data['area'];
+    final street = data['street'];
+    final building = data['building'];
+    final directions = data['directions'];
+    if (label is String) _labelCtrl.text = label;
+    if (name is String) _nameCtrl.text = name;
+    if (phone is String) _phoneCtrl.text = phone;
+    if (city is String) _cityCtrl.text = city;
+    if (area is String) _areaCtrl.text = area;
+    if (street is String) _streetCtrl.text = street;
+    if (building is String) _buildingCtrl.text = building;
+    if (directions is String) _directionsCtrl.text = directions;
+    final isDefault = data['isDefault'];
+    if (isDefault is bool) _isDefault = isDefault;
+    _restoringDraft = false;
+    if (mounted) setState(() {});
+  }
+
+  void _scheduleDraftSave() {
+    if (_restoringDraft) return;
+    final key = _draftKey;
+    if (key == null) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 300), () {
+      DraftStore.write(key, {
+        'label': _labelCtrl.text,
+        'name': _nameCtrl.text,
+        'phone': _phoneCtrl.text,
+        'city': _cityCtrl.text,
+        'area': _areaCtrl.text,
+        'street': _streetCtrl.text,
+        'building': _buildingCtrl.text,
+        'directions': _directionsCtrl.text,
+        'isDefault': _isDefault,
+      });
+    });
+  }
+
+  Future<void> _clearDraft() async {
+    final key = _draftKey;
+    if (key == null) return;
+    await DraftStore.clear(key);
   }
 }

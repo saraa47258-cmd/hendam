@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../features/catalog/models/abaya_item.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 const _kGuideAsset = 'assets/abaya/abaya_guide.jpeg';
 const _brand = Color(0xFF6D4C41);
@@ -140,13 +141,12 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
-          title: const Text('مقاسات العباية'),
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+          title: Text(l10n.abayaMeasurements),
           centerTitle: true,
         ),
         body: SafeArea(
@@ -179,7 +179,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                         final fieldWidth = (inner.maxWidth - _gap * (cols - 1)) / cols;
 
                         return _SectionCard(
-                          title: 'المقاسات الأساسية',
+                          title: l10n.basicMeasurements,
                           child: Wrap(
                             spacing: _gap,
                             runSpacing: _gap,
@@ -188,9 +188,9 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                                 width: fieldWidth,
                                 child: _numField(
                                   context,
-                                  'الطول',
+                                  l10n.length,
                                   _lengthC,
-                                  hint: 'مثال: 138',
+                                  hint: l10n.exampleLength,
                                   icon: Icons.height,
                                 ),
                               ),
@@ -198,9 +198,9 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                                 width: fieldWidth,
                                 child: _numField(
                                   context,
-                                  'طول الكم',
+                                  l10n.sleeveLength,
                                   _sleeveC,
-                                  hint: 'مثال: 58',
+                                  hint: l10n.exampleSleeve,
                                   icon: Icons.rule_rounded,
                                 ),
                               ),
@@ -208,9 +208,9 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                                 width: fieldWidth,
                                 child: _numField(
                                   context,
-                                  'العرض',
+                                  l10n.widthMeasure,
                                   _widthC,
-                                  hint: 'مثال: 60',
+                                  hint: l10n.exampleWidth,
                                   icon: Icons.swap_horiz_rounded,
                                 ),
                               ),
@@ -222,14 +222,14 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                       const SizedBox(height: 14),
 
                       _SectionCard(
-                        title: 'ملاحظات إضافية (اختياري)',
+                        title: l10n.additionalNotesLabel,
                         child: TextFormField(
                           controller: _notesC,
                           maxLines: 4,
                           decoration: _dec(
                             context,
-                            'ملاحظات',
-                            hint: 'مثال: أريدها واسعة قليلًا، وإضافة جيوب داخلية',
+                            l10n.notes,
+                            hint: l10n.notesExample,
                             icon: Icons.edit_note_rounded,
                           ),
                         ),
@@ -263,7 +263,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
               child: ElevatedButton.icon(
                 onPressed: _submit,
                 icon: const Icon(Icons.check_circle_outline_rounded),
-                label: const Text('تأكيد المقاسات ومتابعة الطلب'),
+                label: Text(l10n.confirmMeasurementsAndProceed),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _brand,
                   foregroundColor: Colors.white,
@@ -278,7 +278,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
           ),
         ),
       ),
-    );
+    )
   }
 
   InputDecoration _dec(BuildContext ctx, String label, {String? hint, IconData? icon}) {
@@ -302,13 +302,14 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   }
 
   Widget _numField(BuildContext ctx, String label, TextEditingController c, {String? hint, IconData? icon}) {
+    final l10n = AppLocalizations.of(ctx)!;
     return TextFormField(
       controller: c,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: _dec(ctx, label, hint: hint, icon: icon),
       validator: (v) {
         final n = _toNum(c);
-        if (n <= 0) return 'يرجى إدخال قيمة صحيحة';
+        if (n <= 0) return l10n.pleaseEnterValidValue;
         return null;
       },
     );
@@ -354,7 +355,7 @@ class _ProductHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${item.price} ر.ع',
+                  '${item.price} ${AppLocalizations.of(context)!.omr}',
                   style: const TextStyle(
                     color: _brand,
                     fontWeight: FontWeight.w800,
@@ -422,20 +423,21 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
   // 0 الطول — 1 الكم — 2 العرض
   int _selected = 0;
 
-  String get _tip {
+  String _getTip(AppLocalizations l10n) {
     switch (_selected) {
       case 0:
-        return 'الطول: من أعلى الكتف حتى أسفل العباية.';
+        return l10n.lengthTip;
       case 1:
-        return 'الكم: من بداية فتحة الرقبة مرورًا بالكتف حتى نهاية الكم.';
+        return l10n.sleeveTip;
       default:
-        return 'العرض: المسافة الأفقية بين الجانبين عند مستوى الصدر.';
+        return l10n.widthTip;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final isLandscape = MediaQuery.orientationOf(context) == Orientation.landscape;
 
     // غيّر الأسبكت حسب الاتجاه: مربع على الهاتف عمودي، أوسع أفقيًا
@@ -457,14 +459,14 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _chip('الطول', 0),
-                    _chip('الكم', 1),
-                    _chip('العرض', 2),
+                    _chip(l10n.length, 0),
+                    _chip(l10n.sleeveMeasure, 1),
+                    _chip(l10n.widthMeasure, 2),
                   ],
                 ),
               ),
               IconButton(
-                tooltip: 'تكبير الصورة',
+                tooltip: l10n.enlargeImage,
                 onPressed: _openZoom,
                 icon: const Icon(Icons.open_in_full_rounded),
               ),
@@ -484,6 +486,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                     width: double.infinity,
                     height: double.infinity,
                     errorBuilder: (context, error, stackTrace) {
+                      final l10n = AppLocalizations.of(context)!;
                       return Container(
                         color: Colors.grey[300],
                         child: Column(
@@ -496,7 +499,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'لم يتم العثور على الصورة',
+                              l10n.imageNotFound,
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontWeight: FontWeight.w600,
@@ -514,7 +517,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                   top: 60,
                   child: _HotDot(
                     active: _selected == 0,
-                    label: 'الطول',
+                    label: l10n.length,
                     color: const Color(0xFF6D4C41),
                     onTap: () => setState(() => _selected = 0),
                   ),
@@ -524,7 +527,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                   top: 80,
                   child: _HotDot(
                     active: _selected == 1,
-                    label: 'الكم',
+                    label: l10n.sleeveMeasure,
                     color: const Color(0xFF2196F3),
                     onTap: () => setState(() => _selected = 1),
                   ),
@@ -534,7 +537,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                   top: 70,
                   child: _HotDot(
                     active: _selected == 2,
-                    label: 'العرض',
+                    label: l10n.widthMeasure,
                     color: const Color(0xFF4CAF50),
                     onTap: () => setState(() => _selected = 2),
                   ),
@@ -551,7 +554,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              _tip,
+              _getTip(l10n),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: cs.onSurface,
@@ -584,6 +587,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
   }
 
   void _openZoom() {
+    final l10n = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -608,8 +612,8 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text('دليل القياس — تكبير',
-                      style: TextStyle(fontWeight: FontWeight.w900)),
+                  Text(l10n.measurementGuideZoom,
+                      style: const TextStyle(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 8),
                   Expanded(
                     child: InteractiveViewer(
@@ -637,7 +641,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'لم يتم العثور على الصورة',
+                                      l10n.imageNotFound,
                                       style: TextStyle(
                                         color: Colors.grey[600],
                                         fontWeight: FontWeight.w600,

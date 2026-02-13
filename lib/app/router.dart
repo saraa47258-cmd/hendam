@@ -24,6 +24,7 @@ import 'package:hindam/features/profile/presentation/screens/help_support_screen
 import 'package:hindam/features/profile/presentation/screens/about_app_screen.dart';
 import 'package:hindam/features/profile/presentation/screens/payment_methods_screen.dart';
 import 'package:hindam/features/profile/presentation/screens/privacy_security_screen.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -241,26 +242,29 @@ final GoRouter appRouter = GoRouter(
   ],
 
   // إدارة الأخطاء
-  errorBuilder: (context, state) => Scaffold(
-    appBar: AppBar(title: const Text('خطأ')),
-    body: Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 64, color: Colors.red),
-          const SizedBox(height: 16),
-          Text('حدث خطأ في التنقل',
-              style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 8),
-          Text('الصفحة المطلوبة غير موجودة',
-              style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => context.go('/welcome'),
-            child: const Text('العودة للرئيسية'),
-          ),
-        ],
+  errorBuilder: (context, state) {
+    final l10n = AppLocalizations.of(context)!;
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.error)),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text(l10n.errorOccurred,
+                style: Theme.of(context).textTheme.headlineSmall),
+            const SizedBox(height: 8),
+            Text(l10n.pageNotFound,
+                style: Theme.of(context).textTheme.bodyMedium),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => context.go('/welcome'),
+              child: Text(l10n.goToHome),
+            ),
+          ],
+        ),
       ),
-    ),
-  ),
+    );
+  },
 );

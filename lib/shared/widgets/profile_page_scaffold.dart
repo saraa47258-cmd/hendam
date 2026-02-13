@@ -21,43 +21,40 @@ class ProfilePageScaffold extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        systemOverlayStyle: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
         backgroundColor: cs.surface,
-        appBar: AppBar(
-          systemOverlayStyle: const SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.dark,
-            statusBarBrightness: Brightness.light,
+        elevation: 0,
+        scrolledUnderElevation: 0.5,
+        centerTitle: false,
+        title: Text(
+          title,
+          style: tt.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: cs.onSurface,
           ),
-          backgroundColor: cs.surface,
-          elevation: 0,
-          scrolledUnderElevation: 0.5,
-          centerTitle: false,
-          title: Text(
-            title,
-            style: tt.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface,
-            ),
-          ),
-          leading: IconButton(
-            onPressed: () {
-              HapticFeedback.lightImpact();
-              Navigator.of(context).pop();
-            },
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: cs.onSurface,
-            ),
-          ),
-          actions: actions,
         ),
-        body: SafeArea(
-          top: false,
-          child: child,
+        leading: IconButton(
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            Navigator.of(context).pop();
+          },
+          icon: Icon(
+            Icons.arrow_back_rounded,
+            color: cs.onSurface,
+          ),
         ),
+        actions: actions,
+      ),
+      body: SafeArea(
+        top: false,
+        child: child,
       ),
     );
   }

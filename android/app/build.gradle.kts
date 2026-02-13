@@ -46,4 +46,28 @@ flutter {
 
 dependencies {
     implementation("com.google.mediapipe:tasks-vision:latest.release")
+
+    // Keep AndroidX versions compatible with AGP 8.8.0
+    constraints {
+        implementation("androidx.activity:activity-ktx") {
+            version { strictly("1.10.1") }
+            because("AGP 8.8.0 compatibility")
+        }
+        implementation("androidx.activity:activity") {
+            version { strictly("1.10.1") }
+            because("AGP 8.8.0 compatibility")
+        }
+        implementation("androidx.core:core-ktx") {
+            version { strictly("1.16.0") }
+            because("AGP 8.8.0 compatibility")
+        }
+        implementation("androidx.core:core") {
+            version { strictly("1.16.0") }
+            because("AGP 8.8.0 compatibility")
+        }
+        implementation("androidx.navigationevent:navigationevent-android") {
+            version { strictly("1.0.0") }
+            because("AGP 8.8.0 compatibility")
+        }
+    }
 }

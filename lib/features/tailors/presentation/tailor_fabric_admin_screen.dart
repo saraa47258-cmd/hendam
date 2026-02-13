@@ -1,5 +1,6 @@
 // lib/features/tailors/presentation/tailor_fabric_admin_screen.dart
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../services/fabric_service.dart';
 import '../utils/fabric_migration_helper.dart';
 
@@ -48,13 +49,12 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
-          title: Text('إدارة أقمشة ${widget.tailorName}'),
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+          title: Text(l10n.manageFabricsFor),
           centerTitle: true,
           actions: [
             IconButton(
@@ -74,7 +74,7 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'البحث في الأقمشة...',
+                  hintText: l10n.searchInFabrics,
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -110,10 +110,9 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _showAddFabricDialog,
           icon: const Icon(Icons.add_rounded),
-          label: const Text('إضافة قماش'),
+          label: Text(l10n.addFabric),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildStatisticsCard() {
@@ -195,6 +194,7 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: FabricService.getTailorFabrics(widget.tailorId),
       builder: (context, snapshot) {
+        final l10n = AppLocalizations.of(context)!;
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -206,11 +206,11 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
               children: [
                 const Icon(Icons.error_outline_rounded, size: 64),
                 const SizedBox(height: 16),
-                const Text('حدث خطأ في تحميل الأقمشة'),
+                Text(l10n.errorLoadingFabrics),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => setState(() {}),
-                  child: const Text('إعادة المحاولة'),
+                  child: Text(l10n.retry),
                 ),
               ],
             ),
@@ -225,12 +225,12 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
               children: [
                 const Icon(Icons.inventory_2_outlined, size: 64),
                 const SizedBox(height: 16),
-                const Text('لا توجد أقمشة لهذا الخياط'),
+                Text(l10n.noFabricsForTailor),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   onPressed: _showAddFabricDialog,
                   icon: const Icon(Icons.add_rounded),
-                  label: const Text('إضافة أول قماش'),
+                  label: Text(l10n.addFirstFabric),
                 ),
               ],
             ),
@@ -253,18 +253,19 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: FabricService.searchTailorFabrics(widget.tailorId, _searchQuery),
       builder: (context, snapshot) {
+        final l10n = AppLocalizations.of(context)!;
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (snapshot.hasError) {
-          return const Center(child: Text('حدث خطأ في البحث'));
+          return Center(child: Text(l10n.searchError));
         }
 
         final fabrics = snapshot.data ?? [];
         if (fabrics.isEmpty) {
-          return const Center(
-            child: Text('لا توجد نتائج للبحث'),
+          return Center(
+            child: Text(l10n.noSearchResults),
           );
         }
 
@@ -381,22 +382,23 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
   }
 
   void _showDeleteFabricDialog(Map<String, dynamic> fabric) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('حذف القماش'),
-        content: Text('هل أنت متأكد من حذف "${fabric['name']}"؟'),
+        title: Text(l10n.deleteFabric),
+        content: Text('${l10n.confirmDeleteFabric} "${fabric['name']}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _deleteFabric(fabric['id']);
             },
-            child: const Text('حذف'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -404,22 +406,23 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
   }
 
   Future<void> _deleteFabric(String fabricId) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final success =
           await FabricService.deleteTailorFabric(widget.tailorId, fabricId);
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم حذف القماش بنجاح')),
+          SnackBar(content: Text(l10n.fabricDeletedSuccess)),
         );
         _loadStatistics();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('فشل في حذف القماش')),
+          SnackBar(content: Text(l10n.fabricDeleteFailed)),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('حدث خطأ: $e')),
+        SnackBar(content: Text('${l10n.errorOccurred}: $e')),
       );
     }
   }

@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 // صفحات الأقسام
 import '../../catalog/presentation/men_services_screen.dart';
@@ -50,130 +51,128 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   String _selected = 'none';
 
-  static const List<TailorItem> _demoTailorsPretty = [
+  List<TailorItem> _getDemoTailors(AppLocalizations l10n) => [
     TailorItem(
-      name: 'خياط الأناقة',
+      name: l10n.tailorElegance,
       rating: 4.9,
       distanceKm: 0.8,
       isOpen: true,
-      tags: ['تسليم سريع', 'دشداشة رجالي'],
+      tags: [l10n.fastDelivery, l10n.menDishdasha],
     ),
     TailorItem(
-      name: 'مركز النخبة',
+      name: l10n.eliteCenter,
       rating: 4.6,
       distanceKm: 1.2,
       isOpen: false,
-      tags: ['تطريز عُماني', 'قياس منزلي'],
+      tags: [l10n.omaniEmbroidery, l10n.homeMeasurement],
     ),
     TailorItem(
-      name: 'لمسة فاشن',
+      name: l10n.fashionTouch,
       rating: 4.5,
       distanceKm: 1.9,
       isOpen: true,
-      tags: ['عبايات', 'خياطة ناعمة'],
+      tags: [l10n.abayas, l10n.fineTailoring],
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     // Premium background with subtle tint
     final bgColor = Color.lerp(cs.surface, cs.primary, 0.02) ?? cs.surface;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: bgColor,
-        body: SafeArea(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics(),
-            ),
-            slivers: [
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: _Spacing.lg),
-                sliver: SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: _Spacing.lg),
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: _Spacing.lg),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: _Spacing.lg),
 
-                      // ═══ Premium Header ═══
-                      const _PremiumHeader(),
-                      const SizedBox(height: _Spacing.xl),
+                    // ═══ Premium Header ═══
+                    const _PremiumHeader(),
+                    const SizedBox(height: _Spacing.xl),
 
-                      // ═══ Premium Search ═══
-                      const _PremiumSearchBar(),
-                      const SizedBox(height: _Spacing.xl),
+                    // ═══ Premium Search ═══
+                    const _PremiumSearchBar(),
+                    const SizedBox(height: _Spacing.xl),
 
-                      // ═══ Promo Banner ═══
-                      const _PremiumPromoBanner(),
-                      const SizedBox(height: _Spacing.xxl),
+                    // ═══ Promo Banner ═══
+                    const _PremiumPromoBanner(),
+                    const SizedBox(height: _Spacing.xxl),
 
-                      // ═══ Categories Section ═══
-                      const _PremiumSectionHeader(title: 'الأقسام'),
-                      const SizedBox(height: _Spacing.lg),
-                      _PremiumCategoriesGrid(
-                        selected: _selected,
-                        onTap: (id) {
-                          HapticFeedback.lightImpact();
-                          setState(() => _selected = id);
+                    // ═══ Categories Section ═══
+                    _PremiumSectionHeader(title: AppLocalizations.of(context)!.categories),
+                    const SizedBox(height: _Spacing.lg),
+                    _PremiumCategoriesGrid(
+                      selected: _selected,
+                      onTap: (id) {
+                        HapticFeedback.lightImpact();
+                        setState(() => _selected = id);
 
-                          late final Widget screen;
-                          switch (id) {
-                            case 'men':
-                              screen = const MenServicesScreen();
-                              break;
-                            case 'abaya':
-                              screen = const AbayaShopsScreen();
-                              break;
-                            case 'merchants':
-                            default:
-                              screen = const SmallMerchantScreen();
-                          }
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(builder: (_) => screen),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: _Spacing.xl),
+                        late final Widget screen;
+                        switch (id) {
+                          case 'men':
+                            screen = const MenServicesScreen();
+                            break;
+                          case 'abaya':
+                            screen = const AbayaShopsScreen();
+                            break;
+                          case 'merchants':
+                          default:
+                            screen = const SmallMerchantScreen();
+                        }
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(builder: (_) => screen),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: _Spacing.xl),
 
-                      // ═══ Last Order ═══
-                      LastOrderCard(
-                        orderCode: '#A-1024',
-                        statusText: 'جارٍ التفصيل',
-                        onTrack: () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (_) =>
-                                  const OrderDetailsScreen(orderId: 'A-1024'),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: _Spacing.xxl),
+                    // ═══ Last Order ═══
+                    LastOrderCard(
+                      orderCode: '#A-1024',
+                      statusText: AppLocalizations.of(context)!.inProgress,
+                      onTrack: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) =>
+                                const OrderDetailsScreen(orderId: 'A-1024'),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: _Spacing.xxl),
 
-                      // ═══ Nearby Tailors ═══
-                      _PremiumSectionHeader(
-                        title: 'خياطون بالقرب منك',
-                        actionText: 'عرض الكل',
-                        onAction: () {},
-                      ),
-                      const SizedBox(height: _Spacing.lg),
-                      NearbyTailorsPretty(
-                        items: _demoTailorsPretty.take(3).toList(),
-                        onTapCard: (t) {},
-                        onCall: (t) {},
-                        onMap: (t) {},
-                      ),
-                      const SizedBox(height: _Spacing.xxl),
-                    ],
-                  ),
+                    // ═══ Nearby Tailors ═══
+                    _PremiumSectionHeader(
+                      title: AppLocalizations.of(context)!.nearbyTailors,
+                      actionText: AppLocalizations.of(context)!.viewAll,
+                      onAction: () {},
+                    ),
+                    const SizedBox(height: _Spacing.lg),
+                    NearbyTailorsPretty(
+                      items: _getDemoTailors(l10n).take(3).toList(),
+                      onTapCard: (t) {},
+                      onCall: (t) {},
+                      onMap: (t) {},
+                    ),
+                    const SizedBox(height: _Spacing.xxl),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -230,7 +229,7 @@ class _PremiumHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'مرحباً 👋',
+                AppLocalizations.of(context)!.hello,
                 style: tt.bodySmall?.copyWith(
                   color: cs.onSurfaceVariant.withOpacity(0.8),
                   fontSize: 13,
@@ -239,7 +238,7 @@ class _PremiumHeader extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                'عميلنا العزيز',
+                AppLocalizations.of(context)!.dearCustomer,
                 style: tt.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                   fontSize: 17,
@@ -417,7 +416,7 @@ class _PremiumSearchBar extends StatelessWidget {
                 color: cs.onSurface,
               ),
               decoration: InputDecoration(
-                hintText: 'ابحث عن خياط أو خدمة...',
+                hintText: AppLocalizations.of(context)!.searchTailorOrService,
                 hintStyle: tt.bodyMedium?.copyWith(
                   color: cs.onSurfaceVariant.withOpacity(0.5),
                   fontSize: 15,
@@ -517,26 +516,29 @@ class _PremiumPromoBannerState extends State<_PremiumPromoBanner> {
   final PageController _controller = PageController();
   int _current = 0;
 
-  static const _promos = [
-    _PromoItem(
-      title: 'خصم 40%',
-      subtitle: 'على جميع خدمات التفصيل الرجالي',
-      badge: 'عرض محدود',
-      gradient: [Color(0xFF667EEA), Color(0xFF764BA2)],
-    ),
-    _PromoItem(
-      title: 'توصيل مجاني',
-      subtitle: 'للطلبات فوق 50 ريال',
-      badge: 'جديد',
-      gradient: [Color(0xFF11998E), Color(0xFF38EF7D)],
-    ),
-    _PromoItem(
-      title: 'دشداشة العيد',
-      subtitle: 'تشكيلة حصرية بأجود الأقمشة',
-      badge: 'حصري',
-      gradient: [Color(0xFFFC466B), Color(0xFF3F5EFB)],
-    ),
-  ];
+  List<_PromoItem> _getPromos(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [
+      _PromoItem(
+        title: l10n.discount40,
+        subtitle: l10n.onAllMensTailoring,
+        badge: l10n.limitedOffer,
+        gradient: const [Color(0xFF667EEA), Color(0xFF764BA2)],
+      ),
+      _PromoItem(
+        title: l10n.freeDelivery,
+        subtitle: l10n.forOrdersAbove50,
+        badge: l10n.newLabel,
+        gradient: const [Color(0xFF11998E), Color(0xFF38EF7D)],
+      ),
+      _PromoItem(
+        title: l10n.eidThobe,
+        subtitle: l10n.exclusiveCollection,
+        badge: l10n.exclusive,
+        gradient: const [Color(0xFFFC466B), Color(0xFF3F5EFB)],
+      ),
+    ];
+  }
 
   @override
   void initState() {
@@ -547,7 +549,7 @@ class _PremiumPromoBannerState extends State<_PremiumPromoBanner> {
   void _startAutoScroll() {
     Future.delayed(const Duration(seconds: 4), () {
       if (!mounted) return;
-      final next = (_current + 1) % _promos.length;
+      final next = (_current + 1) % 3;
       _controller.animateToPage(
         next,
         duration: const Duration(milliseconds: 400),
@@ -566,6 +568,7 @@ class _PremiumPromoBannerState extends State<_PremiumPromoBanner> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final promos = _getPromos(context);
 
     return Column(
       children: [
@@ -574,8 +577,8 @@ class _PremiumPromoBannerState extends State<_PremiumPromoBanner> {
           child: PageView.builder(
             controller: _controller,
             onPageChanged: (i) => setState(() => _current = i),
-            itemCount: _promos.length,
-            itemBuilder: (context, i) => _PromoBannerCard(promo: _promos[i]),
+            itemCount: promos.length,
+            itemBuilder: (context, i) => _PromoBannerCard(promo: promos[i]),
           ),
         ),
         const SizedBox(height: _Spacing.md),
@@ -583,7 +586,7 @@ class _PremiumPromoBannerState extends State<_PremiumPromoBanner> {
         // Minimal indicators
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(_promos.length, (i) {
+          children: List.generate(promos.length, (i) {
             final active = i == _current;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 250),
@@ -593,7 +596,7 @@ class _PremiumPromoBannerState extends State<_PremiumPromoBanner> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(3),
                 color: active
-                    ? _promos[_current].gradient[0]
+                    ? promos[_current].gradient[0]
                     : cs.onSurfaceVariant.withOpacity(0.2),
               ),
             );
@@ -743,35 +746,36 @@ class _PremiumCategoriesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final categories = [
-      const _CategoryData(
+      _CategoryData(
         id: 'men',
-        label: 'الخياط الرجالي',
+        label: l10n.menTailor,
         svg: '${_iconPath}omani_icon_traced.svg',
         fallback: Icons.person,
-        color: Color(0xFF0EA5E9),
+        color: const Color(0xFF0EA5E9),
       ),
-      const _CategoryData(
+      _CategoryData(
         id: 'abaya',
-        label: 'العبايات',
+        label: l10n.abayas,
         svg: '${_iconPath}abaya_icon_traced.svg',
         fallback: Icons.woman,
-        color: Color(0xFFE11D48),
+        color: const Color(0xFFE11D48),
       ),
-      const _CategoryData(
+      _CategoryData(
         id: 'merchants',
-        label: 'التجّار',
+        label: l10n.merchants,
         svg: '${_iconPath}store-svgrepo-com.svg',
         fallback: Icons.store,
-        color: Color(0xFFF59E0B),
+        color: const Color(0xFFF59E0B),
         tint: false,
       ),
-      const _CategoryData(
+      _CategoryData(
         id: 'more',
-        label: 'المزيد',
+        label: l10n.more,
         svg: '${_iconPath}grid-circles-svgrepo-com.svg',
         fallback: Icons.apps_rounded,
-        color: Color(0xFF8B5CF6),
+        color: const Color(0xFF8B5CF6),
       ),
     ];
 

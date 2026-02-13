@@ -10,7 +10,10 @@ import 'package:hindam/features/auth/providers/auth_provider.dart';
 import 'package:hindam/l10n/app_localizations.dart';
 
 class HendamApp extends StatelessWidget {
-  const HendamApp({super.key});
+  /// مزود اللغة المُهيأ مسبقاً من main.dart
+  final LocaleProvider localeProvider;
+
+  const HendamApp({super.key, required this.localeProvider});
 
   @override
   Widget build(BuildContext context) {
@@ -33,21 +36,15 @@ class HendamApp extends StatelessWidget {
             return authProvider;
           },
         ),
-        ChangeNotifierProvider(
-          create: (_) {
-            final localeProvider = LocaleProvider();
-            // تهيئة LocaleProvider
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              localeProvider.initialize();
-            });
-            return localeProvider;
-          },
-        ),
+        // ✅ استخدام LocaleProvider المُهيأ مسبقاً (لا نُنشئ واحد جديد)
+        ChangeNotifierProvider.value(value: localeProvider),
       ],
       child: cart.CartScope(
         state: cartState,
         child: Consumer<LocaleProvider>(
           builder: (context, localeProvider, _) {
+            final currentLocale = localeProvider.locale ?? const Locale('ar');
+            
             return MaterialApp.router(
               title: 'HINDAM',
               debugShowCheckedModeBanner: false,
@@ -56,8 +53,8 @@ class HendamApp extends StatelessWidget {
               darkTheme: theme.AppTheme.dark,
               themeMode: ThemeMode.system,
 
-              // استخدام اللغة من المزود
-              locale: localeProvider.locale ?? const Locale('ar'),
+              // ✅ استخدام اللغة من المزود - يعيد البناء تلقائياً عند التغيير
+              locale: currentLocale,
               supportedLocales: AppLocalizations.supportedLocales,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
 
@@ -71,20 +68,28 @@ class HendamApp extends StatelessWidget {
                 }
 
                 final mq = MediaQuery.of(context);
-                return MediaQuery(
-                  // منع تضخيم النص المفرط
-                  data: mq.copyWith(
-                    textScaler: mq.textScaler
-                        .clamp(maxScaleFactor: 1.2), // تقليل من 1.3 إلى 1.2
-                    // إضافة padding آمن للشاشات الكبيرة
-                    padding: EdgeInsets.symmetric(
-                      horizontal: mq.size.width > 1200
-                          ? 24.0
-                          : mq.padding.horizontal, // تقليل من 32 إلى 24
-                      vertical: mq.padding.vertical,
+                
+                // ✅ تحديد اتجاه النص بناءً على اللغة الحالية
+                final isRtl = currentLocale.languageCode == 'ar';
+                final textDirection = isRtl ? TextDirection.rtl : TextDirection.ltr;
+                
+                return Directionality(
+                  textDirection: textDirection,
+                  child: MediaQuery(
+                    // منع تضخيم النص المفرط
+                    data: mq.copyWith(
+                      textScaler: mq.textScaler
+                          .clamp(maxScaleFactor: 1.2), // تقليل من 1.3 إلى 1.2
+                      // إضافة padding آمن للشاشات الكبيرة
+                      padding: EdgeInsets.symmetric(
+                        horizontal: mq.size.width > 1200
+                            ? 24.0
+                            : mq.padding.horizontal, // تقليل من 32 إلى 24
+                        vertical: mq.padding.vertical,
+                      ),
                     ),
+                    child: child ?? const SizedBox.shrink(),
                   ),
-                  child: child ?? const SizedBox.shrink(),
                 );
               },
 

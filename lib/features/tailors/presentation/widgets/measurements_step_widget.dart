@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import 'interactive_body_map.dart' show InteractiveBodyMap, MeasurementUnit;
 import '../../../measurements/services/measurement_service.dart';
 import '../../../measurements/models/measurement_profile.dart';
@@ -100,6 +101,7 @@ class _MeasurementsStepWidgetState extends State<MeasurementsStepWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final decimals = widget.unit == MeasurementUnit.inch ? 2 : 1;
@@ -117,21 +119,21 @@ class _MeasurementsStepWidgetState extends State<MeasurementsStepWidget>
                   children: [
                     Expanded(
                       child: Text(
-                        'المقاسات واللون',
+                        l10n.measurementsAndColor,
                         style: tt.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     SegmentedButton<MeasurementUnit>(
-                      segments: const [
+                      segments: [
                         ButtonSegment(
                           value: MeasurementUnit.cm,
-                          label: Text('سم'),
+                          label: Text(l10n.cm),
                         ),
                         ButtonSegment(
                           value: MeasurementUnit.inch,
-                          label: Text('إنش'),
+                          label: Text(l10n.inch),
                         ),
                       ],
                       selected: {widget.unit},
@@ -151,7 +153,7 @@ class _MeasurementsStepWidgetState extends State<MeasurementsStepWidget>
                     HapticFeedback.lightImpact();
                   },
                   icon: Icon(_showBodyMap ? Icons.list : Icons.accessibility_new),
-                  label: Text(_showBodyMap ? 'عرض النموذج التقليدي' : 'عرض خريطة الجسم'),
+                  label: Text(_showBodyMap ? l10n.showTraditionalForm : l10n.showBodyMap),
                 ),
               ],
             ),
@@ -183,15 +185,15 @@ class _MeasurementsStepWidgetState extends State<MeasurementsStepWidget>
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final rows = <_RowSpec>[
-                    _RowSpec('الطول الكلي', widget.lengthCtrl, toUnit(110), toUnit(170)),
-                    _RowSpec('الكتف', widget.shoulderCtrl, toUnit(38), toUnit(56)),
-                    _RowSpec('طول الكم', widget.sleeveCtrl, toUnit(45), toUnit(75)),
-                    _RowSpec('محيط الكم العلوي', widget.upperSleeveCtrl, toUnit(24), toUnit(48)),
-                    _RowSpec('محيط الكم السفلي', widget.lowerSleeveCtrl, toUnit(14), toUnit(24)),
-                    _RowSpec('الصدر', widget.chestCtrl, toUnit(80), toUnit(140)),
-                    _RowSpec('الخصر', widget.waistCtrl, toUnit(70), toUnit(130)),
-                    _RowSpec('محيط الرقبة', widget.neckCtrl, toUnit(34), toUnit(48)),
-                    _RowSpec('التطريز الامامي', widget.embroideryCtrl, toUnit(10), toUnit(30)),
+                    _RowSpec(l10n.totalLength, widget.lengthCtrl, toUnit(110), toUnit(170)),
+                    _RowSpec(l10n.shoulder, widget.shoulderCtrl, toUnit(38), toUnit(56)),
+                    _RowSpec(l10n.sleeveLength, widget.sleeveCtrl, toUnit(45), toUnit(75)),
+                    _RowSpec(l10n.upperSleeve, widget.upperSleeveCtrl, toUnit(24), toUnit(48)),
+                    _RowSpec(l10n.lowerSleeve, widget.lowerSleeveCtrl, toUnit(14), toUnit(24)),
+                    _RowSpec(l10n.chest, widget.chestCtrl, toUnit(80), toUnit(140)),
+                    _RowSpec(l10n.waist, widget.waistCtrl, toUnit(70), toUnit(130)),
+                    _RowSpec(l10n.neckCircumference, widget.neckCtrl, toUnit(34), toUnit(48)),
+                    _RowSpec(l10n.frontEmbroidery, widget.embroideryCtrl, toUnit(10), toUnit(30)),
                   ];
 
                   if (index >= rows.length) return null;
@@ -222,7 +224,7 @@ class _MeasurementsStepWidgetState extends State<MeasurementsStepWidget>
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'ملاحظات إضافية',
+                    l10n.additionalNotes,
                     style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
@@ -230,7 +232,7 @@ class _MeasurementsStepWidgetState extends State<MeasurementsStepWidget>
                     controller: widget.notesCtrl,
                     maxLines: 4,
                     decoration: InputDecoration(
-                      hintText: 'أضف أي ملاحظات أو متطلبات خاصة...',
+                      hintText: l10n.addNotesHint,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -283,9 +285,10 @@ class _MeasurementRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final unitLabel = unit == MeasurementUnit.cm ? 'سم' : 'إنش';
+    final unitLabel = unit == MeasurementUnit.cm ? l10n.cm : l10n.inch;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -318,7 +321,7 @@ class _MeasurementRow extends StatelessWidget {
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'مطلوب';
+                  return l10n.required;
                 }
                 final num = double.tryParse(value);
                 if (num == null || num < spec.min || num > spec.max) {
@@ -377,6 +380,7 @@ class _SaveMeasurementsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return FilledButton.icon(
       onPressed: () async {
         try {
@@ -385,7 +389,7 @@ class _SaveMeasurementsButton extends StatelessWidget {
           final profile = MeasurementProfile(
             id: '', // سيتم إنشاؤه تلقائياً
             userId: '', // سيتم تعبئته في saveProfile
-            name: 'مقاسات ${DateTime.now().toString().substring(0, 10)}',
+            name: '${l10n.measurements} ${DateTime.now().toString().substring(0, 10)}',
             measurements: measurements,
             notes: notes.isEmpty ? null : notes,
             createdAt: DateTime.now(),
@@ -395,12 +399,12 @@ class _SaveMeasurementsButton extends StatelessWidget {
           await service.saveProfile(profile);
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Row(
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    SizedBox(width: 8),
-                    Text('تم حفظ المقاسات بنجاح'),
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(l10n.measurementsSavedSuccess),
                   ],
                 ),
                 backgroundColor: Colors.green,
@@ -410,13 +414,13 @@ class _SaveMeasurementsButton extends StatelessWidget {
         } catch (e) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('خطأ في الحفظ: $e')),
+              SnackBar(content: Text('${l10n.errorSaving} $e')),
             );
           }
         }
       },
       icon: const Icon(Icons.save),
-      label: const Text('حفظ المقاسات'),
+      label: Text(l10n.saveMeasurements),
       style: FilledButton.styleFrom(
         padding: const EdgeInsets.symmetric(vertical: 16),
       ),

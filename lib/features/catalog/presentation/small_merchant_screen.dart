@@ -2,12 +2,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../../shops/models/shop.dart';
 import '../../shops/services/traders_service.dart';
 
 // استبدل الاستيراد:
 import 'merchant_products_screen.dart';
-import '../../../shared/widgets/skeletons.dart';
 
 class SmallMerchantScreen extends StatefulWidget {
   const SmallMerchantScreen({super.key});
@@ -19,13 +19,13 @@ class SmallMerchantScreen extends StatefulWidget {
 class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
   final TextEditingController _search = TextEditingController();
   final TradersService _tradersService = TradersService();
-
+  
   // بيانات التجار من Firebase
   List<Shop> _all = [];
   List<Shop> _shown = [];
   bool _isLoading = true;
   StreamSubscription<List<Shop>>? _subscription;
-
+  
   bool _onlyOpen = false;
   bool _onlyDelivery = false;
 
@@ -69,9 +69,7 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
     if (q.isNotEmpty) {
       list = list
           .where((s) =>
-              s.name.contains(q) ||
-              s.city.contains(q) ||
-              s.category.contains(q))
+      s.name.contains(q) || s.city.contains(q) || s.category.contains(q))
           .toList();
     }
     if (_onlyOpen) list = list.where((s) => s.isOpen).toList();
@@ -83,12 +81,11 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
           elevation: 0,
           backgroundColor: const Color(0xFFF59E0B), // لون كهرماني للتجار
           surfaceTintColor: Colors.transparent,
@@ -166,21 +163,21 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                       controller: _search,
                       onChanged: (_) => _applyFilters(),
                       decoration: InputDecoration(
-                        hintText: 'ابحث عن محل رجالي…',
+                        hintText: l10n.searchMenShop,
                         prefixIcon: const Icon(Icons.search_rounded),
                         suffixIcon: _search.text.isEmpty
                             ? null
                             : IconButton(
-                                icon: const Icon(Icons.close_rounded),
-                                onPressed: () {
-                                  _search.clear();
-                                  _applyFilters();
-                                },
-                              ),
+                          icon: const Icon(Icons.close_rounded),
+                          onPressed: () {
+                            _search.clear();
+                            _applyFilters();
+                          },
+                        ),
                         filled: true,
                         fillColor: cs.surfaceContainerHighest.withOpacity(.7),
                         contentPadding:
-                            const EdgeInsets.symmetric(vertical: 12),
+                        const EdgeInsets.symmetric(vertical: 12),
                         border: OutlineInputBorder(
                           borderSide: BorderSide(color: cs.outlineVariant),
                           borderRadius: BorderRadius.circular(14),
@@ -190,7 +187,8 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: cs.primary, width: 1.3),
+                          borderSide:
+                          BorderSide(color: cs.primary, width: 1.3),
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
@@ -199,7 +197,7 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                     Row(
                       children: [
                         FilterChip(
-                          label: const Text('مفتوح الآن'),
+                          label: Text(l10n.openNowFilter),
                           selected: _onlyOpen,
                           onSelected: (v) {
                             setState(() => _onlyOpen = v);
@@ -211,7 +209,7 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                         ),
                         const SizedBox(width: 8),
                         FilterChip(
-                          label: const Text('توصيل'),
+                          label: Text(l10n.deliveryFilter),
                           selected: _onlyDelivery,
                           onSelected: (v) {
                             setState(() => _onlyDelivery = v);
@@ -219,8 +217,8 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
                           },
                           selectedColor: const Color(0xFFE7F6EC),
                           checkmarkColor: const Color(0xFF1B5E20),
-                          avatar: const Icon(Icons.local_shipping_outlined,
-                              size: 18),
+                          avatar:
+                          const Icon(Icons.local_shipping_outlined, size: 18),
                         ),
                         const Spacer(),
                         Container(
@@ -247,12 +245,10 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
 
             // القائمة
             if (_isLoading)
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (_, __) => const ShopCardSkeleton(),
-                    childCount: 5,
+              const SliverFillRemaining(
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFF59E0B),
                   ),
                 ),
               )
@@ -281,36 +277,35 @@ class _SmallMerchantScreenState extends State<SmallMerchantScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, i) {
-                      final s = _shown[i];
-                      return Padding(
-                        padding: EdgeInsets.only(
-                            bottom: i == _shown.length - 1 ? 0 : 12),
-                        child: _ShopCardModern(
-                          shop: s,
-                          // … داخل _ShopCardModern onTap:
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => MerchantProductsScreen(shop: s),
-                              ),
-                            );
-                          },
-                        ),
-                      );
-                    },
-                    childCount: _shown.length,
-                  ),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (context, i) {
+                    final s = _shown[i];
+                    return Padding(
+                      padding: EdgeInsets.only(
+                          bottom: i == _shown.length - 1 ? 0 : 12),
+                      child: _ShopCardModern(
+                        shop: s,
+                        // … داخل _ShopCardModern onTap:
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => MerchantProductsScreen(shop: s),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                  childCount: _shown.length,
                 ),
               ),
+            ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -337,7 +332,7 @@ class _ShopCardModern extends StatelessWidget {
           src,
           fit: BoxFit.cover,
           loadingBuilder: (c, child, p) =>
-              p == null ? child : Container(color: cs.surfaceContainerHighest),
+          p == null ? child : Container(color: cs.surfaceContainerHighest),
           errorBuilder: (_, __, ___) =>
               Container(color: cs.surfaceContainerHighest),
         );
@@ -531,7 +526,7 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
+      BoxDecoration(color: bg, borderRadius: BorderRadius.circular(999)),
       child: Text(
         text,
         style: TextStyle(color: fg, fontWeight: FontWeight.w800, fontSize: 12),

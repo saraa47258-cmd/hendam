@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 class LastOrderCard extends StatefulWidget {
   final String orderCode;
@@ -44,6 +45,7 @@ class _LastOrderCardState extends State<LastOrderCard>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
@@ -107,7 +109,7 @@ class _LastOrderCardState extends State<LastOrderCard>
                     Row(
                       children: [
                         Text(
-                          'أحدث طلب',
+                          l10n.latestOrder,
                           style: tt.bodySmall?.copyWith(
                             color: cs.onSurfaceVariant.withOpacity(0.8),
                             fontSize: 12,
@@ -173,7 +175,7 @@ class _LastOrderCardState extends State<LastOrderCard>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'تتبّع',
+                      l10n.track,
                       style: tt.labelMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,

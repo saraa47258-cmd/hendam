@@ -11,7 +11,6 @@ import '../../../measurements/presentation/abaya_measure_screen.dart';
 import '../../../shared/widgets/any_image.dart';
 import '../../favorites/services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../../shared/widgets/skeletons.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Design System
@@ -219,78 +218,90 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
   }
 
   Widget _buildLoadingState() {
-    return const Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: _DS.background,
-        body: ProductPreviewSkeleton(),
+    return const Scaffold(
+      backgroundColor: _DS.background,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(_DS.primaryBrown),
+              strokeWidth: 2,
+            ),
+            SizedBox(height: _DS.lg),
+            Text(
+              'جاري التحميل...',
+              style: TextStyle(
+                color: _DS.mediumText,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildErrorState() {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: _DS.background,
-        body: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(_DS.lg),
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: _GlassIconButton(
-                    icon: Icons.arrow_back_rounded,
-                    onTap: () => Navigator.maybePop(context),
-                  ),
+    return Scaffold(
+      backgroundColor: _DS.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(_DS.lg),
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: _GlassIconButton(
+                  icon: Icons.arrow_back_rounded,
+                  onTap: () => Navigator.maybePop(context),
                 ),
               ),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.error_outline_rounded,
-                          size: 40,
-                          color: _DS.mediumText,
-                        ),
+            ),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        shape: BoxShape.circle,
                       ),
-                      const SizedBox(height: _DS.xl),
-                      Text(
-                        _error ?? 'المنتج غير موجود',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: _DS.mediumText,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: const Icon(
+                        Icons.error_outline_rounded,
+                        size: 40,
+                        color: _DS.mediumText,
                       ),
-                      const SizedBox(height: _DS.xxl),
-                      _PremiumButton(
-                        label: 'إعادة المحاولة',
-                        onTap: () {
-                          setState(() {
-                            _isLoadingProduct = true;
-                            _error = null;
-                          });
-                          _loadProduct();
-                        },
-                        isOutlined: true,
+                    ),
+                    const SizedBox(height: _DS.xl),
+                    Text(
+                      _error ?? 'المنتج غير موجود',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: _DS.mediumText,
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: _DS.xxl),
+                    _PremiumButton(
+                      label: 'إعادة المحاولة',
+                      onTap: () {
+                        setState(() {
+                          _isLoadingProduct = true;
+                          _error = null;
+                        });
+                        _loadProduct();
+                      },
+                      isOutlined: true,
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -303,75 +314,72 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
     final screenHeight = MediaQuery.sizeOf(context).height;
     final imageHeight = screenHeight * 0.55;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: Stack(
-          children: [
-            // Main Content
-            CustomScrollView(
-              physics: const BouncingScrollPhysics(),
-              slivers: [
-                // Hero Image Section
-                SliverToBoxAdapter(
-                  child: _ImageHero(
-                    images: images,
-                    heroTag: heroTag,
-                    height: imageHeight,
-                    currentIndex: _index,
-                    pageController: _pc,
-                    onPageChanged: (i) => setState(() => _index = i),
-                    isFavorite: _wish,
-                    isLoadingFavorite: _isLoadingFavorite,
-                    isInitialized: _isInitialized,
-                    onFavoriteTap: _toggleFavorite,
-                  ),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Main Content
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Hero Image Section
+              SliverToBoxAdapter(
+                child: _ImageHero(
+                  images: images,
+                  heroTag: heroTag,
+                  height: imageHeight,
+                  currentIndex: _index,
+                  pageController: _pc,
+                  onPageChanged: (i) => setState(() => _index = i),
+                  isFavorite: _wish,
+                  isLoadingFavorite: _isLoadingFavorite,
+                  isInitialized: _isInitialized,
+                  onFavoriteTap: _toggleFavorite,
                 ),
-
-                // Info Sheet
-                SliverToBoxAdapter(
-                  child: _InfoSheet(
-                    item: item!,
-                    formattedPrice: _formatPrice(item!.price),
-                    selectedColor: _selectedColor,
-                    onColorSelected: (color) {
-                      setState(() => _selectedColor = color);
-                      HapticFeedback.selectionClick();
-                    },
-                  ),
-                ),
-
-                // Extra space for bottom bar
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 120),
-                ),
-              ],
-            ),
-
-            // Overlay App Bar
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: _OverlayAppBar(
-                onBack: () => Navigator.maybePop(context),
-                onShare: () {},
               ),
-            ),
 
-            // Sticky Actions
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _StickyActions(
-                onAddToCart: () => _addToCart(),
-                onOrderNow: () => _orderNow(),
+              // Info Sheet
+              SliverToBoxAdapter(
+                child: _InfoSheet(
+                  item: item!,
+                  formattedPrice: _formatPrice(item!.price),
+                  selectedColor: _selectedColor,
+                  onColorSelected: (color) {
+                    setState(() => _selectedColor = color);
+                    HapticFeedback.selectionClick();
+                  },
+                ),
               ),
+
+              // Extra space for bottom bar
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 120),
+              ),
+            ],
+          ),
+
+          // Overlay App Bar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _OverlayAppBar(
+              onBack: () => Navigator.maybePop(context),
+              onShare: () {},
             ),
-          ],
-        ),
+          ),
+
+          // Sticky Actions
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _StickyActions(
+              onAddToCart: () => _addToCart(),
+              onOrderNow: () => _orderNow(),
+            ),
+          ),
+        ],
       ),
     );
   }

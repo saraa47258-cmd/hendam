@@ -1257,6 +1257,7 @@ class _OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildActionButtons(
       BuildContext context, OrderModel order, ColorScheme cs) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1265,27 +1266,25 @@ class _OrderDetailsScreen extends StatelessWidget {
             order.status == OrderStatus.accepted)
           OutlinedButton.icon(
             onPressed: () async {
+              final l10n = AppLocalizations.of(context)!;
               final confirmed = await showDialog<bool>(
                 context: context,
-                builder: (context) => Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: AlertDialog(
-                    title: const Text('إلغاء الطلب'),
-                    content: const Text('هل أنت متأكد من إلغاء هذا الطلب؟'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('لا'),
+                builder: (dialogContext) => AlertDialog(
+                  title: Text(l10n.cancelOrder),
+                  content: Text(l10n.cancelOrderConfirmation),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                      child: Text(l10n.no),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.red,
                       ),
-                      FilledButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        child: const Text('نعم، إلغاء'),
-                      ),
-                    ],
-                  ),
+                      child: Text(l10n.yesCancelOrder),
+                    ),
+                  ],
                 ),
               );
 
@@ -1308,7 +1307,7 @@ class _OrderDetailsScreen extends StatelessWidget {
               }
             },
             icon: const Icon(Icons.cancel_outlined),
-            label: const Text('إلغاء الطلب'),
+            label: Text(l10n.cancelOrder),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               side: BorderSide(color: Colors.red.shade300),

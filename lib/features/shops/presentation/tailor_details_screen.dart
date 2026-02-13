@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 import '../../../core/state/cart_scope.dart';
 import '../../../measurements/presentation/measurement_form_screen.dart';
@@ -10,6 +11,7 @@ class TailorDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final cart = CartScope.of(context);
 
@@ -38,7 +40,7 @@ class TailorDetailsScreen extends StatelessWidget {
             subtitle: Text('${tailor.city} • ★ ${tailor.rating.toStringAsFixed(1)}'),
           ),
           const SizedBox(height: 8),
-          Text('الخدمات:', style: Theme.of(context).textTheme.titleMedium),
+          Text('${l10n.services}:', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(spacing: 8, children: tailor.tags.map((e) => Chip(label: Text(e))).toList()),
           const SizedBox(height: 20),
@@ -51,23 +53,23 @@ class TailorDetailsScreen extends StatelessWidget {
                 cart.addService(name: 'تفصيل دشداشة - ${tailor.name}', price: 7.0);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تمت إضافة الخدمة إلى السلة')),
+                    SnackBar(content: Text(l10n.productAddedToCart)),
                   );
                 }
               }
             },
             icon: const Icon(Icons.content_cut),
-            label: const Text('ابدأ طلب التفصيل'),
+            label: Text(l10n.orderNow),
           ),
           const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('سيتم ربط الأقمشة لاحقًا')),
+                SnackBar(content: Text(l10n.featureComingSoon)),
               );
             },
             icon: const Icon(Icons.store_outlined),
-            label: const Text('عرض الأقمشة'),
+            label: Text(l10n.fabrics),
           ),
         ],
       ),

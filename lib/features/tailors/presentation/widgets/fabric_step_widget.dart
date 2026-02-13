@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../../services/fabric_service.dart';
 
 /// Fabric Step Widget - منفصل للأداء الأفضل
@@ -69,6 +70,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
@@ -96,7 +98,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'حدث خطأ في تحميل الأقمشة',
+                      l10n.errorLoadingFabrics,
                       style: tt.bodySmall,
                     ),
                   ),
@@ -147,7 +149,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                               textAlign: TextAlign.right,
                               textAlignVertical: TextAlignVertical.center,
                               decoration: InputDecoration(
-                                hintText: 'ابحث عن نوع القماش أو الاسم',
+                                hintText: l10n.searchFabricHint,
                                 border: InputBorder.none,
                                 isDense: true,
                                 hintStyle: tt.bodyLarge?.copyWith(
@@ -263,6 +265,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
 
   Widget buildRecentlyViewedCard(
       Map<String, dynamic> fabric, ColorScheme cs, TextTheme tt) {
+    final l10n = AppLocalizations.of(context)!;
     final currentPrice = (fabric['pricePerMeter'] as num?)?.toDouble() ?? 0.0;
     final heroTag = 'fabric-${fabric['id'] ?? fabric['name']}';
     final imageUrl = fabric['imageUrl'] as String? ?? '';
@@ -308,7 +311,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      fabric['name'] ?? 'قماش',
+                      fabric['name'] ?? l10n.fabric,
                       style: tt.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         fontSize: 18,
@@ -326,7 +329,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                     Align(
                       alignment: AlignmentDirectional.centerEnd,
                       child: Text(
-                        'ر.ع ${currentPrice.toStringAsFixed(3)}',
+                        '${l10n.omr} ${currentPrice.toStringAsFixed(3)}',
                         style: tt.titleLarge?.copyWith(
                           fontWeight: FontWeight.w900,
                           fontSize: 20,
@@ -345,6 +348,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
   }
 
   Widget buildSelectedFabricDetailCard(Map<String, dynamic> fabric) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final availableColors =
@@ -419,12 +423,12 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'السعر',
+                          l10n.price,
                           style: tt.labelSmall
                               ?.copyWith(color: cs.onSurfaceVariant),
                         ),
                         Text(
-                          'ر.ع ${currentPrice.toStringAsFixed(3)}',
+                          '${l10n.omr} ${currentPrice.toStringAsFixed(3)}',
                           style: tt.titleMedium?.copyWith(
                             color: cs.primary,
                             fontWeight: FontWeight.w900,
@@ -444,7 +448,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        fabric['name'] ?? 'قماش',
+                        fabric['name'] ?? l10n.fabric,
                         style: tt.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w900,
                           color: cs.primary,
@@ -458,7 +462,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
             if (availableColors.isNotEmpty) ...[
               const SizedBox(height: 20),
               Text(
-                'الألوان المتاحة',
+                l10n.availableColors,
                 style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
@@ -498,6 +502,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final heroTag = 'fabric-${fabric['id'] ?? fabric['name']}';
@@ -546,7 +551,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
               Padding(
                 padding: const EdgeInsets.all(8),
                 child: Text(
-                  fabric['name'] ?? 'قماش',
+                  fabric['name'] ?? l10n.fabric,
                   style: tt.bodySmall?.copyWith(
                     fontWeight: FontWeight.w600,
                     fontSize: 12,

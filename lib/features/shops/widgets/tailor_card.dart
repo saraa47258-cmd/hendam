@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui'; // للـ Blur
+import 'package:hindam/l10n/app_localizations.dart';
 import '../../../features/favorites/widgets/favorite_button.dart';
 
 // ===== النموذج =====
@@ -48,15 +49,14 @@ class TailorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Card(
-        elevation: 6,
-        margin: EdgeInsets.zero,
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: InkWell(
+    return Card(
+      elevation: 6,
+      margin: EdgeInsets.zero,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: InkWell(
           onTap: onTap,
           splashColor: cs.primary.withOpacity(0.06),
           highlightColor: cs.primary.withOpacity(0.02),
@@ -207,7 +207,7 @@ class TailorCard extends StatelessWidget {
                               onPressed: onBook,
                               icon: const Icon(Icons.calendar_today_outlined,
                                   size: 18),
-                              label: const Text('احجز موعد'),
+                              label: Text(l10n.bookAppointment),
                               style: FilledButton.styleFrom(
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
@@ -229,7 +229,7 @@ class TailorCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    )
   }
 }
 

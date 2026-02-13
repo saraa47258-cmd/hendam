@@ -1,5 +1,6 @@
 // lib/measurements/presentation/abaya_measure_screen.dart
-import 'dart:ui';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -12,6 +13,7 @@ import '../../core/state/cart_scope.dart';
 import '../../shared/widgets/any_image.dart';
 import '../../shared/widgets/gift_recipient_bottom_sheet.dart';
 import '../../l10n/app_localizations.dart';
+import '../../core/state/draft_store.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Design System
@@ -107,9 +109,23 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   final _sleeveFocus = FocusNode();
   final _widthFocus = FocusNode();
   final _notesFocus = FocusNode();
+  Timer? _draftTimer;
+  late final String _draftKey;
+  bool _restoringDraft = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _draftKey = 'abaya-measure:${widget.item.id}';
+    for (final controller in [_lengthC, _sleeveC, _widthC, _notesC]) {
+      controller.addListener(_scheduleDraftSave);
+    }
+    Future.microtask(_loadDraft);
+  }
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
     _lengthC.dispose();
     _sleeveC.dispose();
     _widthC.dispose();
@@ -209,6 +225,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
           notes: _notesC.text.trim(),
         );
 
+        await _clearDraft();
         Navigator.pop(context, m);
       } else {
         _showSnackBar(l10n.failedToSendOrder,
@@ -263,6 +280,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
       );
 
       // العودة للصفحة السابقة
+      _clearDraft();
       Navigator.pop(context);
     } catch (e) {
       _showSnackBar(l10n.errorOccurred, isError: true);
@@ -328,6 +346,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
               onTap: () {
                 HapticFeedback.lightImpact();
                 setState(() => _isGift = !_isGift);
+                _scheduleDraftSave();
                 
                 if (_isGift && _giftRecipientDetails == null) {
                   _showGiftBottomSheet();
@@ -374,7 +393,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                           const SizedBox(height: 2),
                           Text(
                             l10n.thisOrderIsAGift,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 13,
                               color: _DS.mediumText,
                             ),
@@ -387,6 +406,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                       onChanged: (val) {
                         HapticFeedback.lightImpact();
                         setState(() => _isGift = val);
+                        _scheduleDraftSave();
                         
                         if (val && _giftRecipientDetails == null) {
                           _showGiftBottomSheet();
@@ -442,21 +462,63 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
           setState(() {
             _giftRecipientDetails = details;
           });
+          _scheduleDraftSave();
         },
       ),
     );
   }
 
+  Future<void> _loadDraft() async {
+    final data = await DraftStore.read(_draftKey);
+    if (data == null) return;
+    _restoringDraft = true;
+    final length = data['length'];
+    final sleeve = data['sleeve'];
+    final width = data['width'];
+    final notes = data['notes'];
+    if (length is String) _lengthC.text = length;
+    if (sleeve is String) _sleeveC.text = sleeve;
+    if (width is String) _widthC.text = width;
+    if (notes is String) _notesC.text = notes;
+    final isGift = data['isGift'];
+    if (isGift is bool) _isGift = isGift;
+    final gift = data['gift'];
+    if (gift is Map<String, dynamic>) {
+      _giftRecipientDetails = GiftRecipientDetails.fromMap(
+        Map<String, dynamic>.from(gift),
+      );
+    }
+    _restoringDraft = false;
+    if (mounted) setState(() {});
+  }
+
+  void _scheduleDraftSave() {
+    if (_restoringDraft) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 300), () {
+      DraftStore.write(_draftKey, {
+        'length': _lengthC.text,
+        'sleeve': _sleeveC.text,
+        'width': _widthC.text,
+        'notes': _notesC.text,
+        'isGift': _isGift,
+        'gift': _giftRecipientDetails?.toMap(),
+      });
+    });
+  }
+
+  Future<void> _clearDraft() async {
+    await DraftStore.clear(_draftKey);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: _DS.background,
-        body: Stack(
-          children: [
-            // Main Content
-            CustomScrollView(
+    return Scaffold(
+      backgroundColor: _DS.background,
+      body: Stack(
+        children: [
+          // Main Content
+          CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
                 // Header
@@ -527,8 +589,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 

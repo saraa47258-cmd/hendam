@@ -226,6 +226,7 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
     if (!_giftFormKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
+    final l10n = AppLocalizations.of(context)!;
 
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -233,8 +234,8 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
 
       if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('يرجى تسجيل الدخول أولاً'),
+          SnackBar(
+            content: Text(l10n.pleaseLoginFirst),
             backgroundColor: Colors.red,
           ),
         );
@@ -338,118 +339,115 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
         if (didPop) return;
         _back();
       },
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          backgroundColor: cs.surface,
-          appBar: PremiumStoreAppBar(
-            title: widget.tailorName,
-            locationText: 'هدية 🎁',
-            gradientColors: const [
-              Color(0xFFE91E63),
-              Color(0xFFF06292),
-              Color(0xFFF8BBD9),
-            ],
-          ),
-          body: SafeArea(
-            top: false,
-            child: Column(
-              children: [
-                // ===== شريط التقدّم =====
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 900),
-                      child: _GiftStepperHeader(
-                        current: _step,
-                        labels: const [
-                          'القماش',
-                          'المقاسات و اللون',
-                          'التطريز',
-                          'بيانات المستلم'
-                        ],
-                      ),
+      child: Scaffold(
+        backgroundColor: cs.surface,
+        appBar: PremiumStoreAppBar(
+          title: widget.tailorName,
+          locationText: 'هدية 🎁',
+          gradientColors: const [
+            Color(0xFFE91E63),
+            Color(0xFFF06292),
+            Color(0xFFF8BBD9),
+          ],
+        ),
+        body: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              // ===== شريط التقدّم =====
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 900),
+                    child: _GiftStepperHeader(
+                      current: _step,
+                      labels: const [
+                        'القماش',
+                        'المقاسات و اللون',
+                        'التطريز',
+                        'بيانات المستلم'
+                      ],
                     ),
                   ),
                 ),
+              ),
 
-                // ===== الصفحات =====
-                Expanded(
-                  child: PageView(
-                    controller: _pager,
-                    physics: const NeverScrollableScrollPhysics(),
-                    children: [
-                      // الخطوة 1: القماش
-                      _GiftFabricStep(
-                        tailorId: widget.tailorId,
-                        selectedType: _fabricType,
-                        selectedFabricId: _selectedFabricId,
-                        onTypeChanged: (v, thumb, fabricId) => setState(() {
-                          _fabricType = v;
-                          _fabricThumb = thumb;
-                          _selectedFabricId = fabricId;
-                        }),
-                        onNext: _next,
-                      ),
+              // ===== الصفحات =====
+              Expanded(
+                child: PageView(
+                  controller: _pager,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    // الخطوة 1: القماش
+                    _GiftFabricStep(
+                      tailorId: widget.tailorId,
+                      selectedType: _fabricType,
+                      selectedFabricId: _selectedFabricId,
+                      onTypeChanged: (v, thumb, fabricId) => setState(() {
+                        _fabricType = v;
+                        _fabricThumb = thumb;
+                        _selectedFabricId = fabricId;
+                      }),
+                      onNext: _next,
+                    ),
 
-                      // الخطوة 2: المقاسات واللون
-                      _GiftMeasurementsStep(
-                        fabricId: _selectedFabricId ?? '',
-                        formKey: _formKey,
-                        unit: _unit,
-                        onUnitChanged: _switchUnit,
-                        onNext: _next,
-                        lengthCtrl: _lengthCtrl,
-                        shoulderCtrl: _shoulderCtrl,
-                        neckCtrl: _neckCtrl,
-                        armLengthCtrl: _armLengthCtrl,
-                        wristWidthCtrl: _wristWidthCtrl,
-                        chestWidthCtrl: _chestWidthCtrl,
-                        bottomWidthCtrl: _bottomWidthCtrl,
-                        patternLengthCtrl: _patternLengthCtrl,
-                      ),
+                    // الخطوة 2: المقاسات واللون
+                    _GiftMeasurementsStep(
+                      fabricId: _selectedFabricId ?? '',
+                      formKey: _formKey,
+                      unit: _unit,
+                      onUnitChanged: _switchUnit,
+                      onNext: _next,
+                      lengthCtrl: _lengthCtrl,
+                      shoulderCtrl: _shoulderCtrl,
+                      neckCtrl: _neckCtrl,
+                      armLengthCtrl: _armLengthCtrl,
+                      wristWidthCtrl: _wristWidthCtrl,
+                      chestWidthCtrl: _chestWidthCtrl,
+                      bottomWidthCtrl: _bottomWidthCtrl,
+                      patternLengthCtrl: _patternLengthCtrl,
+                    ),
 
-                      // الخطوة 3: التطريز
-                      _GiftEmbroideryStep(
-                        tailorId: widget.tailorId,
-                        selectedEmbroidery: _selectedEmbroidery,
-                        onEmbroideryChanged: (design) => setState(() {
-                          _selectedEmbroidery = design;
-                          // إعادة تعيين الخيوط عند تغيير التصميم
-                          if (design != null) {
-                            _selectedThreadColorIds = [];
-                            _threadCount = design.minThreads;
-                          }
-                        }),
-                        selectedThreadColorIds: _selectedThreadColorIds,
-                        onThreadColorsChanged: (colors) => setState(() {
-                          _selectedThreadColorIds = colors;
-                        }),
-                        threadCount: _threadCount,
-                        onThreadCountChanged: (count) => setState(() {
-                          _threadCount = count;
-                        }),
-                        onNext: _next,
-                        totalPrice: _price,
-                      ),
+                    // الخطوة 3: التطريز
+                    _GiftEmbroideryStep(
+                      tailorId: widget.tailorId,
+                      selectedEmbroidery: _selectedEmbroidery,
+                      onEmbroideryChanged: (design) => setState(() {
+                        _selectedEmbroidery = design;
+                        // إعادة تعيين الخيوط عند تغيير التصميم
+                        if (design != null) {
+                          _selectedThreadColorIds = [];
+                          _threadCount = design.minThreads;
+                        }
+                      }),
+                      selectedThreadColorIds: _selectedThreadColorIds,
+                      onThreadColorsChanged: (colors) => setState(() {
+                        _selectedThreadColorIds = colors;
+                      }),
+                      threadCount: _threadCount,
+                      onThreadCountChanged: (count) => setState(() {
+                        _threadCount = count;
+                      }),
+                      onNext: _next,
+                      totalPrice: _price,
+                    ),
 
-                      // الخطوة 4: بيانات مستلم الهدية
-                      _GiftRecipientStep(
-                        formKey: _giftFormKey,
-                        recipientNameCtrl: _recipientNameCtrl,
-                        recipientPhoneCtrl: _recipientPhoneCtrl,
-                        giftMessageCtrl: _giftMessageCtrl,
-                        deliveryNotesCtrl: _deliveryNotesCtrl,
-                        onSubmit: _submitGiftOrder,
-                        isSubmitting: _isSubmitting,
-                        totalPrice: _price,
-                      ),
-                    ],
-                  ),
+                    // الخطوة 4: بيانات مستلم الهدية
+                    _GiftRecipientStep(
+                      formKey: _giftFormKey,
+                      recipientNameCtrl: _recipientNameCtrl,
+                      recipientPhoneCtrl: _recipientPhoneCtrl,
+                      giftMessageCtrl: _giftMessageCtrl,
+                      deliveryNotesCtrl: _deliveryNotesCtrl,
+                      onSubmit: _submitGiftOrder,
+                      isSubmitting: _isSubmitting,
+                      totalPrice: _price,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -635,7 +633,7 @@ class _GiftFabricStepState extends State<_GiftFabricStep> {
             Icon(Icons.inventory_2_outlined,
                 size: 64, color: cs.onSurfaceVariant),
             const SizedBox(height: 16),
-            Text('لا توجد أقمشة متاحة', style: tt.titleMedium),
+            Text(AppLocalizations.of(context)!.noFabricsAvailable, style: tt.titleMedium),
           ],
         ),
       );
@@ -763,7 +761,7 @@ class _GiftFabricStepState extends State<_GiftFabricStep> {
             icon: Icon(Directionality.of(context) == TextDirection.rtl
                 ? Icons.arrow_back_rounded
                 : Icons.arrow_forward_rounded),
-            label: const Text('متابعة'),
+            label: Text(AppLocalizations.of(context)!.continueText),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
               backgroundColor: const Color(0xFFE91E63),
@@ -852,7 +850,7 @@ class _GiftMeasurementsStep extends StatelessWidget {
               icon: Icon(Directionality.of(context) == TextDirection.rtl
                   ? Icons.arrow_back_rounded
                   : Icons.arrow_forward_rounded),
-              label: const Text('متابعة'),
+              label: Text(AppLocalizations.of(context)!.continueText),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
                 backgroundColor: const Color(0xFFE91E63),
@@ -1101,7 +1099,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('السعر الإجمالي:',
+                Text(AppLocalizations.of(context)!.totalPriceLabel,
                     style:
                         tt.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 Text(
@@ -1120,7 +1118,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
             icon: Icon(Directionality.of(context) == TextDirection.rtl
                 ? Icons.arrow_back_rounded
                 : Icons.arrow_forward_rounded),
-            label: const Text('متابعة لبيانات المستلم'),
+            label: Text(AppLocalizations.of(context)!.continueToRecipientData),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
               backgroundColor: const Color(0xFFE91E63),
@@ -1664,7 +1662,7 @@ class _EmptyState extends StatelessWidget {
           Icon(Icons.design_services_outlined,
               size: 48, color: cs.onSurfaceVariant),
           const SizedBox(height: 12),
-          Text('لا توجد تصاميم متاحة', style: tt.bodyMedium),
+          Text(AppLocalizations.of(context)!.noDesignsAvailable, style: tt.bodyMedium),
         ],
       ),
     );
@@ -1711,7 +1709,7 @@ class _ErrorState extends StatelessWidget {
             FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
-              label: const Text('إعادة المحاولة'),
+              label: Text(AppLocalizations.of(context)!.retry),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFE91E63),
               ),
@@ -1814,8 +1812,8 @@ class _GiftRecipientStep extends StatelessWidget {
             TextFormField(
               controller: recipientNameCtrl,
               decoration: InputDecoration(
-                labelText: 'اسم المستلم *',
-                hintText: 'أدخل اسم مستلم الهدية',
+                labelText: l10n.recipientName,
+                hintText: l10n.enterRecipientName,
                 prefixIcon: const Icon(Icons.person_rounded),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1828,7 +1826,7 @@ class _GiftRecipientStep extends StatelessWidget {
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'اسم المستلم مطلوب';
+                  return l10n.recipientNameRequired;
                 }
                 return null;
               },
@@ -1841,8 +1839,8 @@ class _GiftRecipientStep extends StatelessWidget {
               controller: recipientPhoneCtrl,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(
-                labelText: 'رقم هاتف المستلم (اختياري)',
-                hintText: 'للتنسيق عند التسليم',
+                labelText: l10n.recipientPhoneOptional,
+                hintText: l10n.forDeliveryCoordination,
                 prefixIcon: const Icon(Icons.phone_rounded),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1863,8 +1861,8 @@ class _GiftRecipientStep extends StatelessWidget {
               maxLines: 3,
               maxLength: 200,
               decoration: InputDecoration(
-                labelText: 'رسالة الهدية (اختياري)',
-                hintText: 'اكتب رسالة قصيرة للمستلم...',
+                labelText: l10n.giftMessageOptional,
+                hintText: l10n.writeShortMessageToRecipient,
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 50),
                   child: Icon(Icons.message_rounded),
@@ -1887,8 +1885,8 @@ class _GiftRecipientStep extends StatelessWidget {
               controller: deliveryNotesCtrl,
               maxLines: 2,
               decoration: InputDecoration(
-                labelText: 'ملاحظات التوصيل (اختياري)',
-                hintText: 'مثال: تسليم بتاريخ معين، تغليف خاص...',
+                labelText: l10n.deliveryNotesOptional,
+                hintText: l10n.deliveryNotesExample,
                 prefixIcon: const Padding(
                   padding: EdgeInsets.only(bottom: 25),
                   child: Icon(Icons.local_shipping_rounded),
@@ -1924,7 +1922,7 @@ class _GiftRecipientStep extends StatelessWidget {
                       const Icon(Icons.receipt_long_rounded,
                           color: Color(0xFFE91E63)),
                       const SizedBox(width: 8),
-                      Text('الإجمالي:',
+                      Text(l10n.totalAmount,
                           style: tt.titleSmall
                               ?.copyWith(fontWeight: FontWeight.w600)),
                     ],

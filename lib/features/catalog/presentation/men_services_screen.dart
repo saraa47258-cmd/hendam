@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hindam/core/services/firebase_service.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../../tailors/widgets/tailor_row_card.dart';
 import '../../tailors/models/tailor.dart';
 import '../../tailors/presentation/tailor_store_screen.dart'; // صفحة الخدمات/التفصيل
@@ -47,9 +48,10 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
 
       // إظهار رسالة نجاح
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تم تحديث قائمة المحلات بنجاح (عدد المحلات: $count)'),
+            content: Text(l10n.shopsListUpdatedSuccess(count)),
             duration: const Duration(seconds: 2),
             backgroundColor: Colors.green,
           ),
@@ -60,9 +62,10 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
       print('📍 Stack trace: $stackTrace');
       
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('فشل في تحديث القائمة: ${e.toString()}'),
+            content: Text('${l10n.failedToRefreshList}: ${e.toString()}'),
             duration: const Duration(seconds: 3),
             backgroundColor: Colors.red,
           ),
@@ -147,12 +150,11 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
           elevation: 0,
           backgroundColor: const Color(0xFF0EA5E9), // لون سماوي للخياطة الرجالية
           surfaceTintColor: Colors.transparent,
@@ -216,7 +218,7 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
               child: Padding(
                 padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
                 child: Text(
-                  'الخياطة الرجالية',
+                  l10n.menTailoring,
                   style: TextStyle(
                     color: cs.onSurface,
                     fontWeight: FontWeight.w900,
@@ -253,7 +255,7 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
                         print('❌ خطأ في جلب محلات الخياطة: ${snapshot.error}');
                         print('📍 Stack trace: ${snapshot.stackTrace}');
                         return _ErrorBox(
-                          message: 'تعذر تحميل محلات الخياطة: ${snapshot.error}',
+                          message: '${l10n.unableToLoadTailorShops}: ${snapshot.error}',
                           onRetry: _refreshTailors,
                         );
                       }
@@ -266,7 +268,7 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
                       if (docs.isEmpty) {
                         print('⚠️ لا توجد محلات في collection "tailors"');
                         return _EmptyBox(
-                          message: 'لا توجد محلات مسجلة حالياً',
+                          message: l10n.noTailorShopsRegistered,
                           onRefresh: _refreshTailors,
                         );
                       }
@@ -322,8 +324,7 @@ class _MenServicesScreenState extends State<MenServicesScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -361,6 +362,7 @@ class _DealBannerMenState extends State<_DealBannerMen>
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return RepaintBoundary(
       child: AnimatedBuilder(
@@ -478,7 +480,7 @@ class _DealBannerMenState extends State<_DealBannerMen>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              'عرض حصري',
+                              l10n.exclusiveOffer,
                               style: tt.labelSmall?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
@@ -496,23 +498,23 @@ class _DealBannerMenState extends State<_DealBannerMen>
                             color: Colors.white,
                             height: 1.2,
                           ),
-                          children: const [
-                            TextSpan(text: 'وفّر حتى '),
+                          children: [
+                            TextSpan(text: '${l10n.saveUpTo} '),
                             TextSpan(
-                              text: '٣ ر.ع',
-                              style: TextStyle(
+                              text: l10n.riyal3,
+                              style: const TextStyle(
                                 color: Color(0xFFFFD54F),
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
-                            TextSpan(text: '\nعلى خياطة الدشداشة'),
+                            TextSpan(text: '\n${l10n.onThobeTailoring}'),
                           ],
                         ),
                       ),
                       const SizedBox(height: 8),
                       // الوصف
                       Text(
-                        'اكتشف محلات جديدة أو جرّب خياطين ما طلبت منهم من فترة',
+                        l10n.discoverNewShopsOrTry,
                         style: tt.bodySmall?.copyWith(
                           color: Colors.white.withOpacity(0.85),
                         ),
@@ -542,7 +544,7 @@ class _DealBannerMenState extends State<_DealBannerMen>
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'اكتشف الآن',
+                                  l10n.discoverNow,
                                   style: tt.labelLarge?.copyWith(
                                     color: const Color(0xFF1A237E),
                                     fontWeight: FontWeight.w700,
@@ -619,6 +621,7 @@ class _FiltersBarMen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     Widget chip(String label, {IconData? icon}) {
       return RepaintBoundary(
@@ -656,11 +659,11 @@ class _FiltersBarMen extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          chip('4.0+ تقييم', icon: Icons.star_rate_rounded),
+          chip(l10n.rating4Plus, icon: Icons.star_rate_rounded),
           const SizedBox(width: 8),
-          chip('الأقسام'),
+          chip(l10n.categories),
           const SizedBox(width: 8),
-          chip('رتّب حسب'),
+          chip(l10n.sortBy),
           const SizedBox(width: 8),
           // زر التحديث اليدوي
           if (onRefresh != null)
@@ -685,7 +688,7 @@ class _FiltersBarMen extends StatelessWidget {
                       const Icon(Icons.refresh, size: 18),
                     const SizedBox(width: 6),
                     Text(
-                      isRefreshing ? 'جاري التحديث...' : 'تحديث',
+                      isRefreshing ? l10n.refreshing : l10n.refresh,
                       style: tt.labelLarge?.copyWith(
                         color: cs.onSurface,
                         fontWeight: FontWeight.w500,
@@ -713,6 +716,7 @@ class _ErrorBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -740,7 +744,7 @@ class _ErrorBox extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('إعادة المحاولة'),
+              label: Text(l10n.retry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: cs.error,
                 foregroundColor: cs.onError,
@@ -765,6 +769,7 @@ class _EmptyBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -782,7 +787,7 @@ class _EmptyBox extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRefresh,
               icon: const Icon(Icons.refresh),
-              label: const Text('تحديث القائمة'),
+              label: Text(l10n.refreshList),
             ),
           ],
         ],

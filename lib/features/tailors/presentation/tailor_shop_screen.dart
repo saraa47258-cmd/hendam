@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../models/tailor.dart';
 
 class TailorShopScreen extends StatelessWidget {
@@ -26,16 +27,15 @@ class TailorShopScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final products = _demoProducts(); // بدّلها لاحقًا ببياناتك من API/فايربيس
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        appBar: AppBar(
-          title: Text('متجر ${tailor.name}'),
+    return Scaffold(
+      backgroundColor: cs.surface,
+      appBar: AppBar(
+        title: Text('${l10n.store} ${tailor.name}'),
           centerTitle: true,
         ),
         body: ListView(
@@ -53,7 +53,7 @@ class TailorShopScreen extends StatelessWidget {
 
             // شريط البحث
             _SearchBar(
-              hint: 'ابحث في متجر ${tailor.name}',
+              hint: l10n.searchInShop(tailor.name),
               onSubmitted: (q) {
                 // TODO: اربط البحث الحقيقي
               },
@@ -96,7 +96,7 @@ class TailorShopScreen extends StatelessWidget {
                     onTap: () {
                       // TODO: افتح ورقة تفاصيل/إضافة للسلة
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('أضِف "${it.title}" — قريبًا')),
+                        SnackBar(content: Text(l10n.addedItemToCart(it.title))),
                       );
                     },
                     child: Column(
@@ -126,7 +126,7 @@ class TailorShopScreen extends StatelessWidget {
                                 onPressed: () {
                                   // TODO: أضف إلى السلة مباشرة
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('أُضيف "${it.title}" إلى السلة')),
+                                    SnackBar(content: Text(l10n.addedItemToCart(it.title))),
                                   );
                                 },
                                 icon: const Icon(Icons.add_shopping_cart_rounded),
@@ -143,8 +143,7 @@ class TailorShopScreen extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 
   Widget _fallbackBox(BuildContext context) {

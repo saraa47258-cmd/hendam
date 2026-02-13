@@ -1,6 +1,7 @@
 // lib/core/error/error_handler.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 class ErrorHandler {
   static void handleError(dynamic error, StackTrace? stackTrace, {String? context}) {
@@ -15,12 +16,13 @@ class ErrorHandler {
   }
 
   static void showErrorSnackBar(BuildContext context, String message) {
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         backgroundColor: Theme.of(context).colorScheme.error,
         action: SnackBarAction(
-          label: 'إغلاق',
+          label: l10n.close,
           textColor: Theme.of(context).colorScheme.onError,
           onPressed: () {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -61,9 +63,14 @@ class ErrorHandler {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: onRetry,
-                child: const Text('إعادة المحاولة'),
+              Builder(
+                builder: (context) {
+                  final l10n = AppLocalizations.of(context)!;
+                  return ElevatedButton(
+                    onPressed: onRetry,
+                    child: Text(l10n.retry),
+                  );
+                },
               ),
             ],
           ],

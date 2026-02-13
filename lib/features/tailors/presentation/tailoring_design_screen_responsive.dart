@@ -48,6 +48,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   final _lowerSleeveCtrl = TextEditingController(); // محيط الكم السفلي
   final _chestCtrl = TextEditingController(); // الصدر
   final _waistCtrl = TextEditingController(); // الخصر
+  final _bottomCtrl = TextEditingController(); // المحيط السفلي
   final _neckCtrl = TextEditingController(); // محيط الرقبة
   final _embroideryCtrl = TextEditingController(); // التطريز الامامي
   final _notesCtrl = TextEditingController(); // ملاحظات
@@ -116,6 +117,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     _lowerSleeveCtrl.dispose();
     _chestCtrl.dispose();
     _waistCtrl.dispose();
+    _bottomCtrl.dispose();
     _neckCtrl.dispose();
     _embroideryCtrl.dispose();
     _notesCtrl.dispose();
@@ -176,12 +178,10 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     final isTablet = context.isTablet;
     final isDesktop = context.isDesktop;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        body: SafeArea(
-          child: Column(
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: SafeArea(
+        child: Column(
             children: [
               // ===== الهيدر المتجاوب =====
               Container(
@@ -347,6 +347,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                       lowerSleeveCtrl: _lowerSleeveCtrl,
                       chestCtrl: _chestCtrl,
                       waistCtrl: _waistCtrl,
+                      bottomCtrl: _bottomCtrl,
                       neckCtrl: _neckCtrl,
                       embroideryCtrl: _embroideryCtrl,
                       notesCtrl: _notesCtrl,
@@ -471,7 +472,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
           ),
         ),
       ),
-    );
+    )
   }
 
   Color _applyShade(Color base, double factor) {
@@ -785,6 +786,7 @@ class _MenMeasurementsStep extends StatelessWidget {
   final TextEditingController lowerSleeveCtrl;
   final TextEditingController chestCtrl;
   final TextEditingController waistCtrl;
+  final TextEditingController bottomCtrl;
   final TextEditingController neckCtrl;
   final TextEditingController embroideryCtrl;
   final TextEditingController notesCtrl;
@@ -801,6 +803,7 @@ class _MenMeasurementsStep extends StatelessWidget {
     required this.lowerSleeveCtrl,
     required this.chestCtrl,
     required this.waistCtrl,
+    required this.bottomCtrl,
     required this.neckCtrl,
     required this.embroideryCtrl,
     required this.notesCtrl,
@@ -1101,6 +1104,7 @@ class _MenMeasurementsStep extends StatelessWidget {
       ('محيط الكم السفلي', lowerSleeveCtrl, Icons.watch),
       ('الصدر', chestCtrl, Icons.accessibility_new),
       ('الخصر', waistCtrl, Icons.straighten),
+      ('المحيط السفلي', bottomCtrl, Icons.panorama_horizontal),
       ('محيط الرقبة', neckCtrl, Icons.accessibility),
       ('التطريز الامامي', embroideryCtrl, Icons.straighten),
     ];

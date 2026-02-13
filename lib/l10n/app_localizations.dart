@@ -617,7 +617,9 @@ abstract class AppLocalizations {
   // Permission Dialogs
   // ═══════════════════════════════════════════════════════════════════════════
   String get cameraPermissionRequired;
+  String get cameraAccessNeeded;
   String get galleryPermissionRequired;
+  String get galleryAccessNeeded;
   String get permissionDenied;
   String get openSettings;
 
@@ -1014,6 +1016,78 @@ abstract class AppLocalizations {
   String get saveRecipient;
   String get giftOptionEnabled;
   String get giftInfoSaved;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Additional Keys for Remaining Hardcoded Strings
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailor names/labels
+  String get tailorElegance;
+  String get fineTailoring;
+  
+  // Shop/Store related
+  String get failedToUpdateList;
+  String get errorLoadingShops;
+  String get noRegisteredShops;
+  String get threeOMR;
+  String get onTailoring;
+  String get discoverNewTailors;
+  String get currentlyClosed;
+  String get theStore;
+  String get callLabel;
+  String get mapLabel;
+  
+  // Measurements form
+  String get showTraditionalForm;
+  String get showBodyMap;
+  String get totalLength;
+  String get upperSleeve;
+  String get lowerSleeve;
+  String get chest;
+  String get waist;
+  String get frontEmbroidery;
+  String get addNotesHint;
+  String get measurementsSavedSuccess;
+  String get errorSaving;
+  String get saveMeasurements;
+  String get tapPartToEnterMeasurement;
+  String get inch;
+  String get measurementsForm;
+  String get enterAtLeastOneMeasurement;
+  String get bottomCircumference;
+  
+  // Embroidery
+  String get selectEmbroideryColor;
+  String get embroideryLinesCount;
+  String get oneLine;
+  String get twoLines;
+  String get threeLines;
+  String get errorLoadingEmbroideryDesigns;
+  String get noEmbroideryDesignsAvailable;
+  String get embroideryLabel;
+  
+  // Fabrics
+  String get searchFabricHint;
+  String get price;
+  String get kidsDishdashaService;
+  String get searchInside;
+  String get specialButtons;
+  String get readyCollars;
+  String get classicCottonFabric;
+  String get manageFabrics;
+  String get colorsLabel;
+  String get addColor;
+  String get noFabricsRegistered;
+  String get pressAddToAddFabric;
+  String get errorLoadingColors;
+  String get colorLabel;
+  String get colorOliveGreen;
+  
+  // Abaya measurements
+  String get notesExample;
+  String get confirmMeasurementsAndProceed;
+  String get imageNotFound;
+  String get measurementGuideZoom;
+  String get enlargeImage;
 }
 
 class _AppLocalizationsDelegate

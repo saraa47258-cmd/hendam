@@ -31,19 +31,21 @@ class _TailorShopsScreenState extends State<TailorShopsScreen> {
 
       // إظهار رسالة نجاح
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم تحديث قائمة المحلات بنجاح'),
-            duration: Duration(seconds: 2),
+          SnackBar(
+            content: Text(l10n.shopsListUpdatedSuccess(0)),
+            duration: const Duration(seconds: 2),
             backgroundColor: Colors.green,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
+        final l10n = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('فشل في تحديث القائمة: ${e.toString()}'),
+            content: Text('${l10n.failedToUpdateList}: ${e.toString()}'),
             duration: const Duration(seconds: 3),
             backgroundColor: Colors.red,
           ),
@@ -66,7 +68,7 @@ class _TailorShopsScreenState extends State<TailorShopsScreen> {
     final location = asMap(data['location']);
 
     final name =
-        (services['shopName'] ?? data['ownerName'] ?? 'متجر').toString();
+        (services['shopName'] ?? data['ownerName'] ?? 'Store').toString();
     final cityOrAddress =
         (location['city'] ?? location['address'] ?? '').toString();
     final rating =
@@ -103,11 +105,9 @@ class _TailorShopsScreenState extends State<TailorShopsScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        body: SafeArea(
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: SafeArea(
           child: RefreshIndicator(
             key: _refreshIndicatorKey,
             onRefresh: _refreshTailors,
@@ -139,7 +139,7 @@ class _TailorShopsScreenState extends State<TailorShopsScreen> {
 
                     if (snapshot.hasError) {
                       return _ErrorBox(
-                        message: 'حدث خطأ أثناء تحميل المحلات',
+                        message: AppLocalizations.of(context)!.errorLoadingShops,
                         onRetry: _refreshTailors,
                       );
                     }
@@ -147,7 +147,7 @@ class _TailorShopsScreenState extends State<TailorShopsScreen> {
                     final docs = snapshot.data?.docs ?? const [];
                     if (docs.isEmpty) {
                       return _EmptyBox(
-                        message: 'لا توجد محلات مسجلة حالياً',
+                        message: AppLocalizations.of(context)!.noRegisteredShops,
                         onRefresh: _refreshTailors,
                       );
                     }
@@ -181,7 +181,7 @@ class _TailorShopsScreenState extends State<TailorShopsScreen> {
           ),
         ),
       ),
-    );
+    )
   }
 }
 
@@ -193,6 +193,7 @@ class _DealBannerTailor extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       decoration: BoxDecoration(
@@ -209,17 +210,17 @@ class _DealBannerTailor extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 color: cs.onSurface,
               ),
-              children: const [
-                TextSpan(text: 'وفّر حتى '),
+              children: [
+                TextSpan(text: '${l10n.saveUpTo} '),
                 TextSpan(
-                    text: '٣ ر.ع', style: TextStyle(color: Color(0xFFE65100))),
-                TextSpan(text: ' على التفصيل'),
+                    text: l10n.riyal3, style: const TextStyle(color: Color(0xFFE65100))),
+                TextSpan(text: ' ${l10n.onTailoring}'),
               ],
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            'اكتشف خياطين جدد أو جرّب محلات ما طلبت منها من فترة',
+            l10n.discoverNewTailors,
             style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 12),
@@ -350,7 +351,7 @@ class _ErrorBox extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('إعادة المحاولة'),
+              label: Text(AppLocalizations.of(context)!.retry),
               style: ElevatedButton.styleFrom(
                 backgroundColor: cs.error,
                 foregroundColor: cs.onError,
@@ -392,7 +393,7 @@ class _EmptyBox extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRefresh,
               icon: const Icon(Icons.refresh),
-              label: const Text('تحديث القائمة'),
+              label: Text(AppLocalizations.of(context)!.refreshList),
             ),
           ],
         ],
@@ -552,7 +553,7 @@ class _TailorRowCard extends StatelessWidget {
                         children: [
                           if (data.serviceFeeOMR != null)
                             Text(
-                              'ر.ع ${data.serviceFeeOMR!.toStringAsFixed(3)}',
+                              '${AppLocalizations.of(context)!.omr} ${data.serviceFeeOMR!.toStringAsFixed(3)}',
                               style: tt.bodySmall
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
@@ -562,7 +563,7 @@ class _TailorRowCard extends StatelessWidget {
                           if (data.etaMinutes != null) ...[
                             Text(
                               // غيّر "دقيقة" إلى "يوم/ساعة" حسب استخدامك
-                              'دقيقة ${data.etaMinutes!.start.toInt()} - ${data.etaMinutes!.end.toInt()}',
+                              '${AppLocalizations.of(context)!.minutes} ${data.etaMinutes!.start.toInt()} - ${data.etaMinutes!.end.toInt()}',
                               style: tt.bodySmall,
                             ),
                             const SizedBox(width: 4),

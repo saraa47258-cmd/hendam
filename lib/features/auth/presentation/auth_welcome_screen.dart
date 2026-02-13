@@ -22,12 +22,9 @@ class AuthWelcomeScreen extends StatelessWidget {
       ),
     );
 
-    return const Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: _DS.bgBase,
-        body: _WelcomeBody(),
-      ),
+    return const Scaffold(
+      backgroundColor: _DS.bgBase,
+      body: _WelcomeBody(),
     );
   }
 }

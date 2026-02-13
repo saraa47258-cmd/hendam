@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
+import 'package:hindam/l10n/app_localizations.dart';
 
 import '../features/home/presentation/home_screen.dart';
 import '../features/orders/presentation/my_orders_screen.dart';
@@ -30,7 +31,6 @@ class _NavShellState extends State<NavShell> {
 
   late final List<_TabSpec> _tabs = [
     _TabSpec(
-      label: 'الرئيسية',
       icon: Icons.home_outlined,
       selectedIcon: Icons.home_rounded,
       color: const Color(0xFF0EA5E9), // أزرق سماوي
@@ -42,7 +42,6 @@ class _NavShellState extends State<NavShell> {
       ),
     ),
     _TabSpec(
-      label: 'الطلبات',
       icon: Icons.receipt_long_outlined,
       selectedIcon: Icons.receipt_long_rounded,
       color: const Color(0xFF10B981), // أخضر
@@ -52,7 +51,6 @@ class _NavShellState extends State<NavShell> {
       ),
     ),
     _TabSpec(
-      label: 'السلة',
       icon: Icons.shopping_bag_outlined,
       selectedIcon: Icons.shopping_bag_rounded,
       color: const Color(0xFFF59E0B), // برتقالي
@@ -63,7 +61,6 @@ class _NavShellState extends State<NavShell> {
       badgeListenable: _cartCount,
     ),
     _TabSpec(
-      label: 'الملف',
       icon: Icons.person_outline_rounded,
       selectedIcon: Icons.person_rounded,
       color: const Color(0xFF8B5CF6), // بنفسجي
@@ -73,6 +70,11 @@ class _NavShellState extends State<NavShell> {
       ),
     ),
   ];
+
+  List<String> _getTabLabels(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [l10n.home, l10n.orders, l10n.cart, l10n.profile];
+  }
 
   @override
   void dispose() {
@@ -100,12 +102,15 @@ class _NavShellState extends State<NavShell> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final tabLabels = _getTabLabels(context);
 
     // تحديث عدد عناصر السلة تلقائياً
     final cartState = CartScope.of(context);
     _cartCount.value = cartState.count;
 
-    final destinations = _tabs.map((t) {
+    final destinations = _tabs.asMap().entries.map((entry) {
+      final i = entry.key;
+      final t = entry.value;
       final listenable = t.badgeListenable ?? _zeroBadge;
       return ValueListenableBuilder<int>(
         valueListenable: listenable,
@@ -121,7 +126,7 @@ class _NavShellState extends State<NavShell> {
             color: t.color,
             selected: true,
           ),
-          label: t.label,
+          label: tabLabels[i],
         ),
       );
     }).toList();
@@ -134,93 +139,89 @@ class _NavShellState extends State<NavShell> {
         ? const Color(0xFF1C1C1E) // iOS dark mode gray
         : const Color(0xFFFAFAFA); // Very light off-white
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: WillPopScope(
-        onWillPop: _onWillPop,
-        child: Scaffold(
-          extendBody: false,
-          backgroundColor: cs.surface,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        extendBody: false,
+        backgroundColor: cs.surface,
+        body: IndexedStack(
+          index: _index,
+          children: List.generate(_tabs.length, (i) {
+            return PrimaryScrollController(
+              controller: _tabScrollCtrls[i],
+              child: _tabs[i].navigator,
+            );
+          }),
+        ),
 
-          body: IndexedStack(
-            index: _index,
-            children: List.generate(_tabs.length, (i) {
-              return PrimaryScrollController(
-                controller: _tabScrollCtrls[i],
-                child: _tabs[i].navigator,
-              );
-            }),
-          ),
-
-          // ═══════════════════════════════════════════════════════════════
-          // Clean, Minimal Bottom Navigation Bar
-          // ═══════════════════════════════════════════════════════════════
-          bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: navBgColor,
-              // Very subtle top border
-              border: Border(
-                top: BorderSide(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.08)
-                      : Colors.black.withOpacity(0.06),
-                  width: 0.5,
-                ),
+        // ═══════════════════════════════════════════════════════════════
+        // Clean, Minimal Bottom Navigation Bar
+        // ═══════════════════════════════════════════════════════════════
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: navBgColor,
+            // Very subtle top border
+            border: Border(
+              top: BorderSide(
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.black.withOpacity(0.06),
+                width: 0.5,
               ),
             ),
-            child: SafeArea(
-              top: false,
-              child: NavigationBarTheme(
-                data: NavigationBarThemeData(
-                  height: 56,
-                  elevation: 0,
-                  backgroundColor: Colors.transparent,
-                  surfaceTintColor: Colors.transparent,
-                  indicatorColor: cs.primary.withOpacity(0.1),
-                  indicatorShape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  labelTextStyle: WidgetStateProperty.resolveWith((states) {
-                    final selected = states.contains(WidgetState.selected);
-                    return TextStyle(
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                      fontSize: 11,
-                      height: 1.2,
-                      letterSpacing: 0.1,
-                      color: selected
-                          ? cs.primary
-                          : cs.onSurfaceVariant.withOpacity(0.9),
-                    );
-                  }),
-                  iconTheme: WidgetStateProperty.resolveWith((states) {
-                    final selected = states.contains(WidgetState.selected);
-                    return IconThemeData(
-                      size: 22,
-                      color: selected ? cs.primary : cs.onSurfaceVariant,
-                    );
-                  }),
+          ),
+          child: SafeArea(
+            top: false,
+            child: NavigationBarTheme(
+              data: NavigationBarThemeData(
+                height: 56,
+                elevation: 0,
+                backgroundColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                indicatorColor: cs.primary.withOpacity(0.1),
+                indicatorShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: NavigationBar(
-                  selectedIndex: _index,
-                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                  destinations: destinations,
-                  onDestinationSelected: (i) async {
-                    HapticFeedback.selectionClick();
-                    if (_index == i) {
-                      _navKeys[i].currentState?.popUntil((r) => r.isFirst);
-                      final c = _tabScrollCtrls[i];
-                      if (c.hasClients) {
-                        await c.animateTo(
-                          0,
-                          duration: const Duration(milliseconds: 280),
-                          curve: Curves.easeOutCubic,
-                        );
-                      }
-                    } else {
-                      setState(() => _index = i);
+                labelTextStyle: WidgetStateProperty.resolveWith((states) {
+                  final selected = states.contains(WidgetState.selected);
+                  return TextStyle(
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                    fontSize: 11,
+                    height: 1.2,
+                    letterSpacing: 0.1,
+                    color: selected
+                        ? cs.primary
+                        : cs.onSurfaceVariant.withOpacity(0.9),
+                  );
+                }),
+                iconTheme: WidgetStateProperty.resolveWith((states) {
+                  final selected = states.contains(WidgetState.selected);
+                  return IconThemeData(
+                    size: 22,
+                    color: selected ? cs.primary : cs.onSurfaceVariant,
+                  );
+                }),
+              ),
+              child: NavigationBar(
+                selectedIndex: _index,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: destinations,
+                onDestinationSelected: (i) async {
+                  HapticFeedback.selectionClick();
+                  if (_index == i) {
+                    _navKeys[i].currentState?.popUntil((r) => r.isFirst);
+                    final c = _tabScrollCtrls[i];
+                    if (c.hasClients) {
+                      await c.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 280),
+                        curve: Curves.easeOutCubic,
+                      );
                     }
-                  },
-                ),
+                  } else {
+                    setState(() => _index = i);
+                  }
+                },
               ),
             ),
           ),
@@ -233,14 +234,12 @@ class _NavShellState extends State<NavShell> {
 /* ======================= نماذج داخلية ======================= */
 
 class _TabSpec {
-  final String label;
   final IconData icon;
   final IconData selectedIcon;
   final Color color;
   final Widget navigator;
   final ValueListenable<int>? badgeListenable;
   _TabSpec({
-    required this.label,
     required this.icon,
     required this.selectedIcon,
     required this.color,

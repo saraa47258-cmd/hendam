@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 /// Premium, world-class AppBar for store/shop screens.
 /// Apple / Airbnb / Stripe style — luxury, clean, RTL-aware.
@@ -210,6 +211,7 @@ class _BackCapsule extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Material(
       color: Colors.white.withOpacity(0.18),
       borderRadius: BorderRadius.circular(16),
@@ -239,7 +241,7 @@ class _BackCapsule extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'رجوع',
+                l10n.back,
                 style: tt.labelLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,

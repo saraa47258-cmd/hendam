@@ -1043,7 +1043,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get cameraPermissionRequired => 'مطلوب إذن الكاميرا';
   @override
+  String get cameraAccessNeeded => 'نحتاج إلى استخدام الكاميرا لالتقاط صورة للملف الشخصي.';
+  @override
   String get galleryPermissionRequired => 'مطلوب إذن الوصول للمعرض';
+  @override
+  String get galleryAccessNeeded => 'نحتاج إلى الوصول لمعرض الصور لاختيار صورة للملف الشخصي.';
   @override
   String get permissionDenied => 'تم رفض الإذن';
   @override
@@ -1783,4 +1787,133 @@ class AppLocalizationsAr extends AppLocalizations {
   String get giftOptionEnabled => 'تم تفعيل خيار الهدية';
   @override
   String get giftInfoSaved => 'تم حفظ بيانات المستلم';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Additional Keys for Remaining Hardcoded Strings
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailor names/labels
+  @override
+  String get tailorElegance => 'خياط الأناقة';
+  @override
+  String get fineTailoring => 'خياطة ناعمة';
+  
+  // Shop/Store related
+  @override
+  String get failedToUpdateList => 'فشل في تحديث القائمة';
+  @override
+  String get errorLoadingShops => 'حدث خطأ أثناء تحميل المحلات';
+  @override
+  String get noRegisteredShops => 'لا توجد محلات مسجلة حالياً';
+  @override
+  String get threeOMR => '٣ ر.ع';
+  @override
+  String get onTailoring => 'على التفصيل';
+  @override
+  String get discoverNewTailors => 'اكتشف خياطين جدد أو جرّب محلات ما طلبت منها من فترة';
+  @override
+  String get currentlyClosed => 'مغلق حالياً';
+  @override
+  String get theStore => 'المتجر';
+  @override
+  String get callLabel => 'اتصال';
+  @override
+  String get mapLabel => 'خريطة';
+  
+  // Measurements form
+  @override
+  String get showTraditionalForm => 'عرض النموذج التقليدي';
+  @override
+  String get showBodyMap => 'عرض خريطة الجسم';
+  @override
+  String get totalLength => 'الطول الكلي';
+  @override
+  String get upperSleeve => 'محيط الكم العلوي';
+  @override
+  String get lowerSleeve => 'محيط الكم السفلي';
+  @override
+  String get chest => 'الصدر';
+  @override
+  String get waist => 'الخصر';
+  @override
+  String get frontEmbroidery => 'التطريز الامامي';
+  @override
+  String get addNotesHint => 'أضف أي ملاحظات أو متطلبات خاصة...';
+  @override
+  String get measurementsSavedSuccess => 'تم حفظ المقاسات بنجاح';
+  @override
+  String get errorSaving => 'خطأ في الحفظ';
+  @override
+  String get saveMeasurements => 'حفظ المقاسات';
+  @override
+  String get tapPartToEnterMeasurement => 'اضغط على الجزء لإدخال المقاس';
+  @override
+  String get inch => 'إنش';
+  @override
+  String get measurementsForm => 'استمارة المقاسات';
+  @override
+  String get enterAtLeastOneMeasurement => 'يرجى إدخال مقاس واحد على الأقل';
+  @override
+  String get bottomCircumference => 'المحيط السفلي';
+  
+  // Embroidery
+  @override
+  String get selectEmbroideryColor => 'اختر لون التطريز';
+  @override
+  String get embroideryLinesCount => 'عدد خطوط التطريز';
+  @override
+  String get oneLine => 'خط واحد';
+  @override
+  String get twoLines => 'خطان';
+  @override
+  String get threeLines => 'ثلاثة خطوط';
+  @override
+  String get errorLoadingEmbroideryDesigns => 'حدث خطأ في تحميل تصاميم التطريز';
+  @override
+  String get noEmbroideryDesignsAvailable => 'لا توجد تصاميم تطريز متاحة';
+  @override
+  String get embroideryLabel => 'تطريز';
+  
+  // Fabrics
+  @override
+  String get searchFabricHint => 'ابحث عن نوع القماش أو الاسم';
+  @override
+  String get price => 'السعر';
+  @override
+  String get kidsDishdashaService => 'تفصيل دشداشة أطفال';
+  @override
+  String get searchInside => 'ابحث داخل';
+  @override
+  String get specialButtons => 'أزرار مميزة';
+  @override
+  String get readyCollars => 'ياقات جاهزة';
+  @override
+  String get classicCottonFabric => 'قماش قطني كلاسيك';
+  @override
+  String get manageFabrics => 'إدارة أقمشة';
+  @override
+  String get colorsLabel => 'الألوان';
+  @override
+  String get addColor => 'إضافة لون';
+  @override
+  String get noFabricsRegistered => 'لا توجد أقمشة مسجلة';
+  @override
+  String get pressAddToAddFabric => 'اضغط على زر الإضافة لإضافة قماش جديد';
+  @override
+  String get errorLoadingColors => 'حدث خطأ في تحميل الألوان';
+  @override
+  String get colorLabel => 'لون';
+  @override
+  String get colorOliveGreen => 'أخضر زيتي';
+  
+  // Abaya measurements
+  @override
+  String get notesExample => 'مثال: أريدها واسعة قليلًا، وإضافة جيوب داخلية';
+  @override
+  String get confirmMeasurementsAndProceed => 'تأكيد المقاسات ومتابعة الطلب';
+  @override
+  String get imageNotFound => 'لم يتم العثور على الصورة';
+  @override
+  String get measurementGuideZoom => 'دليل القياس — تكبير';
+  @override
+  String get enlargeImage => 'تكبير الصورة';
 }

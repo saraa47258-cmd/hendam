@@ -2,6 +2,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// طلب أذونات الصور/المعرض مع توضيح السبب ومعالجة الرفض الدائم
@@ -22,10 +23,11 @@ class PhotoPermissionHelper {
 
     final shouldShowRationale = await permission.shouldShowRequestRationale;
     if (shouldShowRationale && context.mounted) {
+      final l10n = AppLocalizations.of(context)!;
       await _showRationaleDialog(
         context,
-        title: 'الوصول إلى الصور',
-        message: 'نحتاج إلى الوصول لمعرض الصور لاختيار صورة للملف الشخصي.',
+        title: l10n.galleryPermissionRequired,
+        message: l10n.galleryAccessNeeded,
       );
     }
 
@@ -53,10 +55,11 @@ class PhotoPermissionHelper {
     final shouldShowRationale =
         await Permission.camera.shouldShowRequestRationale;
     if (shouldShowRationale && context.mounted) {
+      final l10n = AppLocalizations.of(context)!;
       await _showRationaleDialog(
         context,
-        title: 'الوصول إلى الكاميرا',
-        message: 'نحتاج إلى استخدام الكاميرا لالتقاط صورة للملف الشخصي.',
+        title: l10n.cameraPermissionRequired,
+        message: l10n.cameraAccessNeeded,
       );
     }
 
@@ -73,24 +76,22 @@ class PhotoPermissionHelper {
     required String title,
     required String message,
   }) async {
+    final l10n = AppLocalizations.of(context)!;
     await showDialog<void>(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('إلغاء'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('موافق'),
-            ),
-          ],
-        ),
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.ok),
+          ),
+        ],
       ),
     );
   }
@@ -99,30 +100,28 @@ class PhotoPermissionHelper {
     BuildContext context, {
     required bool isGallery,
   }) async {
-    final title = isGallery ? 'الوصول إلى المعرض' : 'الوصول إلى الكاميرا';
+    final l10n = AppLocalizations.of(context)!;
+    final title = isGallery ? l10n.galleryPermissionRequired : l10n.cameraPermissionRequired;
     final message = isGallery
-        ? 'تم رفض الإذن. يرجى تفعيل الوصول إلى الصور من إعدادات التطبيق.'
-        : 'تم رفض الإذن. يرجى تفعيل الوصول إلى الكاميرا من إعدادات التطبيق.';
+        ? l10n.permissionDenied
+        : l10n.permissionDenied;
 
     if (!context.mounted) return;
     final open = await showDialog<bool>(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('إلغاء'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('فتح الإعدادات'),
-            ),
-          ],
-        ),
+      builder: (ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(l10n.openSettings),
+          ),
+        ],
       ),
     );
     if (open == true) {

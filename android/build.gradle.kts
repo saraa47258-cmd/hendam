@@ -27,6 +27,17 @@ subprojects {
 
     // التأكد من تقييم :app أولاً (مثل قالب Flutter)
     evaluationDependsOn(":app")
+
+    // Pin AndroidX to versions compatible with AGP 8.8.0
+    configurations.configureEach {
+        resolutionStrategy {
+            force("androidx.activity:activity-ktx:1.10.1")
+            force("androidx.activity:activity:1.10.1")
+            force("androidx.core:core-ktx:1.16.0")
+            force("androidx.core:core:1.16.0")
+            force("androidx.navigationevent:navigationevent-android:1.0.0")
+        }
+    }
 }
 
 tasks.register<Delete>("clean") {

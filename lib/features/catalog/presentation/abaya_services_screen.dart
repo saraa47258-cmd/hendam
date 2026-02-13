@@ -12,7 +12,6 @@ import '../../favorites/services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/state/cart_scope.dart';
 import '../../../shared/widgets/any_image.dart';
-import '../../../shared/widgets/skeletons.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Design System
@@ -158,17 +157,19 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: _DS.background,
-        body: _isLoading ? _buildLoading() : _buildContent(),
-      ),
+    return Scaffold(
+      backgroundColor: _DS.background,
+      body: _isLoading ? _buildLoading() : _buildContent(),
     );
   }
 
   Widget _buildLoading() {
-    return const AbayaServicesSkeleton();
+    return const Center(
+      child: CircularProgressIndicator(
+        valueColor: AlwaysStoppedAnimation<Color>(_DS.primaryBrown),
+        strokeWidth: 2,
+      ),
+    );
   }
 
   Widget _buildContent() {

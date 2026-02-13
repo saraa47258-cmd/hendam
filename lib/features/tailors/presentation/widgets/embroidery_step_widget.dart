@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../../services/embroidery_service.dart';
 import '../../models/embroidery_design.dart';
 
@@ -24,6 +25,7 @@ class EmbroideryStepWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
@@ -45,7 +47,7 @@ class EmbroideryStepWidget extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
             child: Text(
-              'اختر تصميم التطريز',
+              l10n.selectEmbroideryDesign,
               style: tt.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -71,7 +73,7 @@ class EmbroideryStepWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'اختر لون التطريز',
+                  l10n.selectEmbroideryColor,
                   style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
@@ -125,16 +127,16 @@ class EmbroideryStepWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'عدد خطوط التطريز',
+                  l10n.embroideryLinesCount,
                   style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 SegmentedButton<int>(
-                  segments: const [
-                    ButtonSegment(value: 0, label: Text('بدون')),
-                    ButtonSegment(value: 1, label: Text('خط واحد')),
-                    ButtonSegment(value: 2, label: Text('خطان')),
-                    ButtonSegment(value: 3, label: Text('ثلاثة خطوط')),
+                  segments: [
+                    ButtonSegment(value: 0, label: Text(l10n.none)),
+                    ButtonSegment(value: 1, label: Text(l10n.oneLine)),
+                    ButtonSegment(value: 2, label: Text(l10n.twoLines)),
+                    ButtonSegment(value: 3, label: Text(l10n.threeLines)),
                   ],
                   selected: {lines},
                   onSelectionChanged: (Set<int> newSelection) {
@@ -164,6 +166,7 @@ class _EmbroideryDesignsSliver extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final embroideryService = EmbroideryService();
@@ -198,7 +201,7 @@ class _EmbroideryDesignsSliver extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'حدث خطأ في تحميل تصاميم التطريز',
+                      l10n.errorLoadingEmbroideryDesigns,
                       style: TextStyle(color: cs.onErrorContainer),
                     ),
                   ),
@@ -224,7 +227,7 @@ class _EmbroideryDesignsSliver extends StatelessWidget {
                       size: 64, color: cs.onSurfaceVariant),
                   const SizedBox(height: 16),
                   Text(
-                    'لا توجد تصاميم تطريز متاحة',
+                    l10n.noEmbroideryDesignsAvailable,
                     style: tt.titleMedium?.copyWith(
                       color: cs.onSurfaceVariant,
                     ),
@@ -278,6 +281,7 @@ class _EmbroideryDesignCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
@@ -357,7 +361,7 @@ class _EmbroideryDesignCard extends StatelessWidget {
                     if (design.price > 0) ...[
                       const SizedBox(height: 4),
                       Text(
-                        'ر.ع ${design.price.toStringAsFixed(3)}',
+                        '${l10n.omr} ${design.price.toStringAsFixed(3)}',
                         style: tt.labelSmall?.copyWith(
                           color: cs.primary,
                           fontWeight: FontWeight.w600,
@@ -372,7 +376,7 @@ class _EmbroideryDesignCard extends StatelessWidget {
                               size: 16, color: cs.primary),
                           const SizedBox(width: 4),
                           Text(
-                            'محدد',
+                            l10n.selected,
                             style: tt.labelSmall?.copyWith(
                               color: cs.primary,
                               fontWeight: FontWeight.w600,

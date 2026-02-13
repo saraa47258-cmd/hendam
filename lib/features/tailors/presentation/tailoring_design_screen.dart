@@ -9,9 +9,9 @@ import '../models/embroidery_design.dart';
 import '../../orders/services/order_service.dart';
 import '../../orders/models/order_model.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../measurements/models/measurement_profile.dart';
 import '../../../shared/widgets/gift_recipient_bottom_sheet.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/state/draft_store.dart';
 
 bool _isNetworkPath(String p) =>
     p.startsWith('http://') || p.startsWith('https://');
@@ -22,6 +22,7 @@ bool _isNetworkPath(String p) =>
 // ═══════════════════════════════════════════════════════════════════════════
 
 /// Premium color palette - Refined, elegant colors
+// ignore_for_file: unused_field
 class _DesignTokens {
   // Primary palette - Deep sophisticated blue
   static const Color primaryDark = Color(0xFF1A2F4B);
@@ -49,9 +50,6 @@ class _DesignTokens {
   static const Color borderLight = Color(0xFFF0F2F5);
   static const Color borderDefault = Color(0xFFE2E8F0);
   static const Color borderStrong = Color(0xFFCBD5E0);
-
-  /// حدود أزرار Outlined أنعم (كلون الصورة)
-  static const Color buttonBorder = Color(0xFFD7D7D7);
 
   // Semantic colors
   static const Color success = Color(0xFF38A169);
@@ -135,9 +133,6 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   String? _fabricType;
   String? _fabricThumb;
   String? _selectedFabricId;
-
-  /// سعر القماش الفعلي من Firebase (ليس تقديراً)
-  double? _selectedFabricPrice;
   Color _embroideryColor = const Color(0xFF4A5568);
   int _embroideryLines = 0;
   EmbroideryDesign? _selectedEmbroidery;
@@ -146,6 +141,11 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   // Gift feature state
   bool _isGift = false;
   GiftRecipientDetails? _giftRecipientDetails;
+
+  // Draft persistence
+  Timer? _draftTimer;
+  late final String _draftKey;
+  bool _restoringDraft = false;
 
   // Animation controllers
   late AnimationController _fadeController;
@@ -169,11 +169,20 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ));
+
+    final userId = context.read<AuthProvider>().currentUser?.uid;
+    _draftKey = DraftStore.scopedKey(
+      'tailor-design:${widget.tailorId}',
+      userId: userId,
+    );
+    _attachDraftListeners();
+    Future.microtask(_loadDraft);
   }
 
-  /// الإجمالي الحقيقي: سعر القماش من Firebase + التطريز (لا تقدير ولا قيم مخزنة)
   double get _totalPrice {
-    double price = _selectedFabricPrice ?? 0.0;
+    double price = widget.basePriceOMR;
+    if (_fabricType == 'فاخر') price += 1.500;
+    if (_fabricType == 'شتوي') price += 0.800;
     price += (_embroideryLines * 0.250);
     if (_selectedEmbroidery != null && _selectedEmbroidery!.price > 0) {
       price += _selectedEmbroidery!.price;
@@ -214,7 +223,139 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
     ]) {
       c.dispose();
     }
+    _draftTimer?.cancel();
     super.dispose();
+  }
+
+  void _attachDraftListeners() {
+    for (final c in [
+      _lengthCtrl,
+      _shoulderCtrl,
+      _sleeveCtrl,
+      _upperSleeveCtrl,
+      _lowerSleeveCtrl,
+      _chestCtrl,
+      _waistCtrl,
+      _neckCtrl,
+      _embroideryCtrl,
+      _notesCtrl,
+    ]) {
+      c.addListener(_scheduleDraftSave);
+    }
+  }
+
+  Future<void> _loadDraft() async {
+    final data = await DraftStore.read(_draftKey);
+    if (data == null) return;
+    _restoringDraft = true;
+    final step = data['step'];
+    if (step is int) {
+      _currentStep = step.clamp(0, 2);
+    }
+    final fabricType = data['fabricType'];
+    final fabricThumb = data['fabricThumb'];
+    final fabricId = data['fabricId'];
+    if (fabricType is String) _fabricType = fabricType;
+    if (fabricThumb is String) _fabricThumb = fabricThumb;
+    if (fabricId is String) _selectedFabricId = fabricId;
+
+    final embroideryColor = data['embroideryColor'];
+    if (embroideryColor is int) {
+      _embroideryColor = Color(embroideryColor);
+    }
+    final embroideryLines = data['embroideryLines'];
+    if (embroideryLines is int) _embroideryLines = embroideryLines;
+    final embMap = data['selectedEmbroidery'];
+    final embId = data['selectedEmbroideryId'];
+    if (embMap is Map && embId is String) {
+      _selectedEmbroidery = EmbroideryDesign.fromMap(
+        Map<String, dynamic>.from(embMap),
+        embId,
+      );
+    }
+
+    final unit = data['unit'];
+    if (unit is String) {
+      _unit = unit == 'inch' ? MeasurementUnit.inch : MeasurementUnit.cm;
+    }
+
+    final isGift = data['isGift'];
+    if (isGift is bool) _isGift = isGift;
+    final gift = data['gift'];
+    if (gift is Map<String, dynamic>) {
+      _giftRecipientDetails = GiftRecipientDetails.fromMap(
+        Map<String, dynamic>.from(gift),
+      );
+    }
+
+    final measurements = data['measurements'];
+    if (measurements is Map) {
+      final length = measurements['length'];
+      final shoulder = measurements['shoulder'];
+      final sleeve = measurements['sleeve'];
+      final upperSleeve = measurements['upperSleeve'];
+      final lowerSleeve = measurements['lowerSleeve'];
+      final chest = measurements['chest'];
+      final waist = measurements['waist'];
+      final neck = measurements['neck'];
+      final embroidery = measurements['embroidery'];
+      final notes = measurements['notes'];
+      if (length is String) _lengthCtrl.text = length;
+      if (shoulder is String) _shoulderCtrl.text = shoulder;
+      if (sleeve is String) _sleeveCtrl.text = sleeve;
+      if (upperSleeve is String) _upperSleeveCtrl.text = upperSleeve;
+      if (lowerSleeve is String) _lowerSleeveCtrl.text = lowerSleeve;
+      if (chest is String) _chestCtrl.text = chest;
+      if (waist is String) _waistCtrl.text = waist;
+      if (neck is String) _neckCtrl.text = neck;
+      if (embroidery is String) _embroideryCtrl.text = embroidery;
+      if (notes is String) _notesCtrl.text = notes;
+    }
+    _restoringDraft = false;
+    if (mounted) {
+      setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(_currentStep);
+        }
+      });
+    }
+  }
+
+  void _scheduleDraftSave() {
+    if (_restoringDraft) return;
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 300), () {
+      DraftStore.write(_draftKey, {
+        'step': _currentStep,
+        'fabricType': _fabricType,
+        'fabricThumb': _fabricThumb,
+        'fabricId': _selectedFabricId,
+        'embroideryColor': _embroideryColor.value,
+        'embroideryLines': _embroideryLines,
+        'selectedEmbroideryId': _selectedEmbroidery?.id,
+        'selectedEmbroidery': _selectedEmbroidery?.toMap(),
+        'unit': _unit == MeasurementUnit.inch ? 'inch' : 'cm',
+        'isGift': _isGift,
+        'gift': _giftRecipientDetails?.toMap(),
+        'measurements': {
+          'length': _lengthCtrl.text,
+          'shoulder': _shoulderCtrl.text,
+          'sleeve': _sleeveCtrl.text,
+          'upperSleeve': _upperSleeveCtrl.text,
+          'lowerSleeve': _lowerSleeveCtrl.text,
+          'chest': _chestCtrl.text,
+          'waist': _waistCtrl.text,
+          'neck': _neckCtrl.text,
+          'embroidery': _embroideryCtrl.text,
+          'notes': _notesCtrl.text,
+        },
+      });
+    });
+  }
+
+  Future<void> _clearDraft() async {
+    await DraftStore.clear(_draftKey);
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -229,6 +370,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
     if (_currentStep < 2) {
       setState(() => _currentStep++);
+      _scheduleDraftSave();
       await _pageController.animateToPage(
         _currentStep,
         duration: const Duration(milliseconds: 400),
@@ -245,6 +387,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
     if (_currentStep > 0) {
       setState(() => _currentStep--);
+      _scheduleDraftSave();
       await _pageController.animateToPage(
         _currentStep,
         duration: const Duration(milliseconds: 350),
@@ -309,6 +452,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       }
       _unit = newUnit;
     });
+    _scheduleDraftSave();
     HapticFeedback.selectionClick();
   }
 
@@ -351,6 +495,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                 _isGift = true;
                 _giftRecipientDetails = result;
               });
+              _scheduleDraftSave();
               if (mounted) Navigator.pop(context);
               _showOrderReview();
             }
@@ -359,6 +504,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
               _isGift = value;
               if (!value) _giftRecipientDetails = null;
             });
+            _scheduleDraftSave();
             if (mounted) Navigator.pop(context);
             _showOrderReview();
           }
@@ -370,6 +516,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
           );
           if (result != null) {
             setState(() => _giftRecipientDetails = result);
+            _scheduleDraftSave();
             if (mounted) Navigator.pop(context);
             _showOrderReview();
           }
@@ -443,6 +590,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       Navigator.pop(context); // Close loading
 
       if (orderId != null) {
+        await _clearDraft();
         _showSuccessDialog(orderId);
       } else {
         _showSnackBar('حدث خطأ في إرسال الطلب', isError: true);
@@ -500,11 +648,9 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop && _currentStep > 0) _goToPreviousStep();
       },
-      child: Directionality(
-        textDirection: TextDirection.rtl,
-        child: Scaffold(
-          backgroundColor: isDark ? cs.surface : _DesignTokens.surfaceLight,
-          body: FadeTransition(
+      child: Scaffold(
+        backgroundColor: isDark ? cs.surface : _DesignTokens.surfaceLight,
+        body: FadeTransition(
             opacity: _fadeAnimation,
             child: Column(
               children: [
@@ -530,13 +676,14 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                         tailorId: widget.tailorId,
                         selectedType: _fabricType,
                         selectedFabricId: _selectedFabricId,
-                        onFabricSelected: (type, thumb, id, fabricPrice) =>
-                            setState(() {
-                          _fabricType = type;
-                          _fabricThumb = thumb;
-                          _selectedFabricId = id;
-                          _selectedFabricPrice = fabricPrice;
-                        }),
+                        onFabricSelected: (type, thumb, id) {
+                          setState(() {
+                            _fabricType = type;
+                            _fabricThumb = thumb;
+                            _selectedFabricId = id;
+                          });
+                          _scheduleDraftSave();
+                        },
                       ),
                       _MeasurementsStep(
                         formKey: _formKey,
@@ -560,12 +707,18 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                         color: _embroideryColor,
                         lines: _embroideryLines,
                         selectedDesign: _selectedEmbroidery,
-                        onColorChanged: (c) =>
-                            setState(() => _embroideryColor = c),
-                        onLinesChanged: (l) =>
-                            setState(() => _embroideryLines = l),
-                        onDesignChanged: (d) =>
-                            setState(() => _selectedEmbroidery = d),
+                        onColorChanged: (c) {
+                          setState(() => _embroideryColor = c);
+                          _scheduleDraftSave();
+                        },
+                        onLinesChanged: (l) {
+                          setState(() => _embroideryLines = l);
+                          _scheduleDraftSave();
+                        },
+                        onDesignChanged: (d) {
+                          setState(() => _selectedEmbroidery = d);
+                          _scheduleDraftSave();
+                        },
                       ),
                     ],
                   ),
@@ -573,6 +726,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
                 // Bottom Bar
                 _BottomActionBar(
+                  price: _totalPrice,
                   step: _currentStep,
                   onBack: _goToPreviousStep,
                   onNext: _goToNextStep,
@@ -581,8 +735,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }
 
@@ -621,11 +774,10 @@ class _AppBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // الرجوع: سهم لليمين (→) — منع انعكاس RTL بعرض الأيقونة في LTR
+          // Back button
           _IconButton(
             icon: Icons.arrow_forward_rounded,
             onTap: onBack,
-            forceLtrIcon: true,
           ),
           const SizedBox(width: _DesignTokens.spaceMD),
 
@@ -791,11 +943,13 @@ class _ProgressIndicator extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _BottomActionBar extends StatelessWidget {
+  final double price;
   final int step;
   final VoidCallback onBack;
   final VoidCallback onNext;
 
   const _BottomActionBar({
+    required this.price,
     required this.step,
     required this.onBack,
     required this.onNext,
@@ -819,14 +973,42 @@ class _BottomActionBar extends StatelessWidget {
         border: Border(
           top: BorderSide(
             color: isDark
-                ? Theme.of(context).colorScheme.outlineVariant.withOpacity(0.15)
+                ? cs.outlineVariant.withOpacity(0.15)
                 : _DesignTokens.borderLight,
           ),
         ),
       ),
       child: Row(
         children: [
-          const Spacer(),
+          // Price
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'التكلفة التقديرية',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? cs.onSurfaceVariant
+                        : _DesignTokens.textTertiary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'ر.ع ${price.toStringAsFixed(3)}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // Back button
           _OutlinedButton(
             label: step == 0 ? 'رجوع' : 'السابق',
@@ -834,12 +1016,11 @@ class _BottomActionBar extends StatelessWidget {
           ),
           const SizedBox(width: _DesignTokens.spaceMD),
 
-          // التالي: سهم لليسار (←) — منع انعكاس RTL بعرض الأيقونة في LTR
+          // Next button
           _FilledButton(
             label: step == 2 ? 'إرسال الطلب' : 'التالي',
             icon: step == 2 ? Icons.check_rounded : Icons.arrow_back_rounded,
             onTap: onNext,
-            forceLtrIcon: step != 2,
           ),
         ],
       ),
@@ -855,9 +1036,7 @@ class _FabricSelectionStep extends StatelessWidget {
   final String tailorId;
   final String? selectedType;
   final String? selectedFabricId;
-  final void Function(
-          String? type, String? thumb, String? id, double? fabricPrice)
-      onFabricSelected;
+  final void Function(String? type, String? thumb, String? id) onFabricSelected;
 
   const _FabricSelectionStep({
     required this.tailorId,
@@ -1040,8 +1219,8 @@ class _FabricSelectionStep extends StatelessWidget {
               isDark ? cs.surfaceContainerHighest : _DesignTokens.surfacePure,
           borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
           child: InkWell(
-            onTap: () => onFabricSelected(fabric['name'], fabric['imageUrl'],
-                fabric['id'], (fabric['pricePerMeter'] as num?)?.toDouble()),
+            onTap: () => onFabricSelected(
+                fabric['name'], fabric['imageUrl'], fabric['id']),
             borderRadius: BorderRadius.circular(_DesignTokens.radiusXL),
             child: Container(
               decoration: BoxDecoration(
@@ -1221,7 +1400,7 @@ class _FabricSelectionStep extends StatelessWidget {
                 ),
                 _OutlinedButton(
                   label: 'تغيير',
-                  onTap: () => onFabricSelected(null, null, null, null),
+                  onTap: () => onFabricSelected(null, null, null),
                 ),
               ],
             ),
@@ -2117,25 +2296,12 @@ class _IconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  /// عرض الأيقونة في سياق LTR لعدم انعكاسها في RTL (سهم الرجوع → يمين)
-  final bool forceLtrIcon;
-
-  const _IconButton({
-    required this.icon,
-    required this.onTap,
-    this.forceLtrIcon = false,
-  });
+  const _IconButton({required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
-
-    final iconWidget = Icon(
-      icon,
-      size: 20,
-      color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
-    );
 
     return Material(
       color: isDark ? cs.surfaceContainerHighest : _DesignTokens.surfaceMuted,
@@ -2146,12 +2312,11 @@ class _IconButton extends StatelessWidget {
         child: SizedBox(
           width: 44,
           height: 44,
-          child: forceLtrIcon
-              ? Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: iconWidget,
-                )
-              : iconWidget,
+          child: Icon(
+            icon,
+            size: 20,
+            color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
+          ),
         ),
       ),
     );
@@ -2163,47 +2328,23 @@ class _FilledButton extends StatelessWidget {
   final IconData? icon;
   final VoidCallback onTap;
 
-  /// عرض الأيقونة في LTR لعدم انعكاسها (سهم التالي ← يسار)
-  final bool forceLtrIcon;
-
-  const _FilledButton({
-    required this.label,
-    this.icon,
-    required this.onTap,
-    this.forceLtrIcon = false,
-  });
+  const _FilledButton({required this.label, this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
 
-    final iconWidget = icon != null
-        ? Icon(icon!, size: 20, color: isDark ? cs.onPrimary : Colors.white)
-        : null;
-
     return Material(
-      color: Colors.transparent,
+      color: isDark ? cs.primary : _DesignTokens.primary,
+      borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
         child: Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(
-            horizontal: _DesignTokens.spaceLG + 4,
-            vertical: _DesignTokens.spaceSM,
-          ),
-          decoration: BoxDecoration(
-            color: isDark ? cs.primary : const Color(0xFF2B4468),
-            borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
+          height: 48,
+          padding:
+              const EdgeInsets.symmetric(horizontal: _DesignTokens.spaceLG),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
@@ -2211,20 +2352,15 @@ class _FilledButton extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: FontWeight.w600,
                   color: isDark ? cs.onPrimary : Colors.white,
-                  letterSpacing: -0.2,
                 ),
               ),
-              if (iconWidget != null) ...[
+              if (icon != null) ...[
                 const SizedBox(width: _DesignTokens.spaceSM),
-                forceLtrIcon
-                    ? Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: iconWidget,
-                      )
-                    : iconWidget,
+                Icon(icon,
+                    size: 18, color: isDark ? cs.onPrimary : Colors.white),
               ],
             ],
           ),
@@ -2247,31 +2383,28 @@ class _OutlinedButton extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
+        borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
         child: Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(
-            horizontal: _DesignTokens.spaceLG + 4,
-            vertical: _DesignTokens.spaceSM,
-          ),
+          height: 48,
+          padding:
+              const EdgeInsets.symmetric(horizontal: _DesignTokens.spaceLG),
           decoration: BoxDecoration(
-            color: isDark ? cs.surface : _DesignTokens.surfacePure,
-            borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
+            borderRadius: BorderRadius.circular(_DesignTokens.radiusMD),
             border: Border.all(
-              color: isDark ? cs.outlineVariant : _DesignTokens.buttonBorder,
-              width: 1.2,
+              color: isDark ? cs.outlineVariant : _DesignTokens.borderDefault,
+              width: 1.5,
             ),
           ),
           child: Center(
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDark ? cs.onSurface : const Color(0xFF4A5568),
-                letterSpacing: -0.2,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: isDark ? cs.onSurface : _DesignTokens.textPrimary,
               ),
             ),
           ),
@@ -2609,15 +2742,15 @@ class _OrderReviewSheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Gift toggle — أيقونة وتفعيل أوضح
+          // Gift toggle
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: isGift
                   ? LinearGradient(
                       colors: [
-                        _DesignTokens.accent.withOpacity(0.15),
-                        _DesignTokens.accentLight.withOpacity(0.08),
+                        _DesignTokens.accent.withOpacity(0.1),
+                        _DesignTokens.accentLight.withOpacity(0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -2625,71 +2758,34 @@ class _OrderReviewSheet extends StatelessWidget {
                   : null,
               color: isGift
                   ? null
-                  : (isDark
-                      ? cs.surfaceContainerLow
-                      : _DesignTokens.surfaceMuted),
+                  : (isDark ? cs.surfaceContainerLow : _DesignTokens.surfaceMuted),
               borderRadius: BorderRadius.circular(_DesignTokens.radiusLG),
               border: Border.all(
                 color: isGift
-                    ? _DesignTokens.accent
-                    : (isDark
-                        ? cs.outlineVariant
-                        : _DesignTokens.borderDefault),
-                width: isGift ? 2 : 1.5,
+                    ? _DesignTokens.accent.withOpacity(0.5)
+                    : (isDark ? cs.outlineVariant : _DesignTokens.borderDefault),
+                width: isGift ? 2 : 1,
               ),
-              boxShadow: isGift
-                  ? [
-                      BoxShadow(
-                        color: _DesignTokens.accent.withOpacity(0.15),
-                        blurRadius: 12,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : null,
             ),
             child: Row(
               children: [
-                // أيقونة الهدية — أكبر وأوضح مع إطار واضح
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: isGift
-                        ? _DesignTokens.accent.withOpacity(0.25)
-                        : (isDark ? cs.surfaceContainerHigh : Colors.white),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isGift
-                          ? _DesignTokens.accent
-                          : (isDark
-                              ? cs.outlineVariant
-                              : const Color(0xFFE2E8F0)),
-                      width: isGift ? 1.5 : 1,
-                    ),
-                    boxShadow: isGift
-                        ? [
-                            BoxShadow(
-                              color: _DesignTokens.accent.withOpacity(0.2),
-                              blurRadius: 8,
-                              offset: const Offset(0, 1),
-                            ),
-                          ]
-                        : [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 6,
-                              offset: const Offset(0, 1),
-                            ),
-                          ],
+                        ? _DesignTokens.accent.withOpacity(0.2)
+                        : (isDark ? cs.surfaceContainerHigh : _DesignTokens.surfaceDim),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.card_giftcard_rounded,
                     color: isGift
                         ? _DesignTokens.accent
-                        : (isDark ? cs.onSurface : _DesignTokens.textSecondary),
-                    size: 28,
+                        : (isDark ? cs.onSurfaceVariant : _DesignTokens.textTertiary),
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -2697,44 +2793,28 @@ class _OrderReviewSheet extends StatelessWidget {
                       Text(
                         l10n?.sendAsGift ?? 'إرسال كهدية',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
                           color: isGift
                               ? _DesignTokens.accent
-                              : (isDark
-                                  ? cs.onSurface
-                                  : _DesignTokens.textPrimary),
+                              : (isDark ? cs.onSurface : _DesignTokens.textPrimary),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         l10n?.thisOrderIsAGift ?? 'هذا الطلب هدية',
                         style: TextStyle(
-                          fontSize: 13,
-                          color: isGift
-                              ? _DesignTokens.accent.withOpacity(0.9)
-                              : (isDark
-                                  ? cs.onSurfaceVariant
-                                  : _DesignTokens.textSecondary),
+                          fontSize: 12,
+                          color: isDark ? cs.onSurfaceVariant : _DesignTokens.textTertiary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                // سويتش أوضح: تباين أعلى عند الإيقاف والتشغيل
-                Switch(
+                Switch.adaptive(
                   value: isGift,
                   onChanged: onGiftToggle,
-                  activeTrackColor: _DesignTokens.accent.withOpacity(0.6),
-                  inactiveTrackColor:
-                      isDark ? cs.outlineVariant : const Color(0xFFCBD5E0),
-                  activeThumbColor: Colors.white,
-                  thumbColor: WidgetStateProperty.resolveWith<Color>((states) {
-                    if (states.contains(WidgetState.selected)) {
-                      return Colors.white;
-                    }
-                    return isDark ? cs.surface : const Color(0xFF64748B);
-                  }),
+                  activeColor: _DesignTokens.accent,
                 ),
               ],
             ),

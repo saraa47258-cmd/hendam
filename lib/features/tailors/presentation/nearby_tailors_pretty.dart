@@ -2,6 +2,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../models/tailor_item.dart';
 
 class NearbyTailorsPretty extends StatelessWidget {
@@ -30,6 +31,7 @@ class NearbyTailorsPretty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final w = MediaQuery.sizeOf(context).width;
     final h = preferredHeight(context);
@@ -59,7 +61,7 @@ class NearbyTailorsPretty extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'لا توجد محلات قريبة حالياً',
+              l10n.noTailorsNearby,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant.withOpacity(0.6),
                   ),
@@ -139,6 +141,7 @@ class _TailorCardState extends State<_TailorCard>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
@@ -184,7 +187,7 @@ class _TailorCardState extends State<_TailorCard>
                   _badge(
                     context,
                     icon: Icons.place_outlined,
-                    label: '${widget.item.distanceKm.toStringAsFixed(1)} كم',
+                    label: '${widget.item.distanceKm.toStringAsFixed(1)} ${l10n.km}',
                   ),
                   const Spacer(),
                   Container(
@@ -213,7 +216,7 @@ class _TailorCardState extends State<_TailorCard>
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          widget.item.isOpen ? 'مفتوح' : 'مغلق',
+                          widget.item.isOpen ? l10n.open : l10n.closed,
                           style: tt.labelSmall?.copyWith(
                             color: widget.item.isOpen
                                 ? const Color(0xFF10B981)
@@ -262,14 +265,14 @@ class _TailorCardState extends State<_TailorCard>
                   _actionBtn(
                     context,
                     icon: Icons.call_outlined,
-                    label: 'اتصال',
+                    label: l10n.callLabel,
                     onTap: widget.onCall,
                   ),
                   const SizedBox(width: 8),
                   _actionBtn(
                     context,
                     icon: Icons.map_outlined,
-                    label: 'خريطة',
+                    label: l10n.mapLabel,
                     onTap: widget.onMap,
                   ),
                   const Spacer(),

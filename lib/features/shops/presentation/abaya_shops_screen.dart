@@ -87,11 +87,9 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
     final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: cs.surface,
-        body: _isLoading
+    return Scaffold(
+      backgroundColor: cs.surface,
+      body: _isLoading
             ? const ShopListSkeleton(count: 6)
             : CustomScrollView(
                 slivers: [
@@ -319,8 +317,7 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
                   ),
                 ],
               ),
-      ),
-    );
+      );
   }
 }
 

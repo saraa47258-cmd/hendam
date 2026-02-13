@@ -1,5 +1,6 @@
 // lib/features/tailors/widgets/tailor_row_card.dart
 import 'package:flutter/material.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 import '../models/tailor.dart';
 import '../../../features/favorites/widgets/favorite_button.dart';
 
@@ -49,20 +50,21 @@ class TailorRowCard extends StatelessWidget {
     return AssetImage(u);
   }
 
-  String _fmtEta(RangeValues? v) {
+  String _fmtEta(RangeValues? v, String minutesLabel) {
     if (v == null) return '';
     final lo = v.start.round();
     final hi = v.end.round();
-    return '$lo - $hi دقيقة';
+    return '$lo - $hi $minutesLabel';
   }
 
-  String _fmtFee(double? v) {
+  String _fmtFee(double? v, String omrLabel) {
     if (v == null) return '';
-    return '${v.toStringAsFixed(3)} ر.ع';
+    return '${v.toStringAsFixed(3)} $omrLabel';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
@@ -135,7 +137,7 @@ class TailorRowCard extends StatelessWidget {
                                     size: 14, color: cs.primary),
                                 const SizedBox(width: 4),
                                 Text(
-                                  'المتجر',
+                                  l10n.theStore,
                                   style: tt.labelSmall?.copyWith(
                                     color: cs.primary,
                                     fontWeight: FontWeight.w800,
@@ -246,7 +248,7 @@ class TailorRowCard extends StatelessWidget {
                           Flexible(
                             child: _chip(context,
                                 icon: Icons.timer_outlined,
-                                label: _fmtEta(etaMinutes)),
+                                label: _fmtEta(etaMinutes, l10n.minutes)),
                           ),
                         ],
                         if (hasFee) ...[
@@ -254,7 +256,7 @@ class TailorRowCard extends StatelessWidget {
                           Flexible(
                             child: _chip(context,
                                 icon: Icons.attach_money_rounded,
-                                label: _fmtFee(serviceFeeOMR)),
+                                label: _fmtFee(serviceFeeOMR, l10n.omr)),
                           ),
                         ],
                       ],
