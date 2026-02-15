@@ -122,7 +122,9 @@ class ThreadDetails {
     required this.threadCount,
   });
 
-  bool get isValid => selectedColorIds.isNotEmpty && threadCount > 0;  Map<String, dynamic> toMap() {
+  bool get isValid => selectedColorIds.isNotEmpty && threadCount > 0;
+
+  Map<String, dynamic> toMap() {
     return {
       'selectedColorIds': selectedColorIds,
       'threadCount': threadCount,

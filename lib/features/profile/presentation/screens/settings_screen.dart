@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hindam/shared/widgets/profile_page_scaffold.dart';
-import 'package:hindam/l10n/app_localizations.dart';
 
 /// صفحة الإعدادات: إشعارات، عروض، إلخ
 class SettingsScreen extends StatefulWidget {
@@ -19,20 +18,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context)!;
 
     return ProfilePageScaffold(
-      title: l10n.settings,
+      title: 'الإعدادات',
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         children: [
-          _SectionTitle(title: l10n.notifications),
+          _SectionTitle(title: 'الإشعارات'),
           const SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.notifications_active_rounded,
             iconColor: cs.primary,
-            title: l10n.notifications,
-            subtitle: l10n.orderStatusAndOffersAlerts,
+            title: 'الإشعارات',
+            subtitle: 'تنبيهات حالة الطلب والعروض',
             trailing: Switch(
               value: _notificationsEnabled,
               onChanged: (v) {
@@ -46,8 +44,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _SettingsTile(
             icon: Icons.local_offer_rounded,
             iconColor: const Color(0xFF10B981),
-            title: l10n.offersAndDiscounts,
-            subtitle: l10n.receiveExclusiveOffers,
+            title: 'عروض وتخفيضات',
+            subtitle: 'استقبال العروض الحصرية',
             trailing: Switch(
               value: _offersEnabled,
               onChanged: (v) {

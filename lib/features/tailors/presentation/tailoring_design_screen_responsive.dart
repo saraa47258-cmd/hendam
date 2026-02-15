@@ -182,172 +182,172 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       backgroundColor: cs.surface,
       body: SafeArea(
         child: Column(
-            children: [
-              // ===== الهيدر المتجاوب =====
-              Container(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  14,
-                  16,
-                  isTablet ? 20 : 16,
+          children: [
+            // ===== الهيدر المتجاوب =====
+            Container(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                14,
+                16,
+                isTablet ? 20 : 16,
+              ),
+              decoration: BoxDecoration(
+                gradient: _headerGradient,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(18),
                 ),
-                decoration: BoxDecoration(
-                  gradient: _headerGradient,
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(18),
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isDesktop ? 1200 : 840,
                   ),
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: isDesktop ? 1200 : 840,
-                    ),
-                    child: Row(
-                      children: [
-                        // أيقونة الخياط
-                        Container(
-                          width: isTablet ? 64 : 56,
-                          height: isTablet ? 64 : 56,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: Colors.white.withOpacity(.5),
-                              width: 2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(.08),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              )
-                            ],
+                  child: Row(
+                    children: [
+                      // أيقونة الخياط
+                      Container(
+                        width: isTablet ? 64 : 56,
+                        height: isTablet ? 64 : 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white.withOpacity(.5),
+                            width: 2,
                           ),
-                          child: CircleAvatar(
-                            backgroundColor: Colors.white24,
-                            child: Icon(
-                              Icons.content_cut,
-                              color: Colors.white,
-                              size: isTablet ? 30 : 26,
-                            ),
-                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(.08),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            )
+                          ],
                         ),
-                        SizedBox(width: isTablet ? 16 : 12),
-
-                        // معلومات الخياط
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                widget.tailorName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: isTablet ? 24 : 20,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.location_on_outlined,
-                                    size: isTablet ? 18 : 16,
-                                    color: Colors.white,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      'مسقط',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(.9),
-                                        fontSize: isTablet ? 16 : 14,
-                                      ),
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // زر الإغلاق
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: Icon(
-                            Icons.close_rounded,
+                        child: CircleAvatar(
+                          backgroundColor: Colors.white24,
+                          child: Icon(
+                            Icons.content_cut,
                             color: Colors.white,
-                            size: isTablet ? 28 : 24,
+                            size: isTablet ? 30 : 26,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(width: isTablet ? 16 : 12),
+
+                      // معلومات الخياط
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.tailorName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: isTablet ? 24 : 20,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  size: isTablet ? 18 : 16,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    'مسقط',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(.9),
+                                      fontSize: isTablet ? 16 : 14,
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // زر الإغلاق
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                          size: isTablet ? 28 : 24,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
+            ),
 
-              // ===== شريط التقدّم المتجاوب =====
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  isTablet ? 16 : 12,
-                  16,
-                  8,
-                ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: isDesktop ? 1200 : 840,
-                    ),
-                    child: _ResponsiveStepperHeader(
-                      current: _step,
-                      labels: const ['القماش', 'اللون', 'المقاسات', 'التطريز'],
-                      isTablet: isTablet,
-                    ),
+            // ===== شريط التقدّم المتجاوب =====
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                isTablet ? 16 : 12,
+                16,
+                8,
+              ),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: isDesktop ? 1200 : 840,
+                  ),
+                  child: _ResponsiveStepperHeader(
+                    current: _step,
+                    labels: const ['القماش', 'اللون', 'المقاسات', 'التطريز'],
+                    isTablet: isTablet,
                   ),
                 ),
               ),
+            ),
 
-              // ===== الصفحات المتجاوبة =====
-              Expanded(
-                child: PageView(
-                  controller: _pager,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _FabricStep(
-                      items: widget.fabrics,
-                      selectedType: _fabricType,
-                      onTypeChanged: (v, thumb) => setState(() {
-                        _fabricType = v;
-                      }),
-                      isTablet: isTablet,
-                    ),
-                    _ColorStep(
-                      palette: _palette,
-                      selected: _fabricColor,
-                      shadeFactor: _shadeFactor,
-                      onColorChanged: (c) => setState(() => _fabricColor = c),
-                      onShadeChanged: (f) => setState(() => _shadeFactor = f),
-                      previewColor: _fabricColor == null
-                          ? null
-                          : _applyShade(_fabricColor!, _shadeFactor),
-                      isTablet: isTablet,
-                    ),
-                    _MenMeasurementsStep(
-                      formKey: _formKey,
-                      unit: _unit,
-                      onUnitChanged: (u) => setState(() => _unit = u),
-                      lengthCtrl: _lengthCtrl,
-                      shoulderCtrl: _shoulderCtrl,
-                      sleeveCtrl: _sleeveCtrl,
-                      upperSleeveCtrl: _upperSleeveCtrl,
-                      lowerSleeveCtrl: _lowerSleeveCtrl,
-                      chestCtrl: _chestCtrl,
-                      waistCtrl: _waistCtrl,
-                      bottomCtrl: _bottomCtrl,
+            // ===== الصفحات المتجاوبة =====
+            Expanded(
+              child: PageView(
+                controller: _pager,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _FabricStep(
+                    items: widget.fabrics,
+                    selectedType: _fabricType,
+                    onTypeChanged: (v, thumb) => setState(() {
+                      _fabricType = v;
+                    }),
+                    isTablet: isTablet,
+                  ),
+                  _ColorStep(
+                    palette: _palette,
+                    selected: _fabricColor,
+                    shadeFactor: _shadeFactor,
+                    onColorChanged: (c) => setState(() => _fabricColor = c),
+                    onShadeChanged: (f) => setState(() => _shadeFactor = f),
+                    previewColor: _fabricColor == null
+                        ? null
+                        : _applyShade(_fabricColor!, _shadeFactor),
+                    isTablet: isTablet,
+                  ),
+                  _MenMeasurementsStep(
+                    formKey: _formKey,
+                    unit: _unit,
+                    onUnitChanged: (u) => setState(() => _unit = u),
+                    lengthCtrl: _lengthCtrl,
+                    shoulderCtrl: _shoulderCtrl,
+                    sleeveCtrl: _sleeveCtrl,
+                    upperSleeveCtrl: _upperSleeveCtrl,
+                    lowerSleeveCtrl: _lowerSleeveCtrl,
+                    chestCtrl: _chestCtrl,
+                    waistCtrl: _waistCtrl,
+                    bottomCtrl: _bottomCtrl,
                       neckCtrl: _neckCtrl,
                       embroideryCtrl: _embroideryCtrl,
                       notesCtrl: _notesCtrl,
@@ -471,9 +471,8 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
             ],
           ),
         ),
-      ),
-    )
-  }
+      );
+    }
 
   Color _applyShade(Color base, double factor) {
     return Color.fromARGB(

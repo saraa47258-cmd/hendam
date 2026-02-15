@@ -1,7 +1,6 @@
 // lib/features/profile/presentation/screens/about_app_screen.dart
 import 'package:flutter/material.dart';
 import 'package:hindam/shared/widgets/profile_page_scaffold.dart';
-import 'package:hindam/l10n/app_localizations.dart';
 
 /// صفحة عن التطبيق
 class AboutAppScreen extends StatelessWidget {
@@ -11,11 +10,9 @@ class AboutAppScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final l10n = AppLocalizations.of(context)!;
-    const appVersion = '1.0.0';
 
     return ProfilePageScaffold(
-      title: l10n.aboutApp,
+      title: 'عن التطبيق',
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
         children: [
@@ -44,7 +41,7 @@ class AboutAppScreen extends StatelessWidget {
           const SizedBox(height: 20),
           Center(
             child: Text(
-              l10n.appName,
+              'هندام',
               style: tt.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: cs.onSurface,
@@ -54,7 +51,7 @@ class AboutAppScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Center(
             child: Text(
-              l10n.appVersion(appVersion),
+              'الإصدار 1.0.0',
               style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
           ),
@@ -70,7 +67,8 @@ class AboutAppScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l10n.aboutAppDescription,
+                  'تطبيق هندام يربطك بأفضل محلات الخياطة الرجالية في السلطنة. '
+                  'اطلب دشداشاتك، عباياتك، وتفصيلاتك بسهولة مع متابعة الطلبات والتوصيل.',
                   style: tt.bodyMedium?.copyWith(
                     color: cs.onSurface,
                     height: 1.6,
@@ -81,19 +79,19 @@ class AboutAppScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           _AboutRow(
-            label: l10n.appVersionLabel,
-            value: appVersion,
+            label: 'الإصدار',
+            value: '1.0.0',
             tt: tt,
             cs: cs,
           ),
           _AboutRow(
-            label: l10n.email,
+            label: 'البريد',
             value: 'info@hindam.app',
             tt: tt,
             cs: cs,
           ),
           _AboutRow(
-            label: l10n.website,
+            label: 'الموقع',
             value: 'www.hindam.app',
             tt: tt,
             cs: cs,

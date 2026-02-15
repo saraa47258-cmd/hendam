@@ -1,6 +1,7 @@
 name: hindam
 description: Owner app for men's tailoring shops (HINDAM)
 publish_to: "none"
+version: 1.0.0+1
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

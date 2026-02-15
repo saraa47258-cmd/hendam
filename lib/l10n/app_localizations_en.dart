@@ -671,6 +671,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get selected => 'Selected';
   @override
+  String get details => 'Details';
+  @override
+  String get bookAppointment => 'Book Appointment';
+  @override
   String get add => 'Add';
   @override
   String get remove => 'Remove';

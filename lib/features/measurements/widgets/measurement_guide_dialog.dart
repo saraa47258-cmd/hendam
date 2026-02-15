@@ -178,8 +178,7 @@ class MeasurementGuideDialog extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    )
+    );
   }
 
   Map<String, dynamic> _getGuide(String name) {

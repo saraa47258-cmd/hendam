@@ -45,7 +45,8 @@ flutter {
 }
 
 dependencies {
-    implementation("com.google.mediapipe:tasks-vision:latest.release")
+    // MediaPipe Hand Landmarker
+    implementation("com.google.mediapipe:tasks-vision:0.10.14")
 
     // Keep AndroidX versions compatible with AGP 8.8.0
     constraints {
@@ -63,10 +64,6 @@ dependencies {
         }
         implementation("androidx.core:core") {
             version { strictly("1.16.0") }
-            because("AGP 8.8.0 compatibility")
-        }
-        implementation("androidx.navigationevent:navigationevent-android") {
-            version { strictly("1.0.0") }
             because("AGP 8.8.0 compatibility")
         }
     }

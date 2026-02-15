@@ -164,7 +164,7 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           foregroundColor: _lightPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          side: const BorderSide(color: _lightOutline),
+          side: BorderSide(color: _lightOutline),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -204,7 +204,7 @@ class AppTheme {
         ),
         side: BorderSide(color: _lightOutline.withOpacity(0.5)),
       ),
-      dividerTheme: const DividerThemeData(
+      dividerTheme: DividerThemeData(
         color: _lightOutlineVariant,
         thickness: 1,
         space: 0,
@@ -308,7 +308,7 @@ class AppTheme {
           );
         }),
       ),
-      dividerTheme: const DividerThemeData(
+      dividerTheme: DividerThemeData(
         color: _darkOutline,
         thickness: 1,
         space: 0,

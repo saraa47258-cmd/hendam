@@ -274,7 +274,7 @@ class CartState extends ChangeNotifier {
       final itemsByShop = <String, List<CartItem>>{};
       for (final item in _items) {
         // استخراج معرف المتجر من productId أو استخدام 'default'
-        const shopId = 'default'; // يمكن تحسينه لاحقاً
+        final shopId = 'default'; // يمكن تحسينه لاحقاً
         itemsByShop.putIfAbsent(shopId, () => []).add(item);
       }
 

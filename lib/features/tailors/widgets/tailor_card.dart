@@ -108,80 +108,79 @@ class _TailorShopsScreenState extends State<TailorShopsScreen> {
     return Scaffold(
       backgroundColor: cs.surface,
       body: SafeArea(
-          child: RefreshIndicator(
-            key: _refreshIndicatorKey,
-            onRefresh: _refreshTailors,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              children: [
-                const _DealBannerTailor(),
-                const SizedBox(height: 12),
-                _FiltersBarTailor(
-                  onRefresh: _refreshTailors,
-                  isRefreshing: _isRefreshing,
-                ),
-                const SizedBox(height: 12),
-                // ===== قائمة حية من فايرستورت مع تحديث محسّن =====
-                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseService.getTailorsQuery(limit: 50)
-                      .snapshots(includeMetadataChanges: true),
-                  builder: (context, snapshot) {
-                    // معالجة محسّنة للحالات المختلفة
-                    if (snapshot.connectionState == ConnectionState.waiting &&
-                        !snapshot.hasData) {
-                      return const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(32.0),
-                          child: CircularProgressIndicator(),
-                        ),
-                      );
-                    }
-
-                    if (snapshot.hasError) {
-                      return _ErrorBox(
-                        message: AppLocalizations.of(context)!.errorLoadingShops,
-                        onRetry: _refreshTailors,
-                      );
-                    }
-
-                    final docs = snapshot.data?.docs ?? const [];
-                    if (docs.isEmpty) {
-                      return _EmptyBox(
-                        message: AppLocalizations.of(context)!.noRegisteredShops,
-                        onRefresh: _refreshTailors,
-                      );
-                    }
-                    final items = docs.map(_fromDoc).toList();
-                    return Column(
-                      children: items
-                          .map(
-                            (e) => Padding(
-                              padding: const EdgeInsets.only(bottom: 14),
-                              child: _TailorRowCard(
-                                data: e,
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => TailorDetailsScreen(
-                                        tailorId: e.tailor.id,
-                                        tailorName: e.tailor.name,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          )
-                          .toList(),
+        child: RefreshIndicator(
+          key: _refreshIndicatorKey,
+          onRefresh: _refreshTailors,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+            children: [
+              const _DealBannerTailor(),
+              const SizedBox(height: 12),
+              _FiltersBarTailor(
+                onRefresh: _refreshTailors,
+                isRefreshing: _isRefreshing,
+              ),
+              const SizedBox(height: 12),
+              // ===== قائمة حية من فايرستورت مع تحديث محسّن =====
+              StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: FirebaseService.getTailorsQuery(limit: 50)
+                    .snapshots(includeMetadataChanges: true),
+                builder: (context, snapshot) {
+                  // معالجة محسّنة للحالات المختلفة
+                  if (snapshot.connectionState == ConnectionState.waiting &&
+                      !snapshot.hasData) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: CircularProgressIndicator(),
+                      ),
                     );
-                  },
-                ),
-              ],
-            ),
+                  }
+
+                  if (snapshot.hasError) {
+                    return _ErrorBox(
+                      message: AppLocalizations.of(context)!.errorLoadingShops,
+                      onRetry: _refreshTailors,
+                    );
+                  }
+
+                  final docs = snapshot.data?.docs ?? const [];
+                  if (docs.isEmpty) {
+                    return _EmptyBox(
+                      message: AppLocalizations.of(context)!.noRegisteredShops,
+                      onRefresh: _refreshTailors,
+                    );
+                  }
+                  final items = docs.map(_fromDoc).toList();
+                  return Column(
+                    children: items
+                        .map(
+                          (e) => Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: _TailorRowCard(
+                              data: e,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (context) => TailorDetailsScreen(
+                                      tailorId: e.tailor.id,
+                                      tailorName: e.tailor.name,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ),
-    )
+    );
   }
 }
 

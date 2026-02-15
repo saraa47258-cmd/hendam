@@ -37,19 +37,18 @@ class ServiceCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(borderRadius)),
         shadowColor: Colors.black.withOpacity(0.1),
         child: InkWell(
-            onTap: onTap,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _Header(imageUrl: imageUrl, serviceIcon: serviceIcon),
-                _Body(item: item, onOpen: onOpen),
-              ],
-            ),
+          onTap: onTap,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _Header(imageUrl: imageUrl, serviceIcon: serviceIcon),
+              _Body(item: item, onOpen: onOpen),
+            ],
           ),
         ),
       ),
-    )
+    );
   }
 }
 

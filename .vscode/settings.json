@@ -1,5 +1,5 @@
 {
     "git.ignoreLimitWarning": true,
-    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.configuration.updateBuildConfiguration": "interactive",
     "FSharp.suggestGitignore": false
 }

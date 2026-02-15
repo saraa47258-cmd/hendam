@@ -669,6 +669,10 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get selected => 'محدد';
   @override
+  String get details => 'التفاصيل';
+  @override
+  String get bookAppointment => 'حجز موعد';
+  @override
   String get add => 'إضافة';
   @override
   String get remove => 'إزالة';

@@ -146,139 +146,138 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-          title: Text(l10n.abayaMeasurements),
-          centerTitle: true,
-        ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: _contentMaxWidth,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _ProductHeader(
-                        item: widget.item,
-                        buildImage: _buildImage,
-                      ),
-                      const SizedBox(height: 12),
+        title: Text(l10n.abayaMeasurements),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: _contentMaxWidth,
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ProductHeader(
+                      item: widget.item,
+                      buildImage: _buildImage,
+                    ),
+                    const SizedBox(height: 12),
 
-                      // دليل القياس (ريسبونسف)
-                      const MeasurementGuideCard(imageSrc: _kGuideAsset),
+                    // دليل القياس (ريسبونسف)
+                    const MeasurementGuideCard(imageSrc: _kGuideAsset),
 
-                      const SizedBox(height: 14),
+                    const SizedBox(height: 14),
 
-                      // ===== المقاسات الأساسية =====
-                      LayoutBuilder(builder: (ctx, inner) {
-                        final cols = _fieldColumns(inner.maxWidth);
-                        final fieldWidth = (inner.maxWidth - _gap * (cols - 1)) / cols;
+                    // ===== المقاسات الأساسية =====
+                    LayoutBuilder(builder: (ctx, inner) {
+                      final cols = _fieldColumns(inner.maxWidth);
+                      final fieldWidth = (inner.maxWidth - _gap * (cols - 1)) / cols;
 
-                        return _SectionCard(
-                          title: l10n.basicMeasurements,
-                          child: Wrap(
-                            spacing: _gap,
-                            runSpacing: _gap,
-                            children: [
-                              SizedBox(
-                                width: fieldWidth,
-                                child: _numField(
-                                  context,
-                                  l10n.length,
-                                  _lengthC,
-                                  hint: l10n.exampleLength,
-                                  icon: Icons.height,
-                                ),
+                      return _SectionCard(
+                        title: l10n.basicMeasurements,
+                        child: Wrap(
+                          spacing: _gap,
+                          runSpacing: _gap,
+                          children: [
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _numField(
+                                context,
+                                l10n.length,
+                                _lengthC,
+                                hint: l10n.exampleLength,
+                                icon: Icons.height,
                               ),
-                              SizedBox(
-                                width: fieldWidth,
-                                child: _numField(
-                                  context,
-                                  l10n.sleeveLength,
-                                  _sleeveC,
-                                  hint: l10n.exampleSleeve,
-                                  icon: Icons.rule_rounded,
-                                ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _numField(
+                                context,
+                                l10n.sleeveLength,
+                                _sleeveC,
+                                hint: l10n.exampleSleeve,
+                                icon: Icons.rule_rounded,
                               ),
-                              SizedBox(
-                                width: fieldWidth,
-                                child: _numField(
-                                  context,
-                                  l10n.widthMeasure,
-                                  _widthC,
-                                  hint: l10n.exampleWidth,
-                                  icon: Icons.swap_horiz_rounded,
-                                ),
+                            ),
+                            SizedBox(
+                              width: fieldWidth,
+                              child: _numField(
+                                context,
+                                l10n.widthMeasure,
+                                _widthC,
+                                hint: l10n.exampleWidth,
+                                icon: Icons.swap_horiz_rounded,
                               ),
-                            ],
-                          ),
-                        );
-                      }),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
 
-                      const SizedBox(height: 14),
+                    const SizedBox(height: 14),
 
-                      _SectionCard(
-                        title: l10n.additionalNotesLabel,
-                        child: TextFormField(
-                          controller: _notesC,
-                          maxLines: 4,
-                          decoration: _dec(
-                            context,
-                            l10n.notes,
-                            hint: l10n.notesExample,
-                            icon: Icons.edit_note_rounded,
-                          ),
+                    _SectionCard(
+                      title: l10n.additionalNotesLabel,
+                      child: TextFormField(
+                        controller: _notesC,
+                        maxLines: 4,
+                        decoration: _dec(
+                          context,
+                          l10n.notes,
+                          hint: l10n.notesExample,
+                          icon: Icons.edit_note_rounded,
                         ),
                       ),
+                    ),
 
-                      const SizedBox(height: 100),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        // زر التأكيد
-        bottomNavigationBar: SafeArea(
-          top: false,
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-            decoration: BoxDecoration(
-              color: cs.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(.06),
-                  blurRadius: 16,
-                  offset: const Offset(0, -4),
-                ),
-              ],
-            ),
-            child: SizedBox(
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: _submit,
-                icon: const Icon(Icons.check_circle_outline_rounded),
-                label: Text(l10n.confirmMeasurementsAndProceed),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _brand,
-                  foregroundColor: Colors.white,
-                  textStyle: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+                    const SizedBox(height: 100),
+                  ],
                 ),
               ),
             ),
           ),
         ),
       ),
-    )
+      // زر التأكيد
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(.06),
+                blurRadius: 16,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: SizedBox(
+            height: 52,
+            child: ElevatedButton.icon(
+              onPressed: _submit,
+              icon: const Icon(Icons.check_circle_outline_rounded),
+              label: Text(l10n.confirmMeasurementsAndProceed),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _brand,
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(
+                    fontWeight: FontWeight.w800, fontSize: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   InputDecoration _dec(BuildContext ctx, String label, {String? hint, IconData? icon}) {

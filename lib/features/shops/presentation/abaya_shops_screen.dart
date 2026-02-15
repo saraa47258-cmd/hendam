@@ -90,7 +90,19 @@ class _AbayaShopsScreenState extends State<AbayaShopsScreen> {
     return Scaffold(
       backgroundColor: cs.surface,
       body: _isLoading
-            ? const ShopListSkeleton(count: 6)
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.loading,
+                      style: TextStyle(color: cs.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              )
             : CustomScrollView(
                 slivers: [
                   // AppBar بنمط iOS ولون بناتي

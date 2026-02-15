@@ -31,75 +31,74 @@ class ServiceCard extends StatelessWidget {
         side: BorderSide(color: cs.outlineVariant.withOpacity(.7)),
       ),
       child: InkWell(
-          onTap: onSelect,
-          splashColor: cs.primary.withOpacity(0.06),
-          highlightColor: cs.primary.withOpacity(0.02),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Header(service: service),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // اسم الخدمة
-                    Text(
-                      service.nameAr,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: tt.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        height: 1.15,
-                      ),
+        onTap: onSelect,
+        splashColor: cs.primary.withOpacity(0.06),
+        highlightColor: cs.primary.withOpacity(0.02),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _Header(service: service),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // اسم الخدمة
+                  Text(
+                    service.nameAr,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: tt.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
                     ),
-                    const SizedBox(height: 12),
-                    // أزرار التفاصيل والاختيار
-                    Row(
-                      children: [
-                        if (onInfo != null)
-                          OutlinedButton.icon(
-                            onPressed: onInfo,
-                            icon: const Icon(Icons.info_outline, size: 18),
-                            label: Text(l10n.details),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  const SizedBox(height: 12),
+                  // أزرار التفاصيل والاختيار
+                  Row(
+                    children: [
+                      if (onInfo != null)
+                        OutlinedButton.icon(
+                          onPressed: onInfo,
+                          icon: const Icon(Icons.info_outline, size: 18),
+                          label: Text(l10n.details),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide(color: cs.outlineVariant),
+                            textStyle: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      if (onInfo != null) const SizedBox(width: 8),
+                      Expanded(
+                        child: SizedBox(
+                          height: 46,
+                          child: FilledButton(
+                            onPressed: onSelect,
+                            style: FilledButton.styleFrom(
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              side: BorderSide(color: cs.outlineVariant),
-                              textStyle: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        if (onInfo != null) const SizedBox(width: 8),
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: FilledButton(
-                              onPressed: onSelect,
-                              style: FilledButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                textStyle: tt.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: .1,
-                                ),
+                              textStyle: tt.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: .1,
                               ),
-                            child: Text(l10n.select),
                             ),
+                            child: Text(l10n.select),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
-    )
+    );
   }
 }
 

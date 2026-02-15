@@ -57,23 +57,23 @@ class TailorCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: InkWell(
-          onTap: onTap,
-          splashColor: cs.primary.withOpacity(0.06),
-          highlightColor: cs.primary.withOpacity(0.02),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // ===== الهيدر (صورة + شرائح معلومات) =====
-              _HeaderImage(
-                imageUrl: tailor.imageUrl,
-                heroTag: heroTag,
-                overlayGradient: const [
-                  Color(0xCC000000),
-                  Color(0x33000000),
-                  Colors.transparent,
-                ],
-                topLeft: _StatusChip(isOpen: isOpen),
-                topRight: Row(
+        onTap: onTap,
+        splashColor: cs.primary.withOpacity(0.06),
+        highlightColor: cs.primary.withOpacity(0.02),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ===== الهيدر (صورة + شرائح معلومات) =====
+            _HeaderImage(
+              imageUrl: tailor.imageUrl,
+              heroTag: heroTag,
+              overlayGradient: const [
+                Color(0xCC000000),
+                Color(0x33000000),
+                Colors.transparent,
+              ],
+              topLeft: _StatusChip(isOpen: isOpen),
+              topRight: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // زر المفضلة
@@ -112,124 +112,123 @@ class TailorCard extends StatelessWidget {
                     ],
                   ],
                 ),
-                bottomLeft: _GlassPill(
-                  child: Row(
-                    children: [
-                      const Icon(Icons.star_rounded,
-                          color: Colors.white, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        tailor.rating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ===== المحتوى السفلي =====
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+              bottomLeft: _GlassPill(
+                child: Row(
                   children: [
-                    // الاسم + المدينة
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            tailor.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: tt.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              height: 1.1,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(Icons.place_rounded,
-                            size: 16, color: cs.onSurfaceVariant),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            tailor.city,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: tt.bodyMedium
-                                ?.copyWith(color: cs.onSurfaceVariant),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    // الوسوم (بشكل أفقي أنيق + عدّاد إضافي)
-                    if (tailor.tags.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _TagsRow(tags: tailor.tags, maxVisible: 4),
-                    ],
-
-                    const SizedBox(height: 14),
-
-                    // الأزرار
-                    Row(
-                      children: [
-                        SizedBox(
-                          height: 46,
-                          width: 46,
-                          child: OutlinedButton(
-                            onPressed: onChat,
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: cs.outlineVariant),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              padding: EdgeInsets.zero,
-                            ),
-                            child:
-                                const Icon(Icons.chat_bubble_outline_rounded),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: SizedBox(
-                            height: 46,
-                            child: FilledButton.icon(
-                              onPressed: onBook,
-                              icon: const Icon(Icons.calendar_today_outlined,
-                                  size: 18),
-                              label: Text(l10n.bookAppointment),
-                              style: FilledButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                textStyle: tt.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.1,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                    const Icon(Icons.star_rounded,
+                        color: Colors.white, size: 16),
+                    const SizedBox(width: 4),
+                    Text(
+                      tailor.rating.toStringAsFixed(1),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // ===== المحتوى السفلي =====
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // الاسم + المدينة
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          tailor.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tt.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            height: 1.1,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.place_rounded,
+                          size: 16, color: cs.onSurfaceVariant),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          tailor.city,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: tt.bodyMedium
+                              ?.copyWith(color: cs.onSurfaceVariant),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // الوسوم (بشكل أفقي أنيق + عدّاد إضافي)
+                  if (tailor.tags.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _TagsRow(tags: tailor.tags, maxVisible: 4),
+                  ],
+
+                  const SizedBox(height: 14),
+
+                  // الأزرار
+                  Row(
+                    children: [
+                      SizedBox(
+                        height: 46,
+                        width: 46,
+                        child: OutlinedButton(
+                          onPressed: onChat,
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: cs.outlineVariant),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          child:
+                              const Icon(Icons.chat_bubble_outline_rounded),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 46,
+                          child: FilledButton.icon(
+                            onPressed: onBook,
+                            icon: const Icon(Icons.calendar_today_outlined,
+                                size: 18),
+                            label: Text(l10n.bookAppointment),
+                            style: FilledButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              textStyle: tt.titleSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
-    )
+    );
   }
 }
 

@@ -76,85 +76,84 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF8B0000), // لون أحمر داكن
       body: SafeArea(
-          child: Column(
-            children: [
-              // العنوان
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.all(context.responsivePadding()),
-                child: Text(
-                  l10n.measurementsForm,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: context.responsiveFontSize(24.0),
-                    fontWeight: FontWeight.bold,
-                  ),
+        child: Column(
+          children: [
+            // العنوان
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(context.responsivePadding()),
+              child: Text(
+                l10n.measurementsForm,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: context.responsiveFontSize(24.0),
+                  fontWeight: FontWeight.bold,
                 ),
               ),
+            ),
 
-              // شبكة المقاسات
-              Expanded(
-                child: Container(
-                  margin: EdgeInsets.all(context.responsivePadding()),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius:
-                        BorderRadius.circular(context.responsiveRadius()),
-                  ),
-                  child: _buildMeasurementsGrid(context, l10n),
+            // شبكة المقاسات
+            Expanded(
+              child: Container(
+                margin: EdgeInsets.all(context.responsivePadding()),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius:
+                      BorderRadius.circular(context.responsiveRadius()),
                 ),
+                child: _buildMeasurementsGrid(context, l10n),
               ),
+            ),
 
-              // أزرار التحكم
-              Container(
-                padding: EdgeInsets.all(context.responsivePadding()),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF8B0000),
-                          padding: EdgeInsets.symmetric(
-                            vertical: context.responsiveSpacing(),
-                          ),
+            // أزرار التحكم
+            Container(
+              padding: EdgeInsets.all(context.responsivePadding()),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF8B0000),
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.responsiveSpacing(),
                         ),
-                        child: Text(
-                          l10n.cancel,
-                          style: TextStyle(
-                            fontSize: context.responsiveFontSize(16.0),
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                      child: Text(
+                        l10n.cancel,
+                        style: TextStyle(
+                          fontSize: context.responsiveFontSize(16.0),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    SizedBox(width: context.responsiveSpacing()),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _saveMeasurements,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF8B0000),
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(
-                            vertical: context.responsiveSpacing(),
-                          ),
+                  ),
+                  SizedBox(width: context.responsiveSpacing()),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _saveMeasurements,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B0000),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          vertical: context.responsiveSpacing(),
                         ),
-                        child: Text(
-                          l10n.save,
-                          style: TextStyle(
-                            fontSize: context.responsiveFontSize(16.0),
-                            fontWeight: FontWeight.bold,
-                          ),
+                      ),
+                      child: Text(
+                        l10n.save,
+                        style: TextStyle(
+                          fontSize: context.responsiveFontSize(16.0),
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

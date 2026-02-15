@@ -402,6 +402,8 @@ abstract class AppLocalizations {
   String get seeLess;
   String get select;
   String get selected;
+  String get details;
+  String get bookAppointment;
   String get add;
   String get remove;
   String get update;
