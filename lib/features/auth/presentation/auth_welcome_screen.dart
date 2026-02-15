@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,143 +7,229 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hindam/l10n/app_localizations.dart';
 
 /// ══════════════════════════════════════════════════════════════════════════
-/// شاشة الترحيب - تصميم عالمي فاخر (Apple / Google Level)
+/// شاشة الترحيب - تصميم فاخر احترافي مع حركات انسيابية
 /// ══════════════════════════════════════════════════════════════════════════
 class AuthWelcomeScreen extends StatelessWidget {
   const AuthWelcomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // ضبط شريط الحالة
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
       ),
     );
 
     return const Scaffold(
-      backgroundColor: _DS.bgBase,
       body: _WelcomeBody(),
     );
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// نظام التصميم - Design System
-/// ══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────
+// نظام التصميم
+// ─────────────────────────────────────────────────────────────────────────
 abstract class _DS {
-  // === الخلفية ===
-  static const Color bgBase = Color(0xFFF8FAFC);
-  static const Color bgWarm = Color(0xFFFFFBF7);
-  static const Color bgCool = Color(0xFFF0F4FF);
+  // الألوان الأساسية - درجات ذهبية وكحلية فاخرة
+  static const Color primary = Color(0xFF0C1B33);
+  static const Color primaryLight = Color(0xFF2A5580);
+  static const Color accent = Color(0xFFD4A853);
+  static const Color accentLight = Color(0xFFE8C97A);
 
-  // === الألوان الأساسية ===
-  static const Color primary = Color(0xFF1A365D);
-  static const Color primaryLight = Color(0xFF2B4C7E);
-  static const Color primarySoft = Color(0xFFE8F0FE);
-  static const Color accent = Color(0xFF3B82F6);
+  // النصوص
+  static const Color textOnDarkMuted = Color(0xFFAFBFD4);
+  static const Color textDark = Color(0xFF0F172A);
 
-  // === النصوص ===
-  static const Color textPrimary = Color(0xFF0F172A);
-  static const Color textSecondary = Color(0xFF475569);
-  static const Color textMuted = Color(0xFF94A3B8);
-  static const Color textOnPrimary = Colors.white;
-
-  // === الأسطح ===
+  // الأسطح
   static const Color surface = Colors.white;
-  static const Color border = Color(0xFFE2E8F0);
-  static const Color borderLight = Color(0xFFF1F5F9);
 
-  // === المسافات ===
+  // المسافات
   static const double xs = 4;
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
   static const double xl = 20;
   static const double xxl = 24;
-  static const double xxxl = 32;
 
-  // === الأقطار ===
-  static const double radiusSm = 8;
-  static const double radiusMd = 12;
-  static const double radiusLg = 16;
-  static const double radiusXl = 20;
-  static const double radiusXxl = 28;
-
-  // === الظلال ===
-  static List<BoxShadow> get shadowMedium => [
-        BoxShadow(
-          color: primary.withOpacity(0.08),
-          blurRadius: 40,
-          offset: const Offset(0, 16),
-        ),
-        BoxShadow(
-          color: primary.withOpacity(0.04),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ];
-
-  static List<BoxShadow> get shadowButton => [
-        BoxShadow(
-          color: primary.withOpacity(0.25),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-        BoxShadow(
-          color: accent.withOpacity(0.15),
-          blurRadius: 32,
-          offset: const Offset(0, 4),
-        ),
-      ];
+  // الأقطار
+  static const double radiusSm = 10;
+  static const double radiusMd = 14;
+  static const double radiusLg = 18;
+  static const double radiusXl = 24;
+  static const double radiusXxl = 32;
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// المحتوى الرئيسي
-/// ══════════════════════════════════════════════════════════════════════════
-class _WelcomeBody extends StatelessWidget {
+// ─────────────────────────────────────────────────────────────────────────
+// المحتوى الرئيسي مع Staggered Animations
+// ─────────────────────────────────────────────────────────────────────────
+class _WelcomeBody extends StatefulWidget {
   const _WelcomeBody();
 
   @override
+  State<_WelcomeBody> createState() => _WelcomeBodyState();
+}
+
+class _WelcomeBodyState extends State<_WelcomeBody>
+    with TickerProviderStateMixin {
+  late final AnimationController _staggerController;
+  late final Animation<double> _logoAnim;
+  late final Animation<double> _titleAnim;
+  late final Animation<double> _subtitleAnim;
+  late final Animation<double> _cardAnim;
+  late final Animation<double> _trustAnim;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _staggerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
+
+    _logoAnim = CurvedAnimation(
+      parent: _staggerController,
+      curve: const Interval(0.0, 0.35, curve: Curves.easeOutBack),
+    );
+    _titleAnim = CurvedAnimation(
+      parent: _staggerController,
+      curve: const Interval(0.15, 0.45, curve: Curves.easeOutCubic),
+    );
+    _subtitleAnim = CurvedAnimation(
+      parent: _staggerController,
+      curve: const Interval(0.25, 0.55, curve: Curves.easeOutCubic),
+    );
+    _cardAnim = CurvedAnimation(
+      parent: _staggerController,
+      curve: const Interval(0.40, 0.75, curve: Curves.easeOutCubic),
+    );
+    _trustAnim = CurvedAnimation(
+      parent: _staggerController,
+      curve: const Interval(0.60, 1.0, curve: Curves.easeOutCubic),
+    );
+
+    _staggerController.forward();
+  }
+
+  @override
+  void dispose() {
+    _staggerController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+
     return Stack(
       children: [
-        // الخلفية النظيفة
-        const _CleanBackground(),
+        // الخلفية المتدرجة الداكنة
+        const _PremiumBackground(),
 
         // المحتوى
         SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
               final isCompact = constraints.maxHeight < 700;
-              final horizontalPadding =
-                  constraints.maxWidth > 400 ? 32.0 : 24.0;
+              final hPad = constraints.maxWidth > 400 ? 32.0 : 24.0;
 
               return SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  constraints:
+                      BoxConstraints(minHeight: constraints.maxHeight),
                   child: Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: horizontalPadding),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     child: Column(
                       children: [
-                        SizedBox(height: isCompact ? 48 : 72),
+                        SizedBox(height: isCompact ? 40 : 64),
 
-                        // الشعار والعلامة التجارية
-                        const _BrandSection(),
+                        // الشعار
+                        _SlideIn(
+                          animation: _logoAnim,
+                          offsetY: 40,
+                          child: const _AnimatedLogo(),
+                        ),
 
-                        SizedBox(height: isCompact ? 40 : 56),
+                        SizedBox(height: isCompact ? 24 : 32),
+
+                        // اسم التطبيق
+                        _SlideIn(
+                          animation: _titleAnim,
+                          offsetY: 30,
+                          child: Text(
+                            l10n.hindam,
+                            style: GoogleFonts.cairo(
+                              fontSize: 52,
+                              fontWeight: FontWeight.w900,
+                              color: _DS.surface,
+                              letterSpacing: -1,
+                              height: 1.0,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: _DS.md),
+
+                        // الشعار الفرعي
+                        _SlideIn(
+                          animation: _subtitleAnim,
+                          offsetY: 20,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: _DS.accent.withValues(alpha: 0.5),
+                                width: 1,
+                              ),
+                              borderRadius:
+                                  BorderRadius.circular(_DS.radiusXxl),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.auto_awesome,
+                                  size: 14,
+                                  color: _DS.accent.withValues(alpha: 0.8),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  l10n.menTailoringShopsApp,
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: _DS.textOnDarkMuted,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: isCompact ? 36 : 52),
 
                         // بطاقة الإجراءات
-                        const _ActionCard(),
+                        _SlideIn(
+                          animation: _cardAnim,
+                          offsetY: 50,
+                          child: const _ActionCard(),
+                        ),
 
-                        SizedBox(height: isCompact ? 32 : 48),
+                        SizedBox(height: isCompact ? 24 : 36),
 
-                        // شارات الثقة
-                        const _TrustIndicators(),
+                        // مؤشرات الثقة
+                        _SlideIn(
+                          animation: _trustAnim,
+                          offsetY: 30,
+                          child: const _TrustIndicators(),
+                        ),
 
                         const SizedBox(height: 32),
                       ],
@@ -158,11 +245,43 @@ class _WelcomeBody extends StatelessWidget {
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// الخلفية النظيفة - بسيطة وأنيقة
-/// ══════════════════════════════════════════════════════════════════════════
-class _CleanBackground extends StatelessWidget {
-  const _CleanBackground();
+// ─────────────────────────────────────────────────────────────────────────
+// SlideIn animation wrapper
+// ─────────────────────────────────────────────────────────────────────────
+class _SlideIn extends StatelessWidget {
+  final Animation<double> animation;
+  final double offsetY;
+  final Widget child;
+
+  const _SlideIn({
+    required this.animation,
+    required this.offsetY,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: animation,
+      builder: (context, child) {
+        return Opacity(
+          opacity: animation.value.clamp(0.0, 1.0),
+          child: Transform.translate(
+            offset: Offset(0, offsetY * (1 - animation.value)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// الخلفية الفاخرة - تدرج كحلي عميق مع تأثيرات ذهبية
+// ─────────────────────────────────────────────────────────────────────────
+class _PremiumBackground extends StatelessWidget {
+  const _PremiumBackground();
 
   @override
   Widget build(BuildContext context) {
@@ -171,45 +290,48 @@ class _CleanBackground extends StatelessWidget {
     return SizedBox.expand(
       child: Stack(
         children: [
-          // التدرج الأساسي الناعم
+          // التدرج الأساسي الداكن
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
                 colors: [
-                  _DS.bgWarm,
-                  _DS.bgBase,
-                  _DS.bgCool,
+                  Color(0xFF05101F),
+                  Color(0xFF0C1B33),
+                  Color(0xFF162D50),
+                  Color(0xFF0C1B33),
                 ],
-                stops: [0.0, 0.5, 1.0],
+                stops: [0.0, 0.3, 0.65, 1.0],
               ),
             ),
           ),
 
-          // توهج دافئ - أعلى اليمين
+          // توهج ذهبي - أعلى اليمين
           Positioned(
-            top: -size.height * 0.15,
-            right: -size.width * 0.3,
+            top: -size.height * 0.08,
+            right: -size.width * 0.15,
             child: Container(
-              width: size.width * 0.9,
-              height: size.width * 0.9,
+              width: size.width * 0.7,
+              height: size.width * 0.7,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFFEE2E2).withOpacity(0.5),
-                    const Color(0xFFFEE2E2).withOpacity(0.0),
+                    _DS.accent.withValues(alpha: 0.12),
+                    _DS.accent.withValues(alpha: 0.03),
+                    Colors.transparent,
                   ],
+                  stops: const [0.0, 0.5, 1.0],
                 ),
               ),
             ),
           ),
 
-          // توهج بارد - أسفل اليسار
+          // توهج أزرق - أسفل اليسار
           Positioned(
             bottom: -size.height * 0.1,
-            left: -size.width * 0.3,
+            left: -size.width * 0.2,
             child: Container(
               width: size.width * 0.8,
               height: size.width * 0.8,
@@ -217,134 +339,193 @@ class _CleanBackground extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFFDBEAFE).withOpacity(0.6),
-                    const Color(0xFFDBEAFE).withOpacity(0.0),
+                    _DS.primaryLight.withValues(alpha: 0.2),
+                    _DS.primaryLight.withValues(alpha: 0.05),
+                    Colors.transparent,
                   ],
+                  stops: const [0.0, 0.4, 1.0],
                 ),
               ),
             ),
           ),
+
+          // نقاط زخرفية خفيفة
+          const _DecorativePattern(),
         ],
       ),
     );
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// قسم العلامة التجارية
-/// ══════════════════════════════════════════════════════════════════════════
-class _BrandSection extends StatelessWidget {
-  const _BrandSection();
+// ─────────────────────────────────────────────────────────────────────────
+// نمط زخرفي - نقاط لامعة خفيفة
+// ─────────────────────────────────────────────────────────────────────────
+class _DecorativePattern extends StatelessWidget {
+  const _DecorativePattern();
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    return CustomPaint(
+      size: MediaQuery.sizeOf(context),
+      painter: _DotPatternPainter(),
+    );
+  }
+}
 
-    return Column(
-      children: [
-        // الشعار
-        const _Logo(),
+class _DotPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.03)
+      ..style = PaintingStyle.fill;
 
-        const SizedBox(height: _DS.xxxl),
+    const spacing = 40.0;
+    const radius = 1.0;
 
-        // اسم التطبيق
-        Text(
-          l10n.hindam,
-          style: GoogleFonts.cairo(
-            fontSize: 48,
-            fontWeight: FontWeight.w800,
-            color: _DS.textPrimary,
-            letterSpacing: -1.5,
-            height: 1.0,
-          ),
-        ),
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x, y), radius, paint);
+      }
+    }
+  }
 
-        const SizedBox(height: _DS.md),
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
-        // الوصف
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: _DS.xl,
-            vertical: _DS.sm,
-          ),
+// ─────────────────────────────────────────────────────────────────────────
+// الشعار المتحرك - مع تأثير توهج دوراني
+// ─────────────────────────────────────────────────────────────────────────
+class _AnimatedLogo extends StatefulWidget {
+  const _AnimatedLogo();
+
+  @override
+  State<_AnimatedLogo> createState() => _AnimatedLogoState();
+}
+
+class _AnimatedLogoState extends State<_AnimatedLogo>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _glowController;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _glowController,
+      builder: (context, child) {
+        final glowAngle = _glowController.value * 2 * math.pi;
+
+        return Container(
+          width: 120,
+          height: 120,
           decoration: BoxDecoration(
-            color: _DS.primarySoft.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(_DS.radiusXl),
-          ),
-          child: Text(
-            l10n.menTailoringShopsApp,
-            style: GoogleFonts.cairo(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: _DS.textSecondary,
-              letterSpacing: 0.2,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// ══════════════════════════════════════════════════════════════════════════
-/// الشعار
-/// ══════════════════════════════════════════════════════════════════════════
-class _Logo extends StatelessWidget {
-  const _Logo();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      height: 100,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: _DS.surface,
-        boxShadow: [
-          BoxShadow(
-            color: _DS.primary.withOpacity(0.08),
-            blurRadius: 32,
-            offset: const Offset(0, 12),
-          ),
-          BoxShadow(
-            color: _DS.accent.withOpacity(0.1),
-            blurRadius: 48,
-            offset: const Offset(0, 8),
-          ),
-        ],
-        border: Border.all(
-          color: _DS.borderLight,
-          width: 1,
-        ),
-      ),
-      child: Container(
-        margin: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              _DS.primarySoft,
-              _DS.primarySoft.withOpacity(0.6),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: _DS.accent.withValues(alpha: 0.25),
+                blurRadius: 48,
+                spreadRadius: 2,
+              ),
+              BoxShadow(
+                color: _DS.accent.withValues(alpha: 0.15),
+                blurRadius: 80,
+                spreadRadius: 8,
+              ),
             ],
           ),
-        ),
-        child: const Center(
-          child: Icon(
-            Icons.content_cut_rounded,
-            size: 40,
-            color: _DS.primary,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              // الحلقة الدوارة المتوهجة
+              Transform.rotate(
+                angle: glowAngle,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: SweepGradient(
+                      colors: [
+                        _DS.accent.withValues(alpha: 0.0),
+                        _DS.accent.withValues(alpha: 0.6),
+                        _DS.accentLight.withValues(alpha: 0.8),
+                        _DS.accent.withValues(alpha: 0.0),
+                      ],
+                      stops: const [0.0, 0.3, 0.5, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+
+              // الخلفية الداخلية
+              Container(
+                width: 112,
+                height: 112,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF132744),
+                      Color(0xFF0C1B33),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: _DS.accent.withValues(alpha: 0.3),
+                    width: 1.5,
+                  ),
+                ),
+              ),
+
+              // الدائرة الداخلية المتدرجة
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      _DS.accent.withValues(alpha: 0.15),
+                      _DS.accent.withValues(alpha: 0.05),
+                    ],
+                  ),
+                ),
+                child: const Center(
+                  child: Icon(
+                    Icons.content_cut_rounded,
+                    size: 44,
+                    color: _DS.accent,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// بطاقة الإجراءات - Glassmorphism خفيف
-/// ══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────
+// بطاقة الإجراءات - Glassmorphism على خلفية داكنة
+// ─────────────────────────────────────────────────────────────────────────
 class _ActionCard extends StatelessWidget {
   const _ActionCard();
 
@@ -353,18 +534,20 @@ class _ActionCard extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(_DS.radiusXxl),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           constraints: const BoxConstraints(maxWidth: 400),
-          padding: const EdgeInsets.all(_DS.xxl),
+          padding: const EdgeInsets.symmetric(
+            horizontal: _DS.xxl,
+            vertical: 28,
+          ),
           decoration: BoxDecoration(
-            color: _DS.surface.withOpacity(0.85),
+            color: Colors.white.withValues(alpha: 0.07),
             borderRadius: BorderRadius.circular(_DS.radiusXxl),
             border: Border.all(
-              color: _DS.border.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.12),
               width: 1,
             ),
-            boxShadow: _DS.shadowMedium,
           ),
           child: const Column(
             children: [
@@ -372,7 +555,7 @@ class _ActionCard extends StatelessWidget {
               SizedBox(height: _DS.lg),
               _SignUpButton(),
               SizedBox(height: _DS.xxl),
-              _Divider(),
+              _OrDivider(),
               SizedBox(height: _DS.xl),
               _GuestLink(),
             ],
@@ -383,9 +566,9 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// زر تسجيل الدخول الأساسي
-/// ══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────
+// زر تسجيل الدخول - أنيق مع تأثير ذهبي
+// ─────────────────────────────────────────────────────────────────────────
 class _LoginButton extends StatefulWidget {
   const _LoginButton();
 
@@ -406,9 +589,9 @@ class _LoginButtonState extends State<_LoginButton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 120),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
   }
@@ -436,12 +619,9 @@ class _LoginButtonState extends State<_LoginButton>
 
   Future<void> _onTap() async {
     if (_isLoading) return;
-
     HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
-
     await Future.delayed(const Duration(milliseconds: 200));
-
     if (mounted) {
       setState(() => _isLoading = false);
       context.push('/login');
@@ -464,27 +644,32 @@ class _LoginButtonState extends State<_LoginButton>
           child: child,
         ),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(milliseconds: 150),
           width: double.infinity,
-          height: 58,
+          height: 60,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: _isPressed
-                  ? [_DS.primary, _DS.primary]
-                  : [_DS.primary, _DS.primaryLight],
+                  ? [_DS.accent, _DS.accent]
+                  : [_DS.accent, _DS.accentLight],
             ),
             borderRadius: BorderRadius.circular(_DS.radiusLg),
             boxShadow: _isPressed
-                ? [
+                ? []
+                : [
                     BoxShadow(
-                      color: _DS.primary.withOpacity(0.3),
-                      blurRadius: 12,
+                      color: _DS.accent.withValues(alpha: 0.4),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: _DS.accent.withValues(alpha: 0.2),
+                      blurRadius: 48,
                       offset: const Offset(0, 4),
                     ),
-                  ]
-                : _DS.shadowButton,
+                  ],
           ),
           child: Center(
             child: _isLoading
@@ -493,7 +678,8 @@ class _LoginButtonState extends State<_LoginButton>
                     height: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation(_DS.textOnPrimary),
+                      valueColor:
+                          AlwaysStoppedAnimation(_DS.textDark),
                     ),
                   )
                 : Row(
@@ -502,23 +688,10 @@ class _LoginButtonState extends State<_LoginButton>
                       Text(
                         l10n.login,
                         style: GoogleFonts.cairo(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: _DS.textOnPrimary,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: _DS.primary,
                           letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(width: _DS.md),
-                      Container(
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(_DS.radiusSm),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_back_rounded, // RTL: السهم يشير لليسار
-                          size: 16,
-                          color: _DS.textOnPrimary,
                         ),
                       ),
                     ],
@@ -530,9 +703,9 @@ class _LoginButtonState extends State<_LoginButton>
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// زر إنشاء حساب جديد
-/// ══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────
+// زر إنشاء حساب جديد - شفاف بإطار أنيق
+// ─────────────────────────────────────────────────────────────────────────
 class _SignUpButton extends StatefulWidget {
   const _SignUpButton();
 
@@ -553,9 +726,9 @@ class _SignUpButtonState extends State<_SignUpButton>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 150),
+      duration: const Duration(milliseconds: 120),
     );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
   }
@@ -583,12 +756,9 @@ class _SignUpButtonState extends State<_SignUpButton>
 
   Future<void> _onTap() async {
     if (_isLoading) return;
-
     HapticFeedback.lightImpact();
     setState(() => _isLoading = true);
-
     await Future.delayed(const Duration(milliseconds: 200));
-
     if (mounted) {
       setState(() => _isLoading = false);
       context.push('/signup');
@@ -611,25 +781,20 @@ class _SignUpButtonState extends State<_SignUpButton>
           child: child,
         ),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
+          duration: const Duration(milliseconds: 150),
           width: double.infinity,
-          height: 58,
+          height: 60,
           decoration: BoxDecoration(
-            color: _isPressed ? _DS.primarySoft : _DS.surface,
+            color: _isPressed
+                ? Colors.white.withValues(alpha: 0.12)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(_DS.radiusLg),
             border: Border.all(
-              color: _isPressed ? _DS.primary : _DS.primary.withOpacity(0.3),
+              color: _isPressed
+                  ? Colors.white.withValues(alpha: 0.4)
+                  : Colors.white.withValues(alpha: 0.2),
               width: 1.5,
             ),
-            boxShadow: _isPressed
-                ? []
-                : [
-                    BoxShadow(
-                      color: _DS.primary.withOpacity(0.06),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
           ),
           child: Center(
             child: _isLoading
@@ -638,22 +803,22 @@ class _SignUpButtonState extends State<_SignUpButton>
                     height: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
-                      valueColor: AlwaysStoppedAnimation(_DS.primary),
+                      valueColor: AlwaysStoppedAnimation(_DS.surface),
                     ),
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(5),
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: _DS.primarySoft,
+                          color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(_DS.radiusSm),
                         ),
                         child: const Icon(
                           Icons.person_add_alt_1_rounded,
-                          size: 16,
-                          color: _DS.primary,
+                          size: 18,
+                          color: _DS.surface,
                         ),
                       ),
                       const SizedBox(width: _DS.md),
@@ -662,7 +827,7 @@ class _SignUpButtonState extends State<_SignUpButton>
                         style: GoogleFonts.cairo(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: _DS.primary,
+                          color: _DS.surface,
                           letterSpacing: 0.2,
                         ),
                       ),
@@ -675,11 +840,11 @@ class _SignUpButtonState extends State<_SignUpButton>
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// فاصل "أو"
-/// ══════════════════════════════════════════════════════════════════════════
-class _Divider extends StatelessWidget {
-  const _Divider();
+// ─────────────────────────────────────────────────────────────────────────
+// فاصل "أو"
+// ─────────────────────────────────────────────────────────────────────────
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
 
   @override
   Widget build(BuildContext context) {
@@ -691,8 +856,8 @@ class _Divider extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _DS.border.withOpacity(0),
-                  _DS.border,
+                  Colors.white.withValues(alpha: 0),
+                  Colors.white.withValues(alpha: 0.15),
                 ],
               ),
             ),
@@ -702,21 +867,20 @@ class _Divider extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: _DS.lg),
           padding: const EdgeInsets.symmetric(
             horizontal: _DS.lg,
-            vertical: _DS.sm,
+            vertical: _DS.xs,
           ),
           decoration: BoxDecoration(
-            color: _DS.bgBase,
-            borderRadius: BorderRadius.circular(_DS.radiusMd),
             border: Border.all(
-              color: _DS.border.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.1),
             ),
+            borderRadius: BorderRadius.circular(_DS.radiusMd),
           ),
           child: Text(
             'أو',
             style: GoogleFonts.cairo(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: _DS.textMuted,
+              color: _DS.textOnDarkMuted,
             ),
           ),
         ),
@@ -726,8 +890,8 @@ class _Divider extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  _DS.border,
-                  _DS.border.withOpacity(0),
+                  Colors.white.withValues(alpha: 0.15),
+                  Colors.white.withValues(alpha: 0),
                 ],
               ),
             ),
@@ -738,9 +902,9 @@ class _Divider extends StatelessWidget {
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// رابط المتابعة كزائر
-/// ══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────
+// رابط المتابعة كزائر
+// ─────────────────────────────────────────────────────────────────────────
 class _GuestLink extends StatefulWidget {
   const _GuestLink();
 
@@ -770,7 +934,9 @@ class _GuestLinkState extends State<_GuestLink> {
           vertical: _DS.md,
         ),
         decoration: BoxDecoration(
-          color: _isPressed ? _DS.bgCool : Colors.transparent,
+          color: _isPressed
+              ? Colors.white.withValues(alpha: 0.08)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(_DS.radiusMd),
         ),
         child: Row(
@@ -780,7 +946,7 @@ class _GuestLinkState extends State<_GuestLink> {
             Icon(
               Icons.explore_outlined,
               size: 18,
-              color: _isPressed ? _DS.primary : _DS.textSecondary,
+              color: _isPressed ? _DS.accentLight : _DS.textOnDarkMuted,
             ),
             const SizedBox(width: _DS.sm),
             Text(
@@ -788,17 +954,7 @@ class _GuestLinkState extends State<_GuestLink> {
               style: GoogleFonts.cairo(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: _isPressed ? _DS.primary : _DS.textSecondary,
-              ),
-            ),
-            const SizedBox(width: _DS.xs),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              transform: Matrix4.translationValues(_isPressed ? -4 : 0, 0, 0),
-              child: Icon(
-                Icons.arrow_back_ios_rounded, // RTL: السهم يشير لليسار
-                size: 12,
-                color: _isPressed ? _DS.primary : _DS.textMuted,
+                color: _isPressed ? _DS.accentLight : _DS.textOnDarkMuted,
               ),
             ),
           ],
@@ -808,9 +964,9 @@ class _GuestLinkState extends State<_GuestLink> {
   }
 }
 
-/// ══════════════════════════════════════════════════════════════════════════
-/// مؤشرات الثقة
-/// ══════════════════════════════════════════════════════════════════════════
+// ─────────────────────────────────────────────────────────────────────────
+// مؤشرات الثقة - تصميم أنيق
+// ─────────────────────────────────────────────────────────────────────────
 class _TrustIndicators extends StatelessWidget {
   const _TrustIndicators();
 
@@ -825,10 +981,10 @@ class _TrustIndicators extends StatelessWidget {
         vertical: _DS.xl,
       ),
       decoration: BoxDecoration(
-        color: _DS.surface.withOpacity(0.7),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(_DS.radiusXl),
         border: Border.all(
-          color: _DS.border.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.08),
         ),
       ),
       child: Row(
@@ -837,19 +993,19 @@ class _TrustIndicators extends StatelessWidget {
           _TrustItem(
             icon: Icons.local_shipping_outlined,
             label: l10n.fastDelivery,
-            color: const Color(0xFF10B981),
+            color: const Color(0xFF34D399),
           ),
-          _VerticalDivider(),
+          _TrustDivider(),
           _TrustItem(
             icon: Icons.verified_outlined,
             label: l10n.guaranteedQuality,
-            color: const Color(0xFF3B82F6),
+            color: const Color(0xFF60A5FA),
           ),
-          _VerticalDivider(),
+          _TrustDivider(),
           _TrustItem(
             icon: Icons.support_agent_outlined,
             label: l10n.continuousSupport,
-            color: const Color(0xFF8B5CF6),
+            color: const Color(0xFFA78BFA),
           ),
         ],
       ),
@@ -874,11 +1030,15 @@ class _TrustItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: 46,
+          height: 46,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(_DS.radiusMd),
+            border: Border.all(
+              color: color.withValues(alpha: 0.2),
+              width: 1,
+            ),
           ),
           child: Icon(
             icon,
@@ -892,7 +1052,7 @@ class _TrustItem extends StatelessWidget {
           style: GoogleFonts.cairo(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: _DS.textSecondary,
+            color: _DS.textOnDarkMuted,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -902,7 +1062,7 @@ class _TrustItem extends StatelessWidget {
   }
 }
 
-class _VerticalDivider extends StatelessWidget {
+class _TrustDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -913,9 +1073,9 @@ class _VerticalDivider extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            _DS.border.withOpacity(0),
-            _DS.border.withOpacity(0.5),
-            _DS.border.withOpacity(0),
+            Colors.white.withValues(alpha: 0),
+            Colors.white.withValues(alpha: 0.1),
+            Colors.white.withValues(alpha: 0),
           ],
         ),
       ),
