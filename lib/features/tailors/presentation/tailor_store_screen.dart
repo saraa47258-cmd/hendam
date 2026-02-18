@@ -131,7 +131,7 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
-                                          'مسقط',
+                                          AppLocalizations.of(context)!.muscat,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: tt.bodySmall?.copyWith(
@@ -156,7 +156,7 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: _SearchBar(
-                          hint: 'ابحث داخل ${_sectionTitle(_selected)}',
+                          hint: '${AppLocalizations.of(context)!.searchInSection} ${_sectionTitle(_selected)}',
                           onSubmitted: (_) {},
                         ),
                       ),
@@ -171,7 +171,7 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
                               top: Radius.circular(28)),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(.04),
+                              color: cs.shadow.withOpacity(.04),
                               blurRadius: 12,
                               offset: const Offset(0, -2),
                             ),
@@ -291,11 +291,12 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
   }
 
   String _sectionTitle(_Section s) {
+    final l10n = AppLocalizations.of(context)!;
     switch (s) {
       case _Section.tailoring:
-        return 'الخدمات';
+        return l10n.services;
       case _Section.store:
-        return 'هدية';
+        return l10n.giftSection;
     }
   }
 
@@ -332,7 +333,7 @@ class _TailorStoreScreenState extends State<TailorStoreScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        'السعر: ر.ع ${item.price.toStringAsFixed(3)}',
+                        '${l10n.priceLabel}: ${l10n.currency(item.price.toStringAsFixed(3))}',
                         style: tt.titleSmall
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
@@ -386,10 +387,10 @@ class _Avatar extends StatelessWidget {
       height: 56,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withOpacity(.5), width: 2),
+        border: Border.all(color: cs.onPrimary.withOpacity(.5), width: 2),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(.08),
+              color: cs.shadow.withOpacity(.08),
               blurRadius: 10,
               offset: const Offset(0, 4))
         ],
@@ -455,11 +456,11 @@ class _SearchBar extends StatelessWidget {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(.06),
+              color: cs.shadow.withOpacity(.06),
               blurRadius: 12,
               offset: const Offset(0, 6))
         ],
@@ -500,7 +501,7 @@ class _SectionTitle extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               foregroundColor: cs.primary,
             ),
-            child: const Text('عرض الكل'),
+            child: Text(AppLocalizations.of(context)!.viewAllButton),
           ),
         ],
       ),
@@ -781,7 +782,7 @@ class _GiftGridCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'هدية',
+                                AppLocalizations.of(context)!.giftSection,
                                 style: tt.labelSmall?.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700,
@@ -859,7 +860,7 @@ class _GiftGridCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            '${item.price.toStringAsFixed(3)} ر.ع',
+                            AppLocalizations.of(context)!.currency(item.price.toStringAsFixed(3)),
                             style: tt.labelSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFFE91E63),
@@ -927,7 +928,7 @@ class _StoreTile extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'ر.ع ${item.price.toStringAsFixed(3)}',
+                      AppLocalizations.of(context)!.currency(item.price.toStringAsFixed(3)),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style:
@@ -959,9 +960,10 @@ class _SectionCircles extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const items = [
-      (_Section.tailoring, Icons.checkroom_rounded, 'الخدمات'),
-      (_Section.store, Icons.card_giftcard_rounded, 'هدية'),
+    final l10n = AppLocalizations.of(context)!;
+    final items = [
+      (_Section.tailoring, Icons.checkroom_rounded, l10n.services),
+      (_Section.store, Icons.card_giftcard_rounded, l10n.giftSection),
     ];
 
     return LayoutBuilder(

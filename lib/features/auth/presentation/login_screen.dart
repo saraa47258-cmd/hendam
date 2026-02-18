@@ -150,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    authProvider.error ?? l10n.loginFailed,
+                    AuthProvider.localizeError(authProvider.error, l10n),
                     style: GoogleFonts.cairo(),
                   ),
                 ),

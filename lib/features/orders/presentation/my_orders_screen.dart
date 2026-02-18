@@ -49,7 +49,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
   }
 
   // مساعد لصياغة السعر
-  String _price(double v) => '${v.toStringAsFixed(3)} ر.ع';
+  String _price(double v, AppLocalizations l10n) => l10n.currency(v.toStringAsFixed(3));
 
   @override
   Widget build(BuildContext context) {
@@ -142,7 +142,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                             cs.surfaceContainerHighest.withValues(alpha: 0.7),
                         selectedColor: const Color(0xFF6D4C41),
                         labelStyle: TextStyle(
-                          color: selected ? Colors.white : cs.onSurface,
+                          color: selected ? cs.onPrimary : cs.onSurface,
                           fontWeight: FontWeight.w700,
                         ),
                         shape: RoundedRectangleBorder(
@@ -299,7 +299,7 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                         itemBuilder: (_, i) => _OrderCard(
                           order: filteredOrders[i],
-                          priceText: _price(filteredOrders[i].totalPrice),
+                          priceText: _price(filteredOrders[i].totalPrice, l10n),
                           dateText:
                               _formatDate(filteredOrders[i].createdAt, l10n),
                           onTap: () {
@@ -357,14 +357,14 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
                                     final success =
                                         await OrderService.cancelOrder(
                                             filteredOrders[i].id,
-                                            'إلغاء من العميل');
+                                            l10n.cancelledByCustomer);
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(
                                         SnackBar(
                                           content: Text(success
-                                              ? '✅ تم إلغاء الطلب بنجاح'
-                                              : '❌ فشل إلغاء الطلب'),
+                                              ? '✅ ${l10n.orderCancelledSuccessfully}'
+                                              : '❌ ${l10n.orderCancellationFailed}'),
                                           backgroundColor: success
                                               ? Colors.green
                                               : Colors.red,
@@ -466,7 +466,7 @@ class _OrderCard extends StatelessWidget {
           border: Border.all(color: cs.outlineVariant),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: cs.shadow.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),
@@ -695,7 +695,7 @@ class _OrderCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
-                                'آخر تحديث: ${_formatUpdateTime(order.updatedAt!)}',
+                                '${l10n.lastUpdate}: ${_formatUpdateTime(order.updatedAt!, l10n)}',
                                 style: TextStyle(
                                   color: cs.onSurfaceVariant,
                                   fontSize: 11,
@@ -736,16 +736,16 @@ class _OrderCard extends StatelessWidget {
     );
   }
 
-  String _formatUpdateTime(DateTime time) {
+  String _formatUpdateTime(DateTime time, AppLocalizations l10n) {
     final now = DateTime.now();
     final diff = now.difference(time);
 
     if (diff.inMinutes < 60) {
-      return 'قبل ${diff.inMinutes} دقيقة';
+      return l10n.minutesAgo(diff.inMinutes);
     } else if (diff.inHours < 24) {
-      return 'قبل ${diff.inHours} ساعة';
+      return l10n.hoursAgo(diff.inHours);
     } else if (diff.inDays < 7) {
-      return 'قبل ${diff.inDays} يوم';
+      return l10n.daysAgo(diff.inDays);
     } else {
       return '${time.day}/${time.month}/${time.year}';
     }
@@ -865,6 +865,7 @@ class _OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildStatusCard(
       BuildContext context, OrderModel order, ColorScheme cs, TextTheme tt) {
+    final l10n = AppLocalizations.of(context)!;
     Color bg;
     Color fg;
     String statusText;
@@ -874,37 +875,37 @@ class _OrderDetailsScreen extends StatelessWidget {
       case OrderStatus.pending:
         bg = const Color(0xFFFFF4E5);
         fg = const Color(0xFF8D6E63);
-        statusText = 'معلقة';
+        statusText = l10n.pending;
         statusIcon = Icons.hourglass_empty_rounded;
         break;
       case OrderStatus.accepted:
         bg = const Color(0xFFE3F2FD);
         fg = const Color(0xFF0D47A1);
-        statusText = 'مقبولة';
+        statusText = l10n.accepted;
         statusIcon = Icons.check_circle_outline_rounded;
         break;
       case OrderStatus.inProgress:
         bg = const Color(0xFFF3E5F5);
         fg = const Color(0xFF4A148C);
-        statusText = 'قيد التنفيذ';
+        statusText = l10n.inProgress;
         statusIcon = Icons.engineering_rounded;
         break;
       case OrderStatus.completed:
         bg = const Color(0xFFE7F6EC);
         fg = const Color(0xFF1B5E20);
-        statusText = 'مكتملة';
+        statusText = l10n.completed;
         statusIcon = Icons.check_circle_rounded;
         break;
       case OrderStatus.rejected:
         bg = const Color(0xFFFDECEC);
         fg = const Color(0xFFB71C1C);
-        statusText = 'مرفوضة';
+        statusText = l10n.rejected;
         statusIcon = Icons.cancel_rounded;
         break;
       case OrderStatus.cancelled:
         bg = const Color(0xFFF5F5F5);
         fg = const Color(0xFF616161);
-        statusText = 'ملغية';
+        statusText = l10n.cancelled;
         statusIcon = Icons.cancel_rounded;
         break;
     }
@@ -929,7 +930,7 @@ class _OrderDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'حالة الطلب: $statusText',
+              '${l10n.orderStatus}: $statusText',
               style: tt.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: fg,
@@ -937,18 +938,18 @@ class _OrderDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'رقم الطلب: #${order.id.length >= 8 ? order.id.substring(0, 8) : order.id}',
+              '${l10n.orderNumberLabel}: #${order.id.length >= 8 ? order.id.substring(0, 8) : order.id}',
               style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 4),
             Text(
-              'تاريخ الطلب: ${_formatFullDate(order.createdAt)}',
+              '${l10n.orderDateLabel}: ${_formatFullDate(order.createdAt)}',
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
             if (order.updatedAt != null) ...[
               const SizedBox(height: 4),
               Text(
-                'آخر تحديث: ${_formatFullDate(order.updatedAt!)}',
+                '${l10n.lastUpdate}: ${_formatFullDate(order.updatedAt!)}',
                 style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               ),
             ],
@@ -960,11 +961,12 @@ class _OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildOrderTracking(
       BuildContext context, OrderModel order, ColorScheme cs, TextTheme tt) {
+    final l10n = AppLocalizations.of(context)!;
     final steps = [
-      {'title': 'معلقة', 'status': OrderStatus.pending},
-      {'title': 'مقبولة', 'status': OrderStatus.accepted},
-      {'title': 'قيد التنفيذ', 'status': OrderStatus.inProgress},
-      {'title': 'مكتملة', 'status': OrderStatus.completed},
+      {'title': l10n.pending, 'status': OrderStatus.pending},
+      {'title': l10n.accepted, 'status': OrderStatus.accepted},
+      {'title': l10n.inProgress, 'status': OrderStatus.inProgress},
+      {'title': l10n.completed, 'status': OrderStatus.completed},
     ];
 
     int currentStep =
@@ -983,7 +985,7 @@ class _OrderDetailsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'تتبع الطلب',
+              l10n.trackOrder,
               style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
@@ -1066,6 +1068,7 @@ class _OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildFabricDetails(
       BuildContext context, OrderModel order, ColorScheme cs, TextTheme tt) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -1078,7 +1081,7 @@ class _OrderDetailsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'تفاصيل القماش',
+              l10n.fabricDetails,
               style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -1093,13 +1096,13 @@ class _OrderDetailsScreen extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 16),
-            _buildDetailRow(Icons.label, 'اسم القماش', order.fabricName, cs),
-            _buildDetailRow(Icons.category, 'النوع', order.fabricType, cs),
-            _buildDetailRow(Icons.palette, 'اللون', order.fabricColor, cs),
+            _buildDetailRow(Icons.label, l10n.fabricName, order.fabricName, cs),
+            _buildDetailRow(Icons.category, l10n.type, order.fabricType, cs),
+            _buildDetailRow(Icons.palette, l10n.color, order.fabricColor, cs),
             _buildDetailRow(
               Icons.money,
-              'السعر الإجمالي',
-              '${order.totalPrice.toStringAsFixed(3)} ر.ع',
+              l10n.totalPrice,
+              l10n.currency(order.totalPrice.toStringAsFixed(3)),
               cs,
               isPrice: true,
             ),
@@ -1111,6 +1114,7 @@ class _OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildMeasurementsCard(
       BuildContext context, OrderModel order, ColorScheme cs, TextTheme tt) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -1123,7 +1127,7 @@ class _OrderDetailsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'المقاسات',
+              l10n.measurementsLabel,
               style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -1134,13 +1138,13 @@ class _OrderDetailsScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      _getMeasurementLabel(entry.key),
+                      _getMeasurementLabel(entry.key, l10n),
                       style: tt.bodyMedium?.copyWith(
                         color: cs.onSurfaceVariant,
                       ),
                     ),
                     Text(
-                      '${entry.value.toStringAsFixed(1)} سم',
+                      '${entry.value.toStringAsFixed(1)} ${l10n.cm}',
                       style: tt.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: cs.onSurface,
@@ -1158,6 +1162,7 @@ class _OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildTailorDetails(
       BuildContext context, OrderModel order, ColorScheme cs, TextTheme tt) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -1170,13 +1175,13 @@ class _OrderDetailsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'معلومات الخياط',
+              l10n.tailorInfo,
               style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            _buildDetailRow(Icons.store, 'اسم المحل', order.tailorName, cs),
-            _buildDetailRow(Icons.person, 'اسم العميل', order.customerName, cs),
-            _buildDetailRow(Icons.phone, 'رقم الهاتف', order.customerPhone, cs),
+            _buildDetailRow(Icons.store, l10n.shopName, order.tailorName, cs),
+            _buildDetailRow(Icons.person, l10n.customerName, order.customerName, cs),
+            _buildDetailRow(Icons.phone, l10n.phoneNumber, order.customerPhone, cs),
           ],
         ),
       ),
@@ -1185,6 +1190,7 @@ class _OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildNotesCard(
       BuildContext context, OrderModel order, ColorScheme cs, TextTheme tt) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -1201,7 +1207,7 @@ class _OrderDetailsScreen extends StatelessWidget {
                 Icon(Icons.note_outlined, size: 20, color: cs.primary),
                 const SizedBox(width: 8),
                 Text(
-                  'ملاحظات إضافية',
+                  l10n.additionalNotes,
                   style: tt.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ],
@@ -1219,6 +1225,7 @@ class _OrderDetailsScreen extends StatelessWidget {
 
   Widget _buildRejectionCard(
       BuildContext context, OrderModel order, ColorScheme cs, TextTheme tt) {
+    final l10n = AppLocalizations.of(context)!;
     return Card(
       elevation: 0,
       color: const Color(0xFFFDECEC),
@@ -1236,7 +1243,7 @@ class _OrderDetailsScreen extends StatelessWidget {
                 Icon(Icons.error_outline, size: 20, color: Colors.red[700]),
                 const SizedBox(width: 8),
                 Text(
-                  'سبب الرفض',
+                  l10n.rejectionReason,
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.red[700],
@@ -1290,13 +1297,13 @@ class _OrderDetailsScreen extends StatelessWidget {
 
               if (confirmed == true && context.mounted) {
                 final success =
-                    await OrderService.cancelOrder(order.id, 'إلغاء من العميل');
+                    await OrderService.cancelOrder(order.id, l10n.cancelledByCustomer);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(success
-                          ? '✅ تم إلغاء الطلب بنجاح'
-                          : '❌ فشل إلغاء الطلب'),
+                          ? '✅ ${l10n.orderCancelledSuccessfully}'
+                          : '❌ ${l10n.orderCancellationFailed}'),
                       backgroundColor: success ? Colors.green : Colors.red,
                     ),
                   );
@@ -1349,16 +1356,16 @@ class _OrderDetailsScreen extends StatelessWidget {
     return '${date.year}/${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
-  String _getMeasurementLabel(String key) {
-    const labels = {
-      'shoulder': 'عرض الكتف',
-      'chest': 'محيط الصدر',
-      'waist': 'محيط الخصر',
-      'hip': 'محيط الورك',
-      'length': 'الطول',
-      'sleeve': 'طول الكم',
-      'neck': 'محيط الرقبة',
-      'arm': 'طول الذراع',
+  String _getMeasurementLabel(String key, AppLocalizations l10n) {
+    final labels = {
+      'shoulder': l10n.shoulderWidth,
+      'chest': l10n.chestCircumference,
+      'waist': l10n.waistCircumference,
+      'hip': l10n.hipCircumference,
+      'length': l10n.length,
+      'sleeve': l10n.sleeveLength,
+      'neck': l10n.neckCircumference,
+      'arm': l10n.armLength2,
     };
     return labels[key] ?? key;
   }

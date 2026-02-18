@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../services/order_service.dart';
 import '../models/order_model.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// شاشة عرض طلبات الخياط
 class TailorOrdersScreen extends StatefulWidget {
@@ -52,12 +53,12 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
+    final l10n = AppLocalizations.of(context)!;
+
+    return Scaffold(
         backgroundColor: cs.surface,
         appBar: AppBar(
-          title: Text('طلبات ${widget.tailorName}'),
+          title: Text(l10n.tailorOrdersTitle(widget.tailorName)),
           centerTitle: true,
           actions: [
             IconButton(
@@ -67,11 +68,11 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
           ],
           bottom: TabBar(
             controller: _tabController,
-            tabs: const [
-              Tab(text: 'جديدة', icon: Icon(Icons.new_releases_rounded)),
-              Tab(text: 'مقبولة', icon: Icon(Icons.check_circle_rounded)),
-              Tab(text: 'قيد التنفيذ', icon: Icon(Icons.work_rounded)),
-              Tab(text: 'مكتملة', icon: Icon(Icons.done_all_rounded)),
+            tabs: [
+              Tab(text: l10n.newOrders, icon: const Icon(Icons.new_releases_rounded)),
+              Tab(text: l10n.acceptedTab, icon: const Icon(Icons.check_circle_rounded)),
+              Tab(text: l10n.inProgressTab, icon: const Icon(Icons.work_rounded)),
+              Tab(text: l10n.completedTab, icon: const Icon(Icons.done_all_rounded)),
             ],
           ),
         ),
@@ -86,7 +87,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'البحث في الطلبات...',
+                  hintText: l10n.searchOrders,
                   prefixIcon: const Icon(Icons.search_rounded),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -125,7 +126,6 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -144,7 +144,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'إحصائيات الطلبات',
+            AppLocalizations.of(context)!.orderStatisticsTitle,
             style: tt.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: cs.onPrimaryContainer,
@@ -155,29 +155,29 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
             children: [
               Expanded(
                 child: _buildStatItem(
-                  'إجمالي الطلبات',
+                  AppLocalizations.of(context)!.totalOrdersLabel,
                   '${_statistics!['totalOrders']}',
                   Icons.inventory_rounded,
                 ),
               ),
               Expanded(
                 child: _buildStatItem(
-                  'في الانتظار',
+                  AppLocalizations.of(context)!.waitingLabel,
                   '${_statistics!['pendingOrders']}',
                   Icons.new_releases_rounded,
                 ),
               ),
               Expanded(
                 child: _buildStatItem(
-                  'مكتملة',
+                  AppLocalizations.of(context)!.completedLabel,
                   '${_statistics!['completedOrders']}',
                   Icons.done_all_rounded,
                 ),
               ),
               Expanded(
                 child: _buildStatItem(
-                  'الإيرادات',
-                  'ر.ع ${(_statistics!['totalRevenue'] as num).toStringAsFixed(3)}',
+                  AppLocalizations.of(context)!.revenueLabel,
+                  '${AppLocalizations.of(context)!.currency} ${(_statistics!['totalRevenue'] as num).toStringAsFixed(3)}',
                   Icons.attach_money_rounded,
                 ),
               ),
@@ -234,11 +234,11 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
               children: [
                 const Icon(Icons.error_outline_rounded, size: 64),
                 const SizedBox(height: 16),
-                const Text('حدث خطأ في تحميل الطلبات'),
+                Text(AppLocalizations.of(context)!.errorLoadingOrdersList),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => setState(() {}),
-                  child: const Text('إعادة المحاولة'),
+                  child: Text(AppLocalizations.of(context)!.retryLabel),
                 ),
               ],
             ),
@@ -306,7 +306,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'طلب #${order.id.length >= 8 ? order.id.substring(0, 8) : order.id}',
+                        AppLocalizations.of(context)!.orderHashLabel(order.id.length >= 8 ? order.id.substring(0, 8) : order.id),
                         style: tt.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -328,7 +328,9 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    order.status.labelAr,
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? order.status.labelAr
+                        : order.status.labelEn,
                     style: tt.labelSmall?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
@@ -380,7 +382,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
                         ),
                       ),
                       Text(
-                        'ر.ع ${order.totalPrice.toStringAsFixed(3)}',
+                        AppLocalizations.of(context)!.currency(order.totalPrice.toStringAsFixed(3)),
                         style: tt.bodySmall?.copyWith(
                           color: cs.primary,
                           fontWeight: FontWeight.w600,
@@ -395,7 +397,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
 
             // تاريخ الطلب
             Text(
-              'تاريخ الطلب: ${_formatDate(order.createdAt)}',
+              '${AppLocalizations.of(context)!.orderDateLabel}: ${_formatDate(order.createdAt)}',
               style: tt.bodySmall?.copyWith(
                 color: cs.onSurfaceVariant,
               ),
@@ -410,7 +412,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
                     child: OutlinedButton.icon(
                       onPressed: () => _rejectOrder(order),
                       icon: const Icon(Icons.close_rounded),
-                      label: const Text('رفض'),
+                      label: Text(AppLocalizations.of(context)!.reject),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: cs.error,
                       ),
@@ -421,7 +423,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
                     child: FilledButton.icon(
                       onPressed: () => _acceptOrder(order),
                       icon: const Icon(Icons.check_rounded),
-                      label: const Text('قبول'),
+                      label: Text(AppLocalizations.of(context)!.accept),
                     ),
                   ),
                 ],
@@ -434,7 +436,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
                     child: FilledButton.icon(
                       onPressed: () => _startOrder(order),
                       icon: const Icon(Icons.play_arrow_rounded),
-                      label: const Text('بدء التنفيذ'),
+                      label: Text(AppLocalizations.of(context)!.startProcessing),
                     ),
                   ),
                 ],
@@ -447,7 +449,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
                     child: FilledButton.icon(
                       onPressed: () => _completeOrder(order),
                       icon: const Icon(Icons.done_all_rounded),
-                      label: const Text('إكمال'),
+                      label: Text(AppLocalizations.of(context)!.complete),
                     ),
                   ),
                 ],
@@ -475,30 +477,32 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
   }
 
   String _getEmptyStateMessage(OrderStatus status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case OrderStatus.pending:
-        return 'لا توجد طلبات جديدة';
+        return l10n.noNewOrders;
       case OrderStatus.accepted:
-        return 'لا توجد طلبات مقبولة';
+        return l10n.noAcceptedOrders;
       case OrderStatus.inProgress:
-        return 'لا توجد طلبات قيد التنفيذ';
+        return l10n.noInProgressOrders;
       case OrderStatus.completed:
-        return 'لا توجد طلبات مكتملة';
+        return l10n.noCompletedOrders;
       default:
-        return 'لا توجد طلبات';
+        return l10n.noOrdersGeneric;
     }
   }
 
   String _getEmptyStateDescription(OrderStatus status) {
+    final l10n = AppLocalizations.of(context)!;
     switch (status) {
       case OrderStatus.pending:
-        return 'الطلبات الجديدة ستظهر هنا';
+        return l10n.newOrdersAppearHere;
       case OrderStatus.accepted:
-        return 'الطلبات المقبولة ستظهر هنا';
+        return l10n.acceptedOrdersAppearHere;
       case OrderStatus.inProgress:
-        return 'الطلبات قيد التنفيذ ستظهر هنا';
+        return l10n.inProgressOrdersAppearHere;
       case OrderStatus.completed:
-        return 'الطلبات المكتملة ستظهر هنا';
+        return l10n.completedOrdersAppearHere;
       default:
         return '';
     }
@@ -526,37 +530,39 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
   }
 
   Future<void> _acceptOrder(OrderModel order) async {
+    final l10n = AppLocalizations.of(context)!;
     final success =
         await OrderService.updateOrderStatus(order.id, OrderStatus.accepted);
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم قبول الطلب')),
+        SnackBar(content: Text(l10n.orderAccepted)),
       );
       _loadStatistics();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('فشل في قبول الطلب')),
+        SnackBar(content: Text(l10n.orderAcceptFailed)),
       );
     }
   }
 
   Future<void> _rejectOrder(OrderModel order) async {
+    final l10n = AppLocalizations.of(context)!;
     final reasonController = TextEditingController();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('رفض الطلب'),
+        title: Text(l10n.rejectOrderDialogTitle),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('يرجى إدخال سبب الرفض:'),
+            Text(l10n.enterRejectionReason),
             const SizedBox(height: 16),
             TextField(
               controller: reasonController,
-              decoration: const InputDecoration(
-                labelText: 'سبب الرفض',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.rejectionReasonLabel,
+                border: const OutlineInputBorder(),
               ),
               maxLines: 3,
             ),
@@ -565,7 +571,7 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -577,16 +583,16 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
               );
               if (success) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('تم رفض الطلب')),
+                  SnackBar(content: Text(l10n.orderRejectedSnack)),
                 );
                 _loadStatistics();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('فشل في رفض الطلب')),
+                  SnackBar(content: Text(l10n.orderRejectFailed)),
                 );
               }
             },
-            child: const Text('رفض'),
+            child: Text(l10n.reject),
           ),
         ],
       ),
@@ -594,31 +600,33 @@ class _TailorOrdersScreenState extends State<TailorOrdersScreen>
   }
 
   Future<void> _startOrder(OrderModel order) async {
+    final l10n = AppLocalizations.of(context)!;
     final success =
         await OrderService.updateOrderStatus(order.id, OrderStatus.inProgress);
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم بدء تنفيذ الطلب')),
+        SnackBar(content: Text(l10n.orderStarted)),
       );
       _loadStatistics();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('فشل في بدء تنفيذ الطلب')),
+        SnackBar(content: Text(l10n.orderStartFailed)),
       );
     }
   }
 
   Future<void> _completeOrder(OrderModel order) async {
+    final l10n = AppLocalizations.of(context)!;
     final success =
         await OrderService.updateOrderStatus(order.id, OrderStatus.completed);
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تم إكمال الطلب')),
+        SnackBar(content: Text(l10n.orderCompleted)),
       );
       _loadStatistics();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('فشل في إكمال الطلب')),
+        SnackBar(content: Text(l10n.orderCompleteFailed)),
       );
     }
   }

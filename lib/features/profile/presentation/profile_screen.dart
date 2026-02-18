@@ -111,7 +111,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Colors.white),
+                Icon(Icons.check_circle_rounded, color: Theme.of(context).colorScheme.onPrimary),
                 const SizedBox(width: 8),
                 Text(l10n.profilePhotoUpdated),
               ],
@@ -131,7 +131,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_outline_rounded, color: Colors.white),
+                Icon(Icons.error_outline_rounded, color: Theme.of(context).colorScheme.onPrimary),
                 const SizedBox(width: 8),
                 Expanded(
                     child:
@@ -265,12 +265,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                     Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.18),
+                        color: cs.onPrimary.withOpacity(0.18),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.person_rounded,
-                        color: Colors.white,
+                        color: cs.onPrimary,
                         size: 18,
                       ),
                     ),
@@ -281,8 +281,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                       children: [
                         Text(
                           l10n.myAccount,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: cs.onPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
@@ -290,8 +290,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                         const SizedBox(height: 2),
                         Text(
                           l10n.manageYourDataAndOrders,
-                          style: const TextStyle(
-                            color: Colors.white70,
+                          style: TextStyle(
+                            color: cs.onPrimary.withOpacity(0.7),
                             fontSize: 12,
                           ),
                         ),
@@ -347,7 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: cs.shadow.withOpacity(0.06),
                 blurRadius: 18,
                 offset: const Offset(0, 6),
               ),
@@ -1102,7 +1102,7 @@ class _ProfessionalProfileCard extends StatelessWidget {
                       border: Border.all(color: cs.surface, width: 2),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: cs.shadow.withOpacity(0.2),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -1133,7 +1133,7 @@ class _ProfessionalProfileCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: cs.shadow.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1282,7 +1282,7 @@ class _AdvancedStatCard extends StatelessWidget {
         border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: cs.shadow.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1367,7 +1367,7 @@ class _FavoritesCard extends StatelessWidget {
             border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: cs.shadow.withOpacity(0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1440,7 +1440,7 @@ class _FavoritesCardSkeleton extends StatelessWidget {
         border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: cs.shadow.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1480,7 +1480,7 @@ class _ProfileStatsSkeleton extends StatelessWidget {
         border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: cs.shadow.withOpacity(0.06),
             blurRadius: 18,
             offset: const Offset(0, 6),
           ),
@@ -1551,7 +1551,7 @@ class _PhotoSourceBottomSheet extends StatelessWidget {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: cs.shadow.withOpacity(0.1),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -1679,7 +1679,7 @@ class _ModernNavTile extends StatelessWidget {
         border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: cs.shadow.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

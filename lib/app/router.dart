@@ -125,7 +125,7 @@ final GoRouter appRouter = GoRouter(
             final tailorId = state.pathParameters['id']!;
             return TailorDetailsScreen(
               tailorId: tailorId,
-              tailorName: state.uri.queryParameters['name'] ?? 'الخياط',
+              tailorName: state.uri.queryParameters['name'] ?? AppLocalizations.of(context)!.tailor,
             );
           },
         ),
@@ -138,7 +138,7 @@ final GoRouter appRouter = GoRouter(
             final tailorId = state.pathParameters['id']!;
             return TailorStoreScreen(
               tailorId: tailorId,
-              tailorName: state.uri.queryParameters['name'] ?? 'الخياط',
+              tailorName: state.uri.queryParameters['name'] ?? AppLocalizations.of(context)!.tailor,
             );
           },
         ),

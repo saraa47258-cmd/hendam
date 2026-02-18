@@ -207,12 +207,12 @@ class _ColorsTab extends StatelessWidget {
                 Icon(Icons.palette, size: 64, color: cs.onSurfaceVariant),
                 const SizedBox(height: 16),
                 Text(
-                  'لا توجد ألوان مسجلة',
+                  AppLocalizations.of(context)!.noColorsRegistered,
                   style: tt.titleMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'اضغط على زر الإضافة لإضافة لون جديد',
+                  AppLocalizations.of(context)!.pressAddToAddColor,
                   style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
               ],
@@ -313,7 +313,7 @@ class _FabricCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'ر.ع ${fabric.pricePerMeter.toStringAsFixed(3)}/متر',
+                            '${AppLocalizations.of(context)!.currency} ${fabric.pricePerMeter.toStringAsFixed(3)}/${AppLocalizations.of(context)!.pricePerMeter}',
                             style: tt.bodySmall?.copyWith(
                               color: cs.primary,
                               fontWeight: FontWeight.bold,
@@ -333,23 +333,23 @@ class _FabricCard extends StatelessWidget {
                     }
                   },
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(Icons.edit),
-                          SizedBox(width: 8),
-                          Text('تعديل'),
+                          const Icon(Icons.edit),
+                          const SizedBox(width: 8),
+                          Text(AppLocalizations.of(context)!.editLabel2),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(Icons.delete, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('حذف', style: TextStyle(color: Colors.red)),
+                          const Icon(Icons.delete, color: Colors.red),
+                          const SizedBox(width: 8),
+                          Text(AppLocalizations.of(context)!.deleteLabel2, style: const TextStyle(color: Colors.red)),
                         ],
                       ),
                     ),
@@ -368,15 +368,16 @@ class _FabricCard extends StatelessWidget {
   }
 
   void _showDeleteFabricDialog(BuildContext context, TailorFabric fabric) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('تأكيد الحذف'),
-        content: Text('هل أنت متأكد من حذف القماش "${fabric.name}"؟'),
+        title: Text(l10n.confirmDeleteTitle),
+        content: Text(l10n.confirmDeleteFabricMessage(fabric.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -384,11 +385,11 @@ class _FabricCard extends StatelessWidget {
               await TailorFabricService.deleteFabric(fabric.id);
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('تم حذف القماش بنجاح')),
+                  SnackBar(content: Text(l10n.fabricDeletedSnack)),
                 );
               }
             },
-            child: const Text('حذف', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -461,18 +462,18 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
   File? _selectedImage;
   bool _isLoading = false;
 
-  final List<Map<String, String>> _fabricTypes = [
-    {'value': 'cotton', 'label': 'قطن'},
-    {'value': 'silk', 'label': 'حرير'},
-    {'value': 'wool', 'label': 'صوف'},
-    {'value': 'linen', 'label': 'كتان'},
-    {'value': 'polyester', 'label': 'بوليستر'},
+  final List<Map<String, String>> _fabricTypes = const [
+    {'value': 'cotton', 'label': 'cotton'},
+    {'value': 'silk', 'label': 'silk'},
+    {'value': 'wool', 'label': 'wool'},
+    {'value': 'linen', 'label': 'linen'},
+    {'value': 'polyester', 'label': 'polyester'},
   ];
 
-  final List<Map<String, String>> _seasons = [
-    {'value': 'summer', 'label': 'صيفي'},
-    {'value': 'winter', 'label': 'شتوي'},
-    {'value': 'all-season', 'label': 'جميع المواسم'},
+  final List<Map<String, String>> _seasons = const [
+    {'value': 'summer', 'label': 'summer'},
+    {'value': 'winter', 'label': 'winter'},
+    {'value': 'all-season', 'label': 'all-season'},
   ];
 
   @override
@@ -487,9 +488,30 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
+
+    String _fabricTypeLabel(String key) {
+      switch (key) {
+        case 'cotton': return l10n.cottonFabric;
+        case 'silk': return l10n.silkFabric;
+        case 'wool': return l10n.woolFabric;
+        case 'linen': return l10n.linenFabric;
+        case 'polyester': return l10n.polyesterFabric;
+        default: return key;
+      }
+    }
+
+    String _seasonLabel(String key) {
+      switch (key) {
+        case 'summer': return l10n.summerSeason;
+        case 'winter': return l10n.winterSeason;
+        case 'all-season': return l10n.allSeasonLabel;
+        default: return key;
+      }
+    }
 
     return AlertDialog(
-      title: const Text('إضافة قماش جديد'),
+      title: Text(l10n.addNewFabric),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -521,7 +543,7 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
                                 color: cs.onSurfaceVariant),
                             const SizedBox(height: 8),
                             Text(
-                              'اضغط لإضافة صورة',
+                              l10n.tapToAddImage,
                               style: tt.bodySmall
                                   ?.copyWith(color: cs.onSurfaceVariant),
                             ),
@@ -534,13 +556,13 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
               // اسم القماش
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'اسم القماش',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.fabricNameLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'يرجى إدخال اسم القماش';
+                    return l10n.pleaseEnterFabricName;
                   }
                   return null;
                 },
@@ -550,14 +572,14 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
               // وصف القماش
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'وصف القماش',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.fabricDescriptionLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 3,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'يرجى إدخال وصف القماش';
+                    return l10n.pleaseEnterFabricDescription;
                   }
                   return null;
                 },
@@ -567,14 +589,14 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
               // نوع القماش
               DropdownButtonFormField<String>(
                 initialValue: _fabricType,
-                decoration: const InputDecoration(
-                  labelText: 'نوع القماش',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.fabricTypeFieldLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 items: _fabricTypes.map((type) {
                   return DropdownMenuItem(
                     value: type['value'],
-                    child: Text(type['label']!),
+                    child: Text(_fabricTypeLabel(type['value']!)),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -588,14 +610,14 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
               // الموسم
               DropdownButtonFormField<String>(
                 initialValue: _season,
-                decoration: const InputDecoration(
-                  labelText: 'الموسم',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.seasonLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 items: _seasons.map((season) {
                   return DropdownMenuItem(
                     value: season['value'],
-                    child: Text(season['label']!),
+                    child: Text(_seasonLabel(season['value']!)),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -609,17 +631,17 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
               // السعر
               TextFormField(
                 controller: _priceController,
-                decoration: const InputDecoration(
-                  labelText: 'السعر لكل متر (ر.ع)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.pricePerMeterLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'يرجى إدخال السعر';
+                    return l10n.pleaseEnterPrice;
                   }
                   if (double.tryParse(value) == null) {
-                    return 'يرجى إدخال رقم صحيح';
+                    return l10n.pleaseEnterValidNumber;
                   }
                   return null;
                 },
@@ -631,7 +653,7 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: const Text('إلغاء'),
+          child: Text(l10n.cancel),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _saveFabric,
@@ -641,7 +663,7 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('حفظ'),
+              : Text(l10n.save),
         ),
       ],
     );
@@ -658,10 +680,11 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
   }
 
   Future<void> _saveFabric() async {
+    final l10n = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
     if (_selectedImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى اختيار صورة للقماش')),
+        SnackBar(content: Text(l10n.pleaseSelectImage)),
       );
       return;
     }
@@ -692,16 +715,16 @@ class _AddFabricDialogState extends State<_AddFabricDialog> {
       if (fabricId != null) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إضافة القماش بنجاح')),
+          SnackBar(content: Text(l10n.fabricAddedSuccess)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('فشل في إضافة القماش')),
+          SnackBar(content: Text(l10n.fabricAddFailed)),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('حدث خطأ: $e')),
+        SnackBar(content: Text(l10n.errorWithMessage(e.toString()))),
       );
     } finally {
       setState(() {
@@ -739,9 +762,10 @@ class _AddColorDialogState extends State<_AddColorDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return AlertDialog(
-      title: const Text('إضافة لون جديد'),
+      title: Text(l10n.addNewColor),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -755,9 +779,9 @@ class _AddColorDialogState extends State<_AddColorDialog> {
                   if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                     return DropdownButtonFormField<String>(
                       initialValue: _selectedFabricId,
-                      decoration: const InputDecoration(
-                        labelText: 'اختر القماش',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.selectFabricLabel,
+                        border: const OutlineInputBorder(),
                       ),
                       items: snapshot.data!.map((fabric) {
                         return DropdownMenuItem(
@@ -772,13 +796,13 @@ class _AddColorDialogState extends State<_AddColorDialog> {
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'يرجى اختيار القماش';
+                          return l10n.pleaseSelectFabricField;
                         }
                         return null;
                       },
                     );
                   }
-                  return const Text('لا توجد أقمشة متاحة');
+                  return Text(l10n.noFabricsAvailableLabel);
                 },
               ),
               const SizedBox(height: 16),
@@ -786,13 +810,13 @@ class _AddColorDialogState extends State<_AddColorDialog> {
               // اسم اللون
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'اسم اللون',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.colorNameLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'يرجى إدخال اسم اللون';
+                    return l10n.pleaseEnterColorName;
                   }
                   return null;
                 },
@@ -802,16 +826,16 @@ class _AddColorDialogState extends State<_AddColorDialog> {
               // كود اللون
               TextFormField(
                 controller: _hexController,
-                decoration: const InputDecoration(
-                  labelText: 'كود اللون (مثل: #FF5733)',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.colorCodeLabel,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'يرجى إدخال كود اللون';
+                    return l10n.pleaseEnterColorCode;
                   }
                   if (!RegExp(r'^#[0-9A-Fa-f]{6}$').hasMatch(value)) {
-                    return 'يرجى إدخال كود لون صحيح (مثل: #FF5733)';
+                    return l10n.invalidColorCode;
                   }
                   return null;
                 },
@@ -831,7 +855,7 @@ class _AddColorDialogState extends State<_AddColorDialog> {
                   child: Center(
                     child: Text(
                       _nameController.text.isEmpty
-                          ? 'معاينة اللون'
+                          ? l10n.colorPreview
                           : _nameController.text,
                       style: TextStyle(
                         color: _getContrastColor(
@@ -848,7 +872,7 @@ class _AddColorDialogState extends State<_AddColorDialog> {
       actions: [
         TextButton(
           onPressed: _isLoading ? null : () => Navigator.pop(context),
-          child: const Text('إلغاء'),
+          child: Text(l10n.cancel),
         ),
         ElevatedButton(
           onPressed: _isLoading ? null : _saveColor,
@@ -858,7 +882,7 @@ class _AddColorDialogState extends State<_AddColorDialog> {
                   height: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('حفظ'),
+              : Text(l10n.save),
         ),
       ],
     );
@@ -880,6 +904,7 @@ class _AddColorDialogState extends State<_AddColorDialog> {
 
   Future<void> _saveColor() async {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context)!;
 
     setState(() {
       _isLoading = true;
@@ -899,16 +924,16 @@ class _AddColorDialogState extends State<_AddColorDialog> {
       if (colorId != null) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إضافة اللون بنجاح')),
+          SnackBar(content: Text(l10n.colorAddedSuccess)),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('فشل في إضافة اللون')),
+          SnackBar(content: Text(l10n.colorAddFailed)),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('حدث خطأ: $e')),
+        SnackBar(content: Text(l10n.errorWithMessage(e.toString()))),
       );
     } finally {
       setState(() {

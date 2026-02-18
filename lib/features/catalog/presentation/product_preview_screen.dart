@@ -11,6 +11,7 @@ import '../../../measurements/presentation/abaya_measure_screen.dart';
 import '../../../shared/widgets/any_image.dart';
 import '../../favorites/services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Design System
@@ -83,7 +84,7 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
         setState(() {
           item = product;
           _isLoadingProduct = false;
-          _error = product == null ? 'المنتج غير موجود' : null;
+          _error = product == null ? 'product_not_found' : null;
         });
         if (product != null) {
           _checkFavoriteStatus();
@@ -105,7 +106,7 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
       if (mounted) {
         setState(() {
           _isLoadingProduct = false;
-          _error = 'حدث خطأ في تحميل المنتج';
+          _error = 'error_loading_product';
         });
       }
     });
@@ -138,7 +139,7 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
     if (item == null) return;
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (!authProvider.isAuthenticated) {
-      _showSnackBar('يرجى تسجيل الدخول أولاً', isError: true);
+      _showSnackBar(AppLocalizations.of(context)!.pleaseSignInFirst, isError: true);
       return;
     }
 
@@ -154,7 +155,7 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
         );
         if (mounted && removed) {
           setState(() => _wish = false);
-          _showSnackBar('تم إزالة من المفضلة');
+          _showSnackBar(AppLocalizations.of(context)!.removedFromFavorites);
         }
       } else {
         final added = await _favoriteService.addToFavorites(
@@ -174,11 +175,11 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
         );
         if (mounted && added) {
           setState(() => _wish = true);
-          _showSnackBar('تمت الإضافة للمفضلة', isSuccess: true);
+          _showSnackBar(AppLocalizations.of(context)!.addedToFavorites, isSuccess: true);
         }
       }
     } catch (e) {
-      _showSnackBar('حدث خطأ', isError: true);
+      _showSnackBar(AppLocalizations.of(context)!.errorOccurred, isError: true);
     } finally {
       if (mounted) setState(() => _isLoadingFavorite = false);
     }
@@ -207,8 +208,10 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
     super.dispose();
   }
 
-  String _formatPrice(double v) =>
-      '${v == v.truncateToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2)} ر.ع';
+  String _formatPrice(double v) {
+    final l10n = AppLocalizations.of(context)!;
+    return l10n.currency(v == v.truncateToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(2));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -218,20 +221,20 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
   }
 
   Widget _buildLoadingState() {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: _DS.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+            const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(_DS.primaryBrown),
               strokeWidth: 2,
             ),
-            SizedBox(height: _DS.lg),
+            const SizedBox(height: _DS.lg),
             Text(
-              'جاري التحميل...',
-              style: TextStyle(
+              AppLocalizations.of(context)!.loading,
+              style: const TextStyle(
                 color: _DS.mediumText,
                 fontSize: 14,
               ),
@@ -278,7 +281,11 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
                     ),
                     const SizedBox(height: _DS.xl),
                     Text(
-                      _error ?? 'المنتج غير موجود',
+                      _error == 'product_not_found'
+                          ? AppLocalizations.of(context)!.productNotFound
+                          : _error == 'error_loading_product'
+                              ? AppLocalizations.of(context)!.errorLoadingProduct
+                              : (_error ?? AppLocalizations.of(context)!.productNotFound),
                       style: const TextStyle(
                         fontSize: 16,
                         color: _DS.mediumText,
@@ -287,7 +294,7 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
                     ),
                     const SizedBox(height: _DS.xxl),
                     _PremiumButton(
-                      label: 'إعادة المحاولة',
+                      label: AppLocalizations.of(context)!.retry,
                       onTap: () {
                         setState(() {
                           _isLoadingProduct = true;
@@ -387,7 +394,7 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
   void _addToCart() {
     // Require color selection if colors are available
     if (item!.colors.isNotEmpty && _selectedColor == null) {
-      _showSnackBar('يرجى اختيار اللون أولاً', isError: true);
+      _showSnackBar(AppLocalizations.of(context)!.selectColorFirst, isError: true);
       return;
     }
 
@@ -423,7 +430,7 @@ class _ProductPreviewScreenState extends State<ProductPreviewScreen>
   void _orderNow() {
     // Require color selection if colors are available
     if (item!.colors.isNotEmpty && _selectedColor == null) {
-      _showSnackBar('يرجى اختيار اللون أولاً', isError: true);
+      _showSnackBar(AppLocalizations.of(context)!.selectColorFirst, isError: true);
       return;
     }
 
@@ -532,6 +539,7 @@ class _GlassIconButtonState extends State<_GlassIconButton>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) {
@@ -562,7 +570,7 @@ class _GlassIconButtonState extends State<_GlassIconButton>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: cs.shadow.withOpacity(0.1),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -752,6 +760,7 @@ class _FavoriteButtonState extends State<_FavoriteButton>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: widget.isInitialized ? widget.onTap : null,
       child: AnimatedBuilder(
@@ -768,7 +777,7 @@ class _FavoriteButtonState extends State<_FavoriteButton>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: cs.shadow.withOpacity(0.1),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -849,7 +858,7 @@ class _InfoSheet extends StatelessWidget {
                 borderRadius: BorderRadius.circular(_DS.radiusMd),
               ),
               child: Text(
-                item.subtitle.isNotEmpty ? item.subtitle : 'عباية',
+                item.subtitle.isNotEmpty ? item.subtitle : AppLocalizations.of(context)!.abayaLabel,
                 style: const TextStyle(
                   color: _DS.primaryBrown,
                   fontSize: 12,
@@ -890,9 +899,9 @@ class _InfoSheet extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
-                      'شامل الضريبة',
-                      style: TextStyle(
+                    Text(
+                      AppLocalizations.of(context)!.taxIncluded,
+                      style: const TextStyle(
                         fontSize: 11,
                         color: _DS.lightText,
                         fontWeight: FontWeight.w500,
@@ -908,9 +917,9 @@ class _InfoSheet extends StatelessWidget {
             if (item.colors.isNotEmpty) ...[
               Row(
                 children: [
-                  const Text(
-                    'الألوان المتاحة',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context)!.availableColors,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: _DS.darkText,
@@ -927,9 +936,9 @@ class _InfoSheet extends StatelessWidget {
                         color: Colors.red.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(_DS.sm),
                       ),
-                      child: const Text(
-                        'مطلوب',
-                        style: TextStyle(
+                      child: Text(
+                        AppLocalizations.of(context)!.required,
+                        style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                           color: Colors.red,
@@ -956,11 +965,11 @@ class _InfoSheet extends StatelessWidget {
             ],
 
             // Features
-            _buildFeatureRow(Icons.verified_outlined, 'جودة عالية مضمونة'),
+            _buildFeatureRow(Icons.verified_outlined, AppLocalizations.of(context)!.qualityGuaranteed),
             const SizedBox(height: _DS.md),
-            _buildFeatureRow(Icons.local_shipping_outlined, 'توصيل سريع'),
+            _buildFeatureRow(Icons.local_shipping_outlined, AppLocalizations.of(context)!.fastDelivery),
             const SizedBox(height: _DS.md),
-            _buildFeatureRow(Icons.replay_outlined, 'استرجاع خلال 14 يوم'),
+            _buildFeatureRow(Icons.replay_outlined, AppLocalizations.of(context)!.returnWithinDays),
           ],
         ),
       ),
@@ -1125,6 +1134,7 @@ class _StickyActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: EdgeInsets.fromLTRB(
         _DS.xxl,
@@ -1136,7 +1146,7 @@ class _StickyActions extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: cs.shadow.withOpacity(0.06),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),
@@ -1147,7 +1157,7 @@ class _StickyActions extends StatelessWidget {
           // Add to Cart - Outlined
           Expanded(
             child: _PremiumButton(
-              label: 'أضف للسلة',
+              label: AppLocalizations.of(context)!.addToCart,
               icon: Icons.shopping_bag_outlined,
               isOutlined: true,
               onTap: onAddToCart,
@@ -1158,7 +1168,7 @@ class _StickyActions extends StatelessWidget {
           Expanded(
             flex: 2,
             child: _PremiumButton(
-              label: 'اطلب الآن',
+              label: AppLocalizations.of(context)!.orderNow,
               onTap: onOrderNow,
             ),
           ),

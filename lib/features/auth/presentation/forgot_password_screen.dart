@@ -53,7 +53,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authProvider.error ?? l10n.emailSendFailed),
+            content: Text(AuthProvider.localizeError(authProvider.error, l10n)),
             backgroundColor: Colors.red,
           ),
         );

@@ -160,133 +160,146 @@ class _MeasurementFormScreenState extends State<MeasurementFormScreen> {
   }
 
   Widget _buildMeasurementsGrid(BuildContext context, AppLocalizations l10n) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: EdgeInsets.all(context.responsivePadding()),
       child: Column(
-        children: [
-          // الصف الأول - المقاسات 1-5
-          Expanded(
+        children: List.generate(5, (rowIndex) {
+          // كل صف يحتوي على قياسين: [i] و [i+5]
+          final leftIndex = rowIndex; // 0-4 (measurements 1-5)
+          final rightIndex = rowIndex + 5; // 5-9 (measurements 6-10)
+
+          final leftMeasurement = measurements[leftIndex];
+          final rightMeasurement = measurements[rightIndex];
+
+          final leftController = _controllers[leftIndex];
+          final rightController = _controllers[rightIndex];
+
+          return Expanded(
             child: Row(
               children: [
-                // القائمة اليمنى (1-5)
+                // العمود الأيسر (RTL: الجهة اليمنى) - المقاسات 1-5
                 Expanded(
-                  child: _buildMeasurementsList(
+                  child: _buildMeasurementCell(
                     context,
                     l10n,
-                    measurements.take(5).toList(),
+                    leftMeasurement,
+                    leftController,
                     isRight: true,
-                    startIndex: 0,
                   ),
                 ),
                 // خط فاصل
                 Container(
-                  width: 2,
+                  width: 1,
                   color: const Color(0xFF8B0000).withValues(alpha: 0.3),
-                  margin: EdgeInsets.symmetric(
-                      horizontal: context.responsiveMargin()),
                 ),
-                // القائمة اليسرى (6-10)
+                // العمود الأيمن (RTL: الجهة اليسرى) - المقاسات 6-10
                 Expanded(
-                  child: _buildMeasurementsList(
+                  child: _buildMeasurementCell(
                     context,
                     l10n,
-                    measurements.skip(5).take(5).toList(),
+                    rightMeasurement,
+                    rightController,
                     isRight: false,
-                    startIndex: 5,
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        }),
       ),
     );
   }
 
-  Widget _buildMeasurementsList(
-      BuildContext context,
-      AppLocalizations l10n,
-      List<MeasurementField> measurementsList,
-      {required bool isRight,
-      required int startIndex}) {
-    return Column(
-      children: measurementsList.asMap().entries.map((entry) {
-        final index = startIndex + entry.key;
-        final measurement = entry.value;
-        final controller = _controllers[index];
-        return Expanded(
-          child: Container(
-            margin: EdgeInsets.symmetric(
-              vertical: context.responsiveMargin() / 2,
-            ),
+  Widget _buildMeasurementCell(
+    BuildContext context,
+    AppLocalizations l10n,
+    MeasurementField measurement,
+    TextEditingController controller, {
+    required bool isRight,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: EdgeInsets.symmetric(
+        vertical: context.responsiveMargin() / 2,
+        horizontal: context.responsiveMargin() / 2,
+      ),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: const Color(0xFF8B0000).withValues(alpha: 0.2),
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        children: [
+          // رقم القياس
+          Container(
+            width: context.pick(35.0, tablet: 40.0, desktop: 45.0),
+            height: double.infinity,
             decoration: BoxDecoration(
-              border: Border.all(
-                color: const Color(0xFF8B0000).withValues(alpha: 0.2),
-                width: 1,
+              color: const Color(0xFF8B0000).withValues(alpha: 0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(3),
+                bottomLeft: Radius.circular(3),
               ),
             ),
-            child: Row(
-              children: [
-                // رقم القياس
-                Container(
-                  width: context.pick(40.0, tablet: 45.0, desktop: 50.0),
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B0000).withValues(alpha: 0.1),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${measurement.id}',
-                      style: TextStyle(
-                        color: const Color(0xFF8B0000),
-                        fontSize: context.responsiveFontSize(16.0),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+            child: Center(
+              child: Text(
+                '${measurement.id}',
+                style: TextStyle(
+                  color: const Color(0xFF8B0000),
+                  fontSize: context.responsiveFontSize(14.0),
+                  fontWeight: FontWeight.bold,
                 ),
-                // اسم القياس
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: context.responsiveMargin(),
-                    ),
-                    child: Text(
-                      _getMeasurementLabel(measurement.id, l10n),
-                      style: TextStyle(
-                        fontSize: context.responsiveFontSize(14.0),
-                        fontWeight: FontWeight.w600,
-                      ),
-                      textAlign: isRight ? TextAlign.right : TextAlign.left,
-                    ),
-                  ),
-                ),
-                // حقل الإدخال
-                Container(
-                  width: context.pick(80.0, tablet: 90.0, desktop: 100.0),
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                  ),
-                  child: TextField(
-                    controller: controller,
-                    textAlign: TextAlign.center,
-                    keyboardType: TextInputType.number,
-                    style: TextStyle(
-                      fontSize: context.responsiveFontSize(14.0),
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        );
-      }).toList(),
+          // اسم القياس
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: context.responsiveMargin() / 2,
+              ),
+              child: Text(
+                _getMeasurementLabel(measurement.id, l10n),
+                style: TextStyle(
+                  fontSize: context.responsiveFontSize(13.0),
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: isRight ? TextAlign.right : TextAlign.left,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          // حقل الإدخال
+          Container(
+            width: context.pick(60.0, tablet: 70.0, desktop: 80.0),
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerLowest,
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(3),
+                bottomRight: Radius.circular(3),
+              ),
+            ),
+            child: TextField(
+              controller: controller,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              style: TextStyle(
+                fontSize: context.responsiveFontSize(12.0),
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 6),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

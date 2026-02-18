@@ -203,6 +203,13 @@ abstract class AppLocalizations {
   // Settings
   // ═══════════════════════════════════════════════════════════════════════════
   String get settings;
+  String get appearance;
+  String get themeSystem;
+  String get themeSystemSubtitle;
+  String get themeLight;
+  String get themeLightSubtitle;
+  String get themeDark;
+  String get themeDarkSubtitle;
   String get personalSettings;
   String get notifications;
   String get orderStatusAlerts;
@@ -747,6 +754,11 @@ abstract class AppLocalizations {
   String get patternLength;
   String get backButton;
   String get confirmSubmit;
+  String get selectionMade;
+  String get chestLabel;
+  String get waistLabel;
+  String get armLabel;
+  String get perLinePrice;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Color Names
@@ -800,6 +812,13 @@ abstract class AppLocalizations {
   String get clickToSelect;
   String get totalPriceLabel;
   String get continueToRecipientData;
+  String get pleaseSelectFabricTypeFirst;
+  String get pleaseSelectThreadColor;
+  String get pleaseSpecifyThreadCount;
+  String get giftOrderSentSuccess;
+  String get threadDetails;
+  String get specifyEmbroideryAndColors;
+  String get threads;
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Tailor Store Screen
@@ -1090,6 +1109,206 @@ abstract class AppLocalizations {
   String get imageNotFound;
   String get measurementGuideZoom;
   String get enlargeImage;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailor Orders Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  String tailorOrdersTitle(String name);
+  String get newOrders;
+  String get acceptedTab;
+  String get inProgressTab;
+  String get completedTab;
+  String get searchOrders;
+  String get orderStatisticsTitle;
+  String get totalOrdersLabel;
+  String get waitingLabel;
+  String get completedLabel;
+  String get revenueLabel;
+  String get errorLoadingOrdersList;
+  String get retryLabel;
+  String orderHashLabel(String id);
+  String get orderDateLabel;
+  String get noNewOrders;
+  String get noAcceptedOrders;
+  String get noInProgressOrders;
+  String get noCompletedOrders;
+  String get noOrdersGeneric;
+  String get newOrdersAppearHere;
+  String get acceptedOrdersAppearHere;
+  String get inProgressOrdersAppearHere;
+  String get completedOrdersAppearHere;
+  String get orderAccepted;
+  String get orderAcceptFailed;
+  String get rejectOrderDialogTitle;
+  String get enterRejectionReason;
+  String get rejectionReasonLabel;
+  String get orderRejectedSnack;
+  String get orderRejectFailed;
+  String get orderStarted;
+  String get orderStartFailed;
+  String get orderCompleted;
+  String get orderCompleteFailed;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Fabric Management Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get noColorsRegistered;
+  String get pressAddToAddColor;
+  String get editLabel2;
+  String get deleteLabel2;
+  String get confirmDeleteTitle;
+  String confirmDeleteFabricMessage(String name);
+  String get fabricDeletedSnack;
+  String get addNewFabric;
+  String get tapToAddImage;
+  String get fabricNameLabel;
+  String get fabricDescriptionLabel;
+  String get fabricTypeFieldLabel;
+  String get seasonLabel;
+  String get pricePerMeterLabel;
+  String get pleaseEnterFabricName;
+  String get pleaseEnterFabricDescription;
+  String get pleaseEnterPrice;
+  String get pleaseEnterValidNumber;
+  String get pleaseSelectImage;
+  String get fabricAddedSuccess;
+  String get fabricAddFailed;
+  String get addNewColor;
+  String get selectFabricLabel;
+  String get colorNameLabel;
+  String get colorCodeLabel;
+  String get colorCodeHint;
+  String get pleaseEnterColorName;
+  String get pleaseEnterColorCode;
+  String get invalidColorCode;
+  String get pleaseSelectFabricField;
+  String get noFabricsAvailableLabel;
+  String get colorPreview;
+  String get colorAddedSuccess;
+  String get colorAddFailed;
+  String get cottonFabric;
+  String get silkFabric;
+  String get woolFabric;
+  String get linenFabric;
+  String get polyesterFabric;
+  String get summerSeason;
+  String get winterSeason;
+  String get allSeasonLabel;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Profile Screens (Settings, Privacy, Payment, Help, About)
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get securityAndPrivacyData;
+  String get updatePasswordPeriodically;
+  String get noSavedPaymentMethodsLabel;
+  String get addPaymentWhenOrdering;
+  String get addPaymentMethodButton;
+  String get faqAnswers;
+  String get supportAndInquiriesLabel;
+  String get happyToHelp247;
+  String get hendamLabel;
+  String get version100;
+  String get hendamAppDescription;
+  String get versionLabel;
+  String get emailLabel;
+  String get websiteLabel;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Catalog / Services Screens
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get noItemsToShow;
+  String get addButton;
+  String get shareLabel;
+  String get productDetailsLabel;
+  String selectedServiceSnack(String name);
+  String get menTailoringSection;
+  String get abayasSection;
+  String get smallMerchantSection;
+  String get allTab;
+  String get menTab;
+  String get womenTab;
+  String get searchServiceHint;
+  String get allCategoriesChip;
+  String get noMatchingServices;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailoring Design Responsive - Additional Keys
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get colorStep;
+  String get measurementsStep;
+  String get selectFabricColor;
+  String get sendOrderButton;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Measurement Form Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get enterMeasurementsTitle;
+  String get saveExperimentalButton;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailoring Design Responsive Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get orderSentTitle;
+  String get willContactSoon;
+  String get okLabel;
+  String get previousLabel;
+  String get nameEmbroideryOnThobe;
+  String get embroideryOptions;
+  String get addNameLabel;
+  String get invalidValue;
+  String get colorRed;
+  String get additionalNotesOptional;
+  String get confirmSubmission;
+  String get noDesignSelected;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Additional Shared Keys
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get errorOccurredWithDetails;
+  String errorWithMessage(String error);
+  String get paymentMethodsTitle;
+  String get pricePerMeter;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Abaya Services Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get newBadge;
+  String get modelViewLabel;
+  String get productViewLabel;
+  String get tryChangingCategoryOrSearch;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Auth Error Messages (Firebase)
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get authErrorWeakPassword;
+  String get authErrorEmailInUse;
+  String get authErrorInvalidEmail;
+  String get authErrorUserDisabled;
+  String get authErrorUserNotFound;
+  String get authErrorWrongPassword;
+  String get authErrorTooManyRequests;
+  String get authErrorOperationNotAllowed;
+  String get authErrorNetworkFailed;
+  String get authErrorUnexpected;
+  String get authErrorAccountCreation;
+  String get authErrorSignIn;
+  String get authErrorNotSignedIn;
+  String get newUserDefaultName;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Core Widget Labels
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get searchHint;
+  String get showMore;
+  String get showLess;
+  String get addImage;
+  String get errorOccurredTitle;
+  String colorsAvailableCount(int count);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // General UI Labels
+  // ═══════════════════════════════════════════════════════════════════════════
+  String get orLabel;
 }
 
 class _AppLocalizationsDelegate

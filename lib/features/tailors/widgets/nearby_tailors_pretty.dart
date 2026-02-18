@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// موديل الخياط
 class TailorItem {
@@ -223,13 +224,13 @@ class NearbyTailorsPretty extends StatelessWidget {
                                 children: [
                                   _QuickBtn(
                                     icon: Icons.call_rounded,
-                                    label: 'اتصال',
+                                    label: AppLocalizations.of(context)!.callLabel,
                                     onTap: () => onCall?.call(t),
                                   ),
                                   const SizedBox(width: 8),
                                   _QuickBtn(
                                     icon: Icons.directions_rounded,
-                                    label: 'خريطة',
+                                    label: AppLocalizations.of(context)!.mapLabel,
                                     onTap: () => onMap?.call(t),
                                   ),
                                   const Spacer(),
@@ -311,8 +312,9 @@ class _OpenDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final color = isOpen ? Colors.greenAccent : Colors.redAccent;
-    final label = isOpen ? 'مفتوح الآن' : 'مغلق حالياً';
+    final label = isOpen ? l10n.openNow : l10n.closedNow;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

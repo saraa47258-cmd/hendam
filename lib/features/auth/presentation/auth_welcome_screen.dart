@@ -222,15 +222,6 @@ class _WelcomeBodyState extends State<_WelcomeBody>
                           child: const _ActionCard(),
                         ),
 
-                        SizedBox(height: isCompact ? 24 : 36),
-
-                        // مؤشرات الثقة
-                        _SlideIn(
-                          animation: _trustAnim,
-                          offsetY: 30,
-                          child: const _TrustIndicators(),
-                        ),
-
                         const SizedBox(height: 32),
                       ],
                     ),
@@ -876,7 +867,7 @@ class _OrDivider extends StatelessWidget {
             borderRadius: BorderRadius.circular(_DS.radiusMd),
           ),
           child: Text(
-            'أو',
+            AppLocalizations.of(context)!.orLabel,
             style: GoogleFonts.cairo(
               fontSize: 13,
               fontWeight: FontWeight.w600,

@@ -118,6 +118,7 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
   Widget _buildStatisticsCard() {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       margin: const EdgeInsets.all(16),
@@ -130,7 +131,7 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'إحصائيات الأقمشة',
+            l10n.fabricStatistics,
             style: tt.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
               color: cs.onPrimaryContainer,
@@ -141,14 +142,14 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
             children: [
               Expanded(
                 child: _buildStatItem(
-                  'إجمالي الأقمشة',
+                  l10n.totalFabrics,
                   '${_statistics!['totalFabrics']}',
                   Icons.inventory_rounded,
                 ),
               ),
               Expanded(
                 child: _buildStatItem(
-                  'أقمشة هذا الخياط',
+                  l10n.tailorFabrics,
                   '${_statistics!['tailorCounts'][widget.tailorId] ?? 0}',
                   Icons.person_rounded,
                 ),
@@ -284,6 +285,7 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
   Widget _buildFabricCard(Map<String, dynamic> fabric) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -317,21 +319,21 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    fabric['name'] ?? 'قماش',
+                    fabric['name'] ?? l10n.fabric,
                     style: tt.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    fabric['type'] ?? 'غير محدد',
+                    fabric['type'] ?? l10n.typeNotSpecified,
                     style: tt.bodyMedium?.copyWith(
                       color: cs.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'ر.ع ${(fabric['pricePerMeter'] ?? 0.0).toStringAsFixed(3)}/متر',
+                    '${l10n.currency((fabric['pricePerMeter'] ?? 0.0).toStringAsFixed(3))}${l10n.perMeter}',
                     style: tt.bodySmall?.copyWith(
                       color: cs.primary,
                       fontWeight: FontWeight.w600,
@@ -339,7 +341,7 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
                   ),
                   if (fabric['availableColors'] != null)
                     Text(
-                      '${(fabric['availableColors'] as List).length} لون متاح',
+                      l10n.colorsAvailableCount((fabric['availableColors'] as List).length),
                       style: tt.bodySmall?.copyWith(
                         color: cs.onSurfaceVariant,
                       ),
@@ -369,15 +371,17 @@ class _TailorFabricAdminScreenState extends State<TailorFabricAdminScreen> {
 
   void _showAddFabricDialog() {
     // TODO: تنفيذ إضافة قماش جديد
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('سيتم تنفيذ إضافة قماش جديد قريباً')),
+      SnackBar(content: Text(l10n.addFabricComingSoon)),
     );
   }
 
   void _showEditFabricDialog(Map<String, dynamic> fabric) {
     // TODO: تنفيذ تعديل القماش
+    final l10n = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('سيتم تنفيذ تعديل القماش قريباً')),
+      SnackBar(content: Text(l10n.editFabricComingSoon)),
     );
   }
 

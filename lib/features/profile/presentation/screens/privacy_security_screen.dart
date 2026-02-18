@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hindam/shared/widgets/profile_page_scaffold.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 /// صفحة الخصوصية والأمان
 class PrivacySecurityScreen extends StatelessWidget {
@@ -11,26 +12,27 @@ class PrivacySecurityScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return ProfilePageScaffold(
-      title: 'الخصوصية والأمان',
+      title: l10n.privacyAndSecurity,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         children: [
           Text(
-            'إعدادات الأمان وبياناتك الشخصية',
+            l10n.securityAndPrivacyData,
             style: tt.bodyLarge?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 20),
           _PrivacyTile(
             icon: Icons.lock_outline_rounded,
-            title: 'تغيير كلمة المرور',
-            subtitle: 'تحديث كلمة المرور بشكل دوري',
+            title: l10n.changePassword,
+            subtitle: l10n.updatePasswordPeriodically,
             onTap: () {
               HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('تغيير كلمة المرور'),
+                  content: Text(l10n.changePassword),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -42,13 +44,13 @@ class PrivacySecurityScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _PrivacyTile(
             icon: Icons.visibility_outlined,
-            title: 'البيانات التي نجمعها',
-            subtitle: 'كيف نستخدم بياناتك',
+            title: l10n.dataWeCollect,
+            subtitle: l10n.howWeUseYourData,
             onTap: () {
               HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('البيانات التي نجمعها'),
+                  content: Text(l10n.dataWeCollect),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
@@ -60,13 +62,13 @@ class PrivacySecurityScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _PrivacyTile(
             icon: Icons.policy_outlined,
-            title: 'سياسة الخصوصية',
-            subtitle: 'قراءة سياسة الخصوصية الكاملة',
+            title: l10n.privacyPolicy,
+            subtitle: l10n.readFullPrivacyPolicy,
             onTap: () {
               HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: const Text('سياسة الخصوصية'),
+                  content: Text(l10n.privacyPolicy),
                   behavior: SnackBarBehavior.floating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),

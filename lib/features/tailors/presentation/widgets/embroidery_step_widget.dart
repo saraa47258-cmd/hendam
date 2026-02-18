@@ -108,7 +108,7 @@ class EmbroideryStepWidget extends StatelessWidget {
                               : null,
                         ),
                         child: isSelected
-                            ? const Icon(Icons.check, color: Colors.white, size: 24)
+                            ? Icon(Icons.check, color: cs.onPrimary, size: 24)
                             : null,
                       ),
                     );

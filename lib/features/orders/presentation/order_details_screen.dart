@@ -116,7 +116,7 @@ class OrderDetailsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '${(item.price * item.qty).toStringAsFixed(2)} ر.ع',
+                              l10n.currency((item.price * item.qty).toStringAsFixed(2)),
                               style: tt.bodyMedium?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),

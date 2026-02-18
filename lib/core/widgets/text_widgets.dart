@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../styles/responsive.dart';
+import '../../l10n/app_localizations.dart';
 
 class SafeText extends StatelessWidget {
   final String text;
@@ -76,16 +77,16 @@ class ExpandableText extends StatefulWidget {
   final String text;
   final TextStyle? style;
   final int maxLines;
-  final String expandText;
-  final String collapseText;
+  final String? expandText;
+  final String? collapseText;
   
   const ExpandableText(
     this.text, {
     super.key,
     this.style,
     this.maxLines = 3,
-    this.expandText = 'عرض المزيد',
-    this.collapseText = 'عرض أقل',
+    this.expandText,
+    this.collapseText,
   });
 
   @override
@@ -120,7 +121,9 @@ class _ExpandableTextState extends State<ExpandableText> {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Text(
-                _isExpanded ? widget.collapseText : widget.expandText,
+                _isExpanded
+                    ? (widget.collapseText ?? AppLocalizations.of(context)!.showLess)
+                    : (widget.expandText ?? AppLocalizations.of(context)!.showMore),
                 style: tt.bodySmall?.copyWith(
                   color: cs.primary,
                   fontWeight: FontWeight.w600,

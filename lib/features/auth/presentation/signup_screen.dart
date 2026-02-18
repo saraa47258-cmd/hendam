@@ -115,7 +115,7 @@ class _SignUpScreenState extends State<SignUpScreen>
                 const SizedBox(width: 8),
                 Expanded(
                     child: Text(
-                        '❌ ${authProvider.error ?? l10n.accountCreationFailed}')),
+                        '❌ ${AuthProvider.localizeError(authProvider.error, l10n)}')),
               ],
             ),
             backgroundColor: Colors.red,

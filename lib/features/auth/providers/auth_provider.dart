@@ -2,6 +2,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:hindam/features/auth/models/user_model.dart';
 import 'package:hindam/features/auth/services/auth_service.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 /// مزود حالة المصادقة
 class AuthProvider extends ChangeNotifier {
@@ -177,5 +178,42 @@ class AuthProvider extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  /// ترجمة رسائل الخطأ باستخدام l10n
+  static String localizeError(String? errorCode, AppLocalizations l10n) {
+    if (errorCode == null) return l10n.errorOccurred;
+    // Strip 'Exception: ' prefix if present
+    final code = errorCode.replaceFirst('Exception: ', '');
+    switch (code) {
+      case 'auth_error_weak_password':
+        return l10n.authErrorWeakPassword;
+      case 'auth_error_email_in_use':
+        return l10n.authErrorEmailInUse;
+      case 'auth_error_invalid_email':
+        return l10n.authErrorInvalidEmail;
+      case 'auth_error_user_disabled':
+        return l10n.authErrorUserDisabled;
+      case 'auth_error_user_not_found':
+        return l10n.authErrorUserNotFound;
+      case 'auth_error_wrong_password':
+        return l10n.authErrorWrongPassword;
+      case 'auth_error_too_many_requests':
+        return l10n.authErrorTooManyRequests;
+      case 'auth_error_operation_not_allowed':
+        return l10n.authErrorOperationNotAllowed;
+      case 'auth_error_network_failed':
+        return l10n.authErrorNetworkFailed;
+      case 'auth_error_unexpected':
+        return l10n.authErrorUnexpected;
+      case 'auth_error_account_creation':
+        return l10n.authErrorAccountCreation;
+      case 'auth_error_sign_in':
+        return l10n.authErrorSignIn;
+      case 'auth_error_not_signed_in':
+        return l10n.authErrorNotSignedIn;
+      default:
+        return errorCode;
+    }
   }
 }

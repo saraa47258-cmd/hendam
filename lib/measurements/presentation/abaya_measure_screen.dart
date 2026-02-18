@@ -318,6 +318,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
   /// بناء قسم الهدية
   Widget _buildGiftSection(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     
     return Container(
       padding: const EdgeInsets.all(_DS.lg),
@@ -329,7 +330,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: cs.shadow.withOpacity(0.03),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -368,7 +369,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
                                 ],
                               )
                             : null,
-                        color: _isGift ? null : const Color(0xFFF3F4F6),
+                        color: _isGift ? null : cs.surfaceContainerLowest,
                         borderRadius: BorderRadius.circular(_DS.radiusSm),
                       ),
                       child: Icon(
@@ -714,7 +715,7 @@ class _GlassBackButtonState extends State<_GlassBackButton>
             border: Border.all(color: _DS.border.withOpacity(0.5), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Theme.of(context).colorScheme.shadow.withOpacity(0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -742,6 +743,7 @@ class _SelectedProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(_DS.lg),
       decoration: BoxDecoration(
@@ -750,7 +752,7 @@ class _SelectedProductCard extends StatelessWidget {
         border: Border.all(color: _DS.border.withOpacity(0.5), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: cs.shadow.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -879,6 +881,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     final labels = _getLabels(l10n);
     final tips = _getTips(l10n);
     return Container(
@@ -889,7 +892,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
         border: Border.all(color: _DS.border.withOpacity(0.5), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: cs.shadow.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -943,7 +946,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
             height: 44,
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
+              color: cs.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(_DS.radiusMd),
             ),
             child: Row(
@@ -964,7 +967,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.06),
+                                  color: cs.shadow.withOpacity(0.06),
                                   blurRadius: 4,
                                   offset: const Offset(0, 1),
                                 ),
@@ -995,7 +998,7 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
           Container(
             height: 200,
             decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
+              color: cs.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(_DS.radiusMd),
               border: Border.all(color: _DS.border.withOpacity(0.5)),
             ),
@@ -1011,13 +1014,13 @@ class _MeasurementGuideSegmentState extends State<_MeasurementGuideSegment> {
                       Icon(
                         Icons.image_not_supported_outlined,
                         size: 40,
-                        color: Colors.grey[400],
+                        color: cs.outlineVariant,
                       ),
                       const SizedBox(height: _DS.sm),
                       Text(
                         l10n.guideImageNotAvailable,
                         style: TextStyle(
-                          color: Colors.grey[500],
+                          color: cs.onSurfaceVariant,
                           fontSize: 13,
                         ),
                       ),
@@ -1099,6 +1102,7 @@ class _MeasurementsForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(_DS.xl),
       decoration: BoxDecoration(
@@ -1107,7 +1111,7 @@ class _MeasurementsForm extends StatelessWidget {
         border: Border.all(color: _DS.border.withOpacity(0.5), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: cs.shadow.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1208,6 +1212,7 @@ class _InchInputField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1258,7 +1263,7 @@ class _InchInputField extends StatelessWidget {
               color: _DS.primaryBrown,
             ),
             filled: true,
-            fillColor: const Color(0xFFF9FAFB),
+            fillColor: cs.surfaceContainerLowest,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: _DS.lg,
               vertical: _DS.lg,
@@ -1312,6 +1317,7 @@ class _NotesField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(_DS.xl),
       decoration: BoxDecoration(
@@ -1320,7 +1326,7 @@ class _NotesField extends StatelessWidget {
         border: Border.all(color: _DS.border.withOpacity(0.5), width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: cs.shadow.withOpacity(0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -1376,7 +1382,7 @@ class _NotesField extends StatelessWidget {
                 fontWeight: FontWeight.w400,
               ),
               filled: true,
-              fillColor: const Color(0xFFF9FAFB),
+              fillColor: cs.surfaceContainerLowest,
               contentPadding: const EdgeInsets.all(_DS.lg),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(_DS.radiusMd),
@@ -1432,7 +1438,7 @@ class _StickyConfirmBar extends StatelessWidget {
         color: _DS.cardBg,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Theme.of(context).colorScheme.shadow.withOpacity(0.06),
             blurRadius: 20,
             offset: const Offset(0, -4),
           ),

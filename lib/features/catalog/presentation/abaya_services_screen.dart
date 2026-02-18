@@ -12,6 +12,7 @@ import '../../favorites/services/favorite_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../../core/state/cart_scope.dart';
 import '../../../shared/widgets/any_image.dart';
+import '../../../l10n/app_localizations.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Design System
@@ -57,7 +58,10 @@ class AbayaServicesScreen extends StatefulWidget {
 }
 
 class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
-  static const _chips = ['الكل', 'عبايات', 'أقمشة', 'أطقم', 'إكسسوارات'];
+  List<String> _getChips(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return [l10n.allTab, l10n.abayasFilter, l10n.fabricsFilter, l10n.setsFilter, l10n.accessoriesFilter];
+  }
   int _selectedChip = 1;
 
   final _abayaService = AbayaService();
@@ -189,7 +193,7 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
         // Category Chips
         SliverToBoxAdapter(
           child: _CategoryChipsBar(
-            chips: _chips,
+            chips: _getChips(context),
             selectedIndex: _selectedChip,
             onSelected: (i) => setState(() => _selectedChip = i),
           ),
@@ -202,9 +206,9 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'العبايات',
-                  style: TextStyle(
+                Text(
+                  AppLocalizations.of(context)!.abayasSection,
+                  style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w800,
                     color: _DS.darkText,
@@ -214,7 +218,7 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
                 ),
                 const SizedBox(height: _DS.xs),
                 Text(
-                  '${_shown.length} منتج متاح',
+                  '${_shown.length} ${AppLocalizations.of(context)!.productsAvailable}',
                   style: const TextStyle(
                     fontSize: 14,
                     color: _DS.mediumText,
@@ -231,7 +235,7 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(_DS.xl, _DS.lg, _DS.xl, _DS.lg),
             child: _SegmentedTabs(
-              labels: const ['نموذج', 'منتج'],
+              labels: [AppLocalizations.of(context)!.modelViewLabel, AppLocalizations.of(context)!.productViewLabel],
               selectedIndex: _selectedTab,
               onSelected: (i) => setState(() => _selectedTab = i),
             ),
@@ -284,18 +288,18 @@ class _AbayaServicesScreenState extends State<AbayaServicesScreen> {
             ),
           ),
           const SizedBox(height: _DS.lg),
-          const Text(
-            'لا توجد منتجات متاحة',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.noProductsAvailable,
+            style: const TextStyle(
               color: _DS.darkText,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: _DS.sm),
-          const Text(
-            'جرب تغيير الفئة أو البحث',
-            style: TextStyle(
+          Text(
+            AppLocalizations.of(context)!.tryChangingCategoryOrSearch,
+            style: const TextStyle(
               color: _DS.mediumText,
               fontSize: 14,
             ),
@@ -407,6 +411,7 @@ class _HeaderIconButtonState extends State<_HeaderIconButton>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) {
@@ -430,7 +435,7 @@ class _HeaderIconButtonState extends State<_HeaderIconButton>
             border: Border.all(color: _DS.border.withOpacity(0.6), width: 1),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: cs.shadow.withOpacity(0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -592,6 +597,7 @@ class _SegmentedTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       height: 46,
       padding: const EdgeInsets.all(4),
@@ -618,7 +624,7 @@ class _SegmentedTabs extends StatelessWidget {
                     borderRadius: BorderRadius.circular(_DS.radiusMd),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.08),
+                        color: cs.shadow.withOpacity(0.08),
                         blurRadius: 6,
                         offset: const Offset(0, 2),
                       ),
@@ -786,9 +792,9 @@ class _PremiumProductCardState extends State<_PremiumProductCard>
                               color: _DS.primaryBrown,
                               borderRadius: BorderRadius.circular(_DS.radiusSm),
                             ),
-                            child: const Text(
-                              'جديد',
-                              style: TextStyle(
+                            child: Text(
+                              AppLocalizations.of(context)!.newBadge,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 8,
                                 fontWeight: FontWeight.w700,
@@ -905,12 +911,12 @@ class _PremiumProductCardState extends State<_PremiumProductCard>
               const SizedBox(height: _DS.xl),
               ListTile(
                 leading: const Icon(Icons.share_outlined, color: _DS.darkText),
-                title: const Text('مشاركة'),
+                title: Text(AppLocalizations.of(ctx)!.shareLabel),
                 onTap: () => Navigator.pop(ctx),
               ),
               ListTile(
                 leading: const Icon(Icons.info_outline, color: _DS.darkText),
-                title: const Text('تفاصيل المنتج'),
+                title: Text(AppLocalizations.of(ctx)!.productDetailsLabel),
                 onTap: () {
                   Navigator.pop(ctx);
                   widget.onTap();
@@ -1014,7 +1020,7 @@ class _AddToCartButtonState extends State<_AddToCartButton>
               const SizedBox(width: _DS.sm),
               Expanded(
                 child: Text(
-                  'تمت إضافة ${widget.item.title} إلى السلة',
+                  AppLocalizations.of(context)!.addedItemToCart(widget.item.title),
                   style: const TextStyle(fontSize: 14),
                 ),
               ),
@@ -1032,7 +1038,7 @@ class _AddToCartButtonState extends State<_AddToCartButton>
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('حدث خطأ: $e'),
+          content: Text(AppLocalizations.of(context)!.errorWithMessage(e.toString())),
           backgroundColor: Colors.red,
         ),
       );
@@ -1107,7 +1113,7 @@ class _FavButtonState extends State<_FavButton>
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     if (!authProvider.isAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('يرجى تسجيل الدخول أولاً')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseLoginFirst)),
       );
       return;
     }

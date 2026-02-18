@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 // استخدم استيراد package لتفادي أخطاء المسار
 import 'package:hindam/features/measurements/presentation/measurement_form_screen.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 // بيانات وهمية (بدون فايربيس حالياً)
 import '../data/mock_services.dart';
@@ -69,6 +70,7 @@ class _ServicesScreenState extends State<ServicesScreen>
   Widget build(BuildContext context) {
     final w = MediaQuery.sizeOf(context).width;
     final cols = _columnsForWidth(w);
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       children: [
@@ -81,19 +83,19 @@ class _ServicesScreenState extends State<ServicesScreen>
           tabs: [
             Tab(
               child: Text(
-                'الكل',
+                l10n.allTab,
                 style: TextStyle(fontSize: context.responsiveFontSize(14.0)),
               ),
             ),
             Tab(
               child: Text(
-                'رجالي',
+                l10n.menTab,
                 style: TextStyle(fontSize: context.responsiveFontSize(14.0)),
               ),
             ),
             Tab(
               child: Text(
-                'نسائي',
+                l10n.womenTab,
                 style: TextStyle(fontSize: context.responsiveFontSize(14.0)),
               ),
             ),
@@ -128,7 +130,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                             context,
                             controller: _search,
                             hintText:
-                                'ابحث عن خدمة (مثال: عباية، دشداشة، تعديل)',
+                                l10n.searchServiceHint,
                             onChanged: (_) => setState(() {}),
                           ),
                           SizedBox(height: context.responsiveSpacing()),
@@ -145,7 +147,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                                   final selected = _selectedCategoryId == null;
                                   return ChoiceChip(
                                     label: Text(
-                                      'كل الفئات',
+                                      l10n.allCategoriesChip,
                                       style: TextStyle(
                                           fontSize:
                                               context.responsiveFontSize(12.0)),
@@ -183,7 +185,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                         padding: EdgeInsets.all(context.responsivePadding()),
                         child: Center(
                           child: Text(
-                            'لا توجد خدمات مطابقة حاليًا',
+                            l10n.noMatchingServices,
                             style: TextStyle(
                                 fontSize: context.responsiveFontSize(16.0)),
                           ),
@@ -215,7 +217,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                                 if (ok == true && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('تم اختيار: ${s.nameAr}'),
+                                      content: Text(l10n.selectedServiceSnack(s.nameAr)),
                                     ),
                                   );
                                 }
@@ -247,7 +249,7 @@ class _ServicesScreenState extends State<ServicesScreen>
                                 if (ok == true && context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: Text('تم اختيار: ${s.nameAr}'),
+                                      content: Text(l10n.selectedServiceSnack(s.nameAr)),
                                     ),
                                   );
                                 }

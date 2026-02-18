@@ -296,7 +296,7 @@ class _OrderCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'ر.ع ${order.totalPrice.toStringAsFixed(3)}',
+                    l10n.currency(order.totalPrice.toStringAsFixed(3)),
                     style: tt.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: cs.primary,
@@ -473,7 +473,7 @@ class _OrderCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'ر.ع ${order.totalPrice.toStringAsFixed(3)}',
+                      l10n.currency(order.totalPrice.toStringAsFixed(3)),
                       style: tt.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: cs.primary,

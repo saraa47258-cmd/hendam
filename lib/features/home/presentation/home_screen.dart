@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hindam/app/theme/colors.dart';
 import 'package:hindam/l10n/app_localizations.dart';
 
 // صفحات الأقسام
@@ -215,10 +216,10 @@ class _PremiumHeader extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.person_rounded,
             size: 24,
-            color: Colors.white,
+            color: cs.onPrimary,
           ),
         ),
         const SizedBox(width: _Spacing.md),
@@ -362,8 +363,8 @@ class _PremiumIconButtonState extends State<_PremiumIconButton>
                   child: Center(
                     child: Text(
                       '${widget.badge}',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: cs.onError,
                         fontSize: 9,
                         fontWeight: FontWeight.w700,
                       ),
@@ -440,10 +441,10 @@ class _PremiumSearchBar extends StatelessWidget {
               color: cs.primary,
               borderRadius: BorderRadius.circular(_Radius.sm),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.tune_rounded,
               size: 18,
-              color: Colors.white,
+              color: cs.onPrimary,
             ),
           ),
         ],
@@ -753,7 +754,7 @@ class _PremiumCategoriesGrid extends StatelessWidget {
         label: l10n.menTailor,
         svg: '${_iconPath}omani_icon_traced.svg',
         fallback: Icons.person,
-        color: const Color(0xFF0EA5E9),
+        color: AppColors.homeAccent,
       ),
       _CategoryData(
         id: 'abaya',
@@ -767,7 +768,7 @@ class _PremiumCategoriesGrid extends StatelessWidget {
         label: l10n.merchants,
         svg: '${_iconPath}store-svgrepo-com.svg',
         fallback: Icons.store,
-        color: const Color(0xFFF59E0B),
+        color: AppColors.cartAccent,
         tint: false,
       ),
       _CategoryData(
@@ -775,7 +776,7 @@ class _PremiumCategoriesGrid extends StatelessWidget {
         label: l10n.more,
         svg: '${_iconPath}grid-circles-svgrepo-com.svg',
         fallback: Icons.apps_rounded,
-        color: const Color(0xFF8B5CF6),
+        color: AppColors.profileAccent,
       ),
     ];
 

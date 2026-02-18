@@ -362,6 +362,7 @@ class _DealBannerMenState extends State<_DealBannerMen>
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
 
     return RepaintBoundary(
@@ -534,7 +535,7 @@ class _DealBannerMenState extends State<_DealBannerMen>
                               borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.15),
+                                  color: cs.shadow.withOpacity(0.15),
                                   blurRadius: 10,
                                   offset: const Offset(0, 4),
                                 ),
@@ -835,7 +836,7 @@ class _TailorSkeletonCard extends StatelessWidget {
             border: Border.all(color: cs.outlineVariant.withOpacity(0.5)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: cs.shadow.withOpacity(0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),

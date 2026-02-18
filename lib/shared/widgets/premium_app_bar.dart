@@ -92,6 +92,7 @@ class _PremiumStoreAppBarState extends State<PremiumStoreAppBar>
     final tt = Theme.of(context).textTheme;
     final isRtl = Directionality.of(context) == TextDirection.rtl;
     final colors = _gradientColors(context);
+    final fg = cs.onPrimary;
     final topPadding = MediaQuery.paddingOf(context).top;
     final totalHeight = PremiumStoreAppBar._contentHeight + topPadding;
 
@@ -105,7 +106,7 @@ class _PremiumStoreAppBarState extends State<PremiumStoreAppBar>
         ),
         border: Border(
           bottom: BorderSide(
-            color: Colors.white.withOpacity(0.12),
+            color: fg.withOpacity(0.12),
             width: 1,
           ),
         ),
@@ -149,7 +150,7 @@ class _PremiumStoreAppBarState extends State<PremiumStoreAppBar>
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.3,
                         height: 1.2,
-                        color: Colors.white,
+                        color: fg,
                       ),
                     ),
                     if (widget.locationText != null) ...[
@@ -163,7 +164,7 @@ class _PremiumStoreAppBarState extends State<PremiumStoreAppBar>
                           Icon(
                             Icons.location_on_rounded,
                             size: 13,
-                            color: Colors.white.withOpacity(0.85),
+                            color: fg.withOpacity(0.85),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -172,7 +173,7 @@ class _PremiumStoreAppBarState extends State<PremiumStoreAppBar>
                             overflow: TextOverflow.ellipsis,
                             style: tt.bodySmall?.copyWith(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.9),
+                              color: fg.withOpacity(0.9),
                               fontWeight: FontWeight.w500,
                               letterSpacing: 0.1,
                             ),
@@ -212,38 +213,39 @@ class _BackCapsule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final fg = cs.onPrimary;
     return Material(
-      color: Colors.white.withOpacity(0.18),
+      color: fg.withOpacity(0.18),
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onBack,
         borderRadius: BorderRadius.circular(16),
         splashFactory: InkRipple.splashFactory,
-        splashColor: Colors.white.withOpacity(0.2),
-        highlightColor: Colors.white.withOpacity(0.1),
+        splashColor: fg.withOpacity(0.2),
+        highlightColor: fg.withOpacity(0.1),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.white.withOpacity(0.4),
+              color: fg.withOpacity(0.4),
               width: 1,
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.arrow_back_rounded,
-                color: Colors.white,
+                color: fg,
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
                 l10n.back,
                 style: tt.labelLarge?.copyWith(
-                  color: Colors.white,
+                  color: fg,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                   letterSpacing: 0.2,
@@ -264,14 +266,15 @@ class _ProfileAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fg = Theme.of(context).colorScheme.onPrimary;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onProfile,
         borderRadius: BorderRadius.circular(24),
         splashFactory: InkRipple.splashFactory,
-        splashColor: Colors.white.withOpacity(0.2),
-        highlightColor: Colors.white.withOpacity(0.1),
+        splashColor: fg.withOpacity(0.2),
+        highlightColor: fg.withOpacity(0.1),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: BackdropFilter(
@@ -281,15 +284,15 @@ class _ProfileAvatar extends StatelessWidget {
               height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.2),
+                color: fg.withOpacity(0.2),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.5),
+                  color: fg.withOpacity(0.5),
                   width: 1.2,
                 ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.checkroom_rounded,
-                color: Colors.white,
+                color: fg,
                 size: 24,
               ),
             ),

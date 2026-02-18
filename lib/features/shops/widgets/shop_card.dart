@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/shop.dart';
 import '../../../core/styles/responsive.dart';
+import '../../../l10n/app_localizations.dart';
 
 class ShopCard extends StatelessWidget {
   final Shop shop;
@@ -56,7 +57,7 @@ class ShopCard extends StatelessWidget {
                       top: context.responsiveMargin(),
                       start: context.responsiveMargin(),
                       child: _ChipBadge(
-                        label: shop.isOpen ? 'مفتوح' : 'مغلق',
+                        label: shop.isOpen ? AppLocalizations.of(context)!.open : AppLocalizations.of(context)!.closed,
                         bg: shop.isOpen ? Colors.green : cs.outline,
                         fg: Colors.white,
                       ),

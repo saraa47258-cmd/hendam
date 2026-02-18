@@ -51,9 +51,13 @@ class ErrorHandler {
           children: [
             const Icon(Icons.error_outline, size: 64, color: Colors.red),
             const SizedBox(height: 16),
-            const Text(
-              'حدث خطأ',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Builder(
+              builder: (context) {
+                return Text(
+                  AppLocalizations.of(context)!.errorOccurredTitle,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                );
+              },
             ),
             const SizedBox(height: 8),
             Text(

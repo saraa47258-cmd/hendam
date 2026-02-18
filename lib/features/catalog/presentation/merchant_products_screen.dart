@@ -1227,6 +1227,7 @@ class _MerchantProductPreviewScreenState
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
     final size = MediaQuery.of(context).size;
     final images = widget.product.gallery.isEmpty
@@ -1594,7 +1595,7 @@ class _MerchantProductPreviewScreenState
                   color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
+                      color: cs.shadow.withOpacity(0.08),
                       blurRadius: 20,
                       offset: const Offset(0, -4),
                     ),

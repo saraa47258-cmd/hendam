@@ -39,7 +39,7 @@ class AuthService {
       );
 
       if (credential.user == null) {
-        throw Exception('فشل إنشاء الحساب');
+        throw Exception('auth_error_account_creation');
       }
 
       // لا نحتاج لتحديث displayName - نحفظ الاسم في Firestore فقط
@@ -89,7 +89,7 @@ class AuthService {
       );
 
       if (credential.user == null) {
-        throw Exception('فشل تسجيل الدخول');
+        throw Exception('auth_error_sign_in');
       }
 
       // جلب بيانات المستخدم من Firestore
@@ -103,7 +103,7 @@ class AuthService {
         final userModel = UserModel(
           uid: credential.user!.uid,
           email: credential.user!.email ?? email,
-          name: 'مستخدم جديد', // اسم افتراضي بدلاً من displayName
+          name: credential.user!.displayName ?? '', // default name set by presentation layer
           createdAt: DateTime.now(),
         );
 
@@ -200,7 +200,7 @@ class AuthService {
   /// حذف الحساب
   Future<void> deleteAccount() async {
     try {
-      if (!isSignedIn) throw Exception('لم يتم تسجيل الدخول');
+      if (!isSignedIn) throw Exception('auth_error_not_signed_in');
 
       // حذف بيانات المستخدم من Firestore
       await _firestore
@@ -219,29 +219,29 @@ class AuthService {
     }
   }
 
-  /// معالجة أخطاء Firebase Auth
+  /// معالجة أخطاء Firebase Auth - returns error codes for l10n
   String _handleAuthException(FirebaseAuthException e) {
     switch (e.code) {
       case 'weak-password':
-        return 'كلمة المرور ضعيفة جداً';
+        return 'auth_error_weak_password';
       case 'email-already-in-use':
-        return 'البريد الإلكتروني مستخدم بالفعل';
+        return 'auth_error_email_in_use';
       case 'invalid-email':
-        return 'البريد الإلكتروني غير صحيح';
+        return 'auth_error_invalid_email';
       case 'user-disabled':
-        return 'هذا الحساب معطل';
+        return 'auth_error_user_disabled';
       case 'user-not-found':
-        return 'لا يوجد حساب بهذا البريد الإلكتروني';
+        return 'auth_error_user_not_found';
       case 'wrong-password':
-        return 'كلمة المرور غير صحيحة';
+        return 'auth_error_wrong_password';
       case 'too-many-requests':
-        return 'تم محاولة تسجيل الدخول عدة مرات، يرجى المحاولة لاحقاً';
+        return 'auth_error_too_many_requests';
       case 'operation-not-allowed':
-        return 'هذه العملية غير مسموح بها';
+        return 'auth_error_operation_not_allowed';
       case 'network-request-failed':
-        return 'فشل الاتصال بالإنترنت';
+        return 'auth_error_network_failed';
       default:
-        return e.message ?? 'حدث خطأ غير متوقع';
+        return 'auth_error_unexpected';
     }
   }
 }

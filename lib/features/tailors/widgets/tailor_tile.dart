@@ -66,7 +66,7 @@ class TailorTile extends StatelessWidget {
                             ),
                             child: Text(
                               isOpen ? l10n.open : l10n.closed,
-                              style: const TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 11, color: cs.onPrimary, fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],

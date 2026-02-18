@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../styles/responsive.dart';
+import '../../l10n/app_localizations.dart';
 
 /// مساعدات الاستجابة العامة
 class ResponsiveHelpers {
@@ -131,7 +132,7 @@ class ResponsiveHelpers {
       controller: controller,
       onChanged: onChanged,
       decoration: InputDecoration(
-        hintText: hintText ?? 'ابحث...',
+        hintText: hintText ?? AppLocalizations.of(context)!.searchHint,
         hintStyle: hintStyle,
         prefixIcon: Icon(
           Icons.search,

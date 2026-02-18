@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/fabric_item.dart';
 import '../../../core/styles/responsive.dart';
 import '../../../core/styles/dimens.dart';
+import '../../../l10n/app_localizations.dart';
 
 bool _isNetworkPath(String p) =>
     p.startsWith('http://') || p.startsWith('https://');
@@ -148,20 +149,21 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
   void _submitOrder() {
     if (!_formKey.currentState!.validate()) return;
+    final l10n = AppLocalizations.of(context)!;
 
     // منطق إرسال الطلب
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تم إرسال الطلب'),
-        content: const Text('سيتم التواصل معك قريباً لتأكيد التفاصيل'),
+        title: Text(l10n.orderSentTitle),
+        content: Text(l10n.willContactSoon),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
-            child: const Text('موافق'),
+            child: Text(l10n.okLabel),
           ),
         ],
       ),
@@ -259,7 +261,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                                 const SizedBox(width: 4),
                                 Expanded(
                                   child: Text(
-                                    'مسقط',
+                                    AppLocalizations.of(context)!.muscat,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
@@ -304,7 +306,12 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                   ),
                   child: _ResponsiveStepperHeader(
                     current: _step,
-                    labels: const ['القماش', 'اللون', 'المقاسات', 'التطريز'],
+                    labels: [
+                      AppLocalizations.of(context)!.fabricStep,
+                      AppLocalizations.of(context)!.colorStep,
+                      AppLocalizations.of(context)!.measurementsStep,
+                      AppLocalizations.of(context)!.embroideryStep,
+                    ],
                     isTablet: isTablet,
                   ),
                 ),
@@ -376,7 +383,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                   color: cs.surface,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(.1),
+                      color: cs.shadow.withOpacity(.1),
                       blurRadius: 8,
                       offset: const Offset(0, -2),
                     ),
@@ -407,7 +414,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'التكلفة التقديرية: ${_price.toStringAsFixed(3)} ر.ع',
+                                '${AppLocalizations.of(context)!.estimatedCost}: ${_price.toStringAsFixed(3)} ${AppLocalizations.of(context)!.currency}',
                                 style: TextStyle(
                                   color: _brand,
                                   fontWeight: FontWeight.bold,
@@ -428,7 +435,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                                 child: OutlinedButton.icon(
                                   onPressed: _prevStep,
                                   icon: const Icon(Icons.arrow_forward_rounded),
-                                  label: const Text('السابق'),
+                                  label: Text(AppLocalizations.of(context)!.previousLabel),
                                   style: OutlinedButton.styleFrom(
                                     padding: EdgeInsets.symmetric(
                                       vertical: isTablet ? 16 : 12,
@@ -451,7 +458,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                                       : Icons.send_rounded,
                                 ),
                                 label:
-                                    Text(_step < 3 ? 'التالي' : 'إرسال الطلب'),
+                                    Text(_step < 3 ? AppLocalizations.of(context)!.next : AppLocalizations.of(context)!.sendOrderButton),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: _brand,
                                   foregroundColor: Colors.white,
@@ -587,7 +594,7 @@ class _FabricStep extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'اختر نوع القماش',
+                AppLocalizations.of(context)!.selectFabricType,
                 style: TextStyle(
                   fontSize: isTablet ? 24 : 20,
                   fontWeight: FontWeight.bold,
@@ -670,8 +677,8 @@ class _FabricStep extends StatelessWidget {
               else
                 Container(
                   padding: EdgeInsets.all(isTablet ? 40 : 24),
-                  child: const Center(
-                    child: Text('لا توجد أقمشة متاحة'),
+                  child: Center(
+                    child: Text(AppLocalizations.of(context)!.noFabricsAvailableNow),
                   ),
                 ),
             ],
@@ -717,7 +724,7 @@ class _ColorStep extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'اختر لون القماش',
+                AppLocalizations.of(context)!.selectFabricColor,
                 style: TextStyle(
                   fontSize: isTablet ? 24 : 20,
                   fontWeight: FontWeight.bold,
@@ -753,7 +760,7 @@ class _ColorStep extends StatelessWidget {
                           shape: BoxShape.circle,
                           color: color,
                           border: Border.all(
-                            color: isSelected ? _brand : Colors.grey[300]!,
+                            color: isSelected ? _brand : cs.outlineVariant,
                             width: isSelected ? 3 : 2,
                           ),
                         ),
@@ -830,7 +837,7 @@ class _MenMeasurementsStep extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'المقاسات',
+                      AppLocalizations.of(context)!.measurementsStep,
                       style: TextStyle(
                         fontSize: isTablet ? 24 : 20,
                         fontWeight: FontWeight.bold,
@@ -845,8 +852,8 @@ class _MenMeasurementsStep extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _buildUnitButton('سم', MeasurementUnit.cm),
-                          _buildUnitButton('إنش', MeasurementUnit.inch),
+                          _buildUnitButton(AppLocalizations.of(context)!.cm, MeasurementUnit.cm),
+                          _buildUnitButton(AppLocalizations.of(context)!.inch, MeasurementUnit.inch),
                         ],
                       ),
                     ),
@@ -860,7 +867,7 @@ class _MenMeasurementsStep extends StatelessWidget {
 
                 // ملاحظات
                 Text(
-                  'ملاحظات إضافية (اختياري)',
+                  AppLocalizations.of(context)!.additionalNotesOptional,
                   style: TextStyle(
                     fontSize: isTablet ? 18 : 16,
                     fontWeight: FontWeight.bold,
@@ -871,7 +878,7 @@ class _MenMeasurementsStep extends StatelessWidget {
                   controller: notesCtrl,
                   maxLines: isTablet ? 4 : 3,
                   decoration: InputDecoration(
-                    hintText: 'مثال: أريدها واسعة قليلًا...',
+                    hintText: AppLocalizations.of(context)!.addNotesHint,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -943,11 +950,11 @@ class _MenMeasurementsStep extends StatelessWidget {
               height: double.infinity,
               margin: EdgeInsets.symmetric(horizontal: isTablet ? 12 : 8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: cs.shadow.withOpacity(0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -983,11 +990,11 @@ class _MenMeasurementsStep extends StatelessWidget {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'مطلوب';
+                      return AppLocalizations.of(context)!.requiredField;
                     }
                     final num = double.tryParse(value);
                     if (num == null || num <= 0) {
-                      return 'قيمة غير صحيحة';
+                      return AppLocalizations.of(context)!.invalidValue;
                     }
                     return null;
                   },
@@ -1022,7 +1029,7 @@ class _MenMeasurementsStep extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                unit.labelAr,
+                unit == MeasurementUnit.cm ? AppLocalizations.of(context)!.cm : AppLocalizations.of(context)!.inch,
                 style: TextStyle(
                   color: cs.onPrimaryContainer,
                   fontWeight: FontWeight.w800,
@@ -1053,7 +1060,7 @@ class _MenMeasurementsStep extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: cs.shadow.withOpacity(0.03),
               blurRadius: 2,
               offset: const Offset(0, 1),
             ),
@@ -1095,21 +1102,23 @@ class _MenMeasurementsStep extends StatelessWidget {
   }
 
   Widget _buildMeasurementsGrid() {
-    final measurements = [
-      ('الطول الكلي', lengthCtrl, Icons.height),
-      ('الكتف', shoulderCtrl, Icons.straighten),
-      ('طول الكم', sleeveCtrl, Icons.rule_rounded),
-      ('محيط الكم العلوي', upperSleeveCtrl, Icons.fitness_center),
-      ('محيط الكم السفلي', lowerSleeveCtrl, Icons.watch),
-      ('الصدر', chestCtrl, Icons.accessibility_new),
-      ('الخصر', waistCtrl, Icons.straighten),
-      ('المحيط السفلي', bottomCtrl, Icons.panorama_horizontal),
-      ('محيط الرقبة', neckCtrl, Icons.accessibility),
-      ('التطريز الامامي', embroideryCtrl, Icons.straighten),
-    ];
-
     return Builder(
-      builder: (context) => Column(
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        final measurements = [
+          (l10n.totalLength, lengthCtrl, Icons.height),
+          (l10n.shoulder, shoulderCtrl, Icons.straighten),
+          (l10n.sleeveLength, sleeveCtrl, Icons.rule_rounded),
+          (l10n.upperSleeve, upperSleeveCtrl, Icons.fitness_center),
+          (l10n.lowerSleeve, lowerSleeveCtrl, Icons.watch),
+          (l10n.chest, chestCtrl, Icons.accessibility_new),
+          (l10n.waist, waistCtrl, Icons.straighten),
+          (l10n.bottomCircumference, bottomCtrl, Icons.panorama_horizontal),
+          (l10n.neckCircumference, neckCtrl, Icons.accessibility),
+          (l10n.frontEmbroidery, embroideryCtrl, Icons.straighten),
+        ];
+
+        return Column(
         children: measurements.map((measurement) {
           final (label, controller, icon) = measurement;
 
@@ -1144,7 +1153,8 @@ class _MenMeasurementsStep extends StatelessWidget {
             ),
           );
         }).toList(),
-      ),
+        );
+      },
     );
   }
 }
@@ -1172,6 +1182,7 @@ class _EmbroideryStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(isTablet ? 24 : 16),
@@ -1184,7 +1195,7 @@ class _EmbroideryStep extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'خيارات التطريز',
+                l10n.embroideryOptions,
                 style: TextStyle(
                   fontSize: isTablet ? 24 : 20,
                   fontWeight: FontWeight.bold,
@@ -1203,7 +1214,7 @@ class _EmbroideryStep extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'لون التطريز',
+                      l10n.selectEmbroideryColor,
                       style: TextStyle(
                         fontSize: isTablet ? 18 : 16,
                         fontWeight: FontWeight.bold,
@@ -1214,12 +1225,12 @@ class _EmbroideryStep extends StatelessWidget {
                       spacing: isTablet ? 16 : 12,
                       runSpacing: isTablet ? 16 : 12,
                       children: [
-                        _buildColorOption(const Color(0xFF795548), 'بني'),
-                        _buildColorOption(const Color(0xFF000000), 'أسود'),
-                        _buildColorOption(const Color(0xFFFFFFFF), 'أبيض'),
-                        _buildColorOption(const Color(0xFFFF0000), 'أحمر'),
-                        _buildColorOption(const Color(0xFF0000FF), 'أزرق'),
-                        _buildColorOption(const Color(0xFF00FF00), 'أخضر'),
+                        _buildColorOption(const Color(0xFF795548), l10n.colorBrown, cs),
+                        _buildColorOption(const Color(0xFF000000), l10n.colorBlack, cs),
+                        _buildColorOption(const Color(0xFFFFFFFF), l10n.colorWhite, cs),
+                        _buildColorOption(const Color(0xFFFF0000), l10n.colorRed, cs),
+                        _buildColorOption(const Color(0xFF0000FF), l10n.colorBlue, cs),
+                        _buildColorOption(const Color(0xFF00FF00), l10n.colorGreen, cs),
                       ],
                     ),
                   ],
@@ -1239,13 +1250,13 @@ class _EmbroideryStep extends StatelessWidget {
                     // إضافة الاسم
                     SwitchListTile(
                       title: Text(
-                        'إضافة الاسم',
+                        l10n.addNameLabel,
                         style: TextStyle(
                           fontSize: isTablet ? 16 : 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      subtitle: const Text('تطريز الاسم على الثوب'),
+                      subtitle: Text(l10n.nameEmbroideryOnThobe),
                       value: addName,
                       onChanged: onAddNameChanged,
                       activeThumbColor: _brand,
@@ -1256,7 +1267,7 @@ class _EmbroideryStep extends StatelessWidget {
                     // عدد خطوط التطريز
                     ListTile(
                       title: Text(
-                        'عدد خطوط التطريز',
+                        l10n.embroideryLinesCount,
                         style: TextStyle(
                           fontSize: isTablet ? 16 : 14,
                           fontWeight: FontWeight.bold,
@@ -1297,7 +1308,7 @@ class _EmbroideryStep extends StatelessWidget {
     );
   }
 
-  Widget _buildColorOption(Color colorOption, String label) {
+  Widget _buildColorOption(Color colorOption, String label, ColorScheme cs) {
     final isSelected = color.value == colorOption.value;
 
     return GestureDetector(
@@ -1311,7 +1322,7 @@ class _EmbroideryStep extends StatelessWidget {
           color: isSelected ? _brand : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? _brand : Colors.grey[300]!,
+            color: isSelected ? _brand : cs.outlineVariant,
             width: 2,
           ),
         ),
@@ -1324,7 +1335,7 @@ class _EmbroideryStep extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colorOption,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.grey[400]!),
+                border: Border.all(color: cs.outlineVariant),
               ),
             ),
             SizedBox(width: isTablet ? 8 : 6),

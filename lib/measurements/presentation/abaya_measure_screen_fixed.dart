@@ -252,7 +252,7 @@ class _AbayaMeasureScreenState extends State<AbayaMeasureScreen> {
             color: cs.surface,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(.06),
+                color: cs.shadow.withOpacity(.06),
                 blurRadius: 16,
                 offset: const Offset(0, -4),
               ),
@@ -566,6 +566,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
   }
 
   Widget _chip(String label, int index) {
+    final cs = Theme.of(context).colorScheme;
     final selected = _selected == index;
     return FilterChip(
       label: Text(label),
@@ -575,11 +576,11 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
       selectedColor: _brand.withOpacity(0.2),
       checkmarkColor: _brand,
       labelStyle: TextStyle(
-        color: selected ? _brand : Colors.black87,
+        color: selected ? _brand : cs.onSurface,
         fontWeight: FontWeight.w700,
       ),
       side: BorderSide(
-        color: selected ? _brand : Colors.grey[400]!,
+        color: selected ? _brand : cs.outlineVariant,
         width: 1.5,
       ),
     );
@@ -587,6 +588,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
 
   void _openZoom() {
     final l10n = AppLocalizations.of(context)!;
+    final cs = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -606,7 +608,7 @@ class _MeasurementGuideCardState extends State<MeasurementGuideCard> {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.black26,
+                      color: cs.onSurfaceVariant.withOpacity(0.4),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -680,6 +682,7 @@ class _HotDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -687,7 +690,7 @@ class _HotDot extends StatelessWidget {
         height: 24,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: active ? color : Colors.white,
+          color: active ? color : cs.surfaceContainerLowest,
           border: Border.all(color: color, width: 2),
           boxShadow: [
             BoxShadow(

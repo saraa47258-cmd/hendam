@@ -355,7 +355,7 @@ class _ShopCardModern extends StatelessWidget {
           border: Border.all(color: cs.outlineVariant),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(.04),
+              color: cs.shadow.withOpacity(.04),
               blurRadius: 14,
               offset: const Offset(0, 6),
             ),

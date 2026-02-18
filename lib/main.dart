@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'app/app.dart';
 import 'core/services/firebase_service.dart';
 import 'core/providers/locale_provider.dart';
+import 'app/theme/theme_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,8 +24,16 @@ void main() async {
 
   // ✅ تهيئة LocaleProvider قبل تشغيل التطبيق
   final localeProvider = LocaleProvider();
-  await localeProvider.initialize();
+  final themeController = ThemeController();
+
+  // Load persisted state before first frame (avoid theme flicker).
+  await Future.wait([
+    localeProvider.initialize(),
+    themeController.initialize(),
+  ]);
   debugPrint('✅ LocaleProvider تم تهيئته - اللغة: ${localeProvider.locale?.languageCode}');
 
-  runApp(HendamApp(localeProvider: localeProvider));
+  debugPrint('✅ ThemeController تم تهيئته - mode: ${themeController.mode}');
+
+  runApp(HendamApp(localeProvider: localeProvider, themeController: themeController));
 }

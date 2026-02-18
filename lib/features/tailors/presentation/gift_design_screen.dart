@@ -146,12 +146,12 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
         if (_fabricType == null || _selectedFabricId == null) {
           HapticFeedback.mediumImpact();
           messenger.showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded, color: Colors.white),
-                  SizedBox(width: 8),
-                  Expanded(child: Text('⚠️ يرجى اختيار نوع القماش أولاً')),
+                  const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text('⚠️ ${AppLocalizations.of(context)!.pleaseSelectFabricTypeFirst}')),
                 ],
               ),
               backgroundColor: Colors.orange,
@@ -175,12 +175,12 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
           if (_selectedThreadColorIds.isEmpty) {
             HapticFeedback.mediumImpact();
             messenger.showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.white),
-                    SizedBox(width: 8),
-                    Expanded(child: Text('⚠️ يرجى اختيار لون الخيط')),
+                    const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('⚠️ ${AppLocalizations.of(context)!.pleaseSelectThreadColor}')),
                   ],
                 ),
                 backgroundColor: Colors.orange,
@@ -192,12 +192,12 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
           if (_threadCount < 1) {
             HapticFeedback.mediumImpact();
             messenger.showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: Colors.white),
-                    SizedBox(width: 8),
-                    Expanded(child: Text('⚠️ يرجى تحديد عدد الخيوط')),
+                    const Icon(Icons.warning_amber_rounded, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text('⚠️ ${AppLocalizations.of(context)!.pleaseSpecifyThreadCount}')),
                   ],
                 ),
                 backgroundColor: Colors.orange,
@@ -298,12 +298,12 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.card_giftcard_rounded, color: Colors.white),
-                SizedBox(width: 8),
-                Text('🎁 تم إرسال طلب الهدية بنجاح!'),
+                const Icon(Icons.card_giftcard_rounded, color: Colors.white),
+                const SizedBox(width: 8),
+                Text('🎁 ${AppLocalizations.of(context)!.giftOrderSentSuccess}'),
               ],
             ),
             backgroundColor: Colors.green,
@@ -317,7 +317,7 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('حدث خطأ: $e'),
+            content: Text(AppLocalizations.of(context)!.errorWithMessage(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -343,7 +343,7 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
         backgroundColor: cs.surface,
         appBar: PremiumStoreAppBar(
           title: widget.tailorName,
-          locationText: 'هدية 🎁',
+          locationText: '${AppLocalizations.of(context)!.giftLabel} 🎁',
           gradientColors: const [
             Color(0xFFE91E63),
             Color(0xFFF06292),
@@ -362,11 +362,11 @@ class _GiftDesignScreenState extends State<GiftDesignScreen>
                     constraints: const BoxConstraints(maxWidth: 900),
                     child: _GiftStepperHeader(
                       current: _step,
-                      labels: const [
-                        'القماش',
-                        'المقاسات و اللون',
-                        'التطريز',
-                        'بيانات المستلم'
+                      labels: [
+                        AppLocalizations.of(context)!.fabricStep,
+                        AppLocalizations.of(context)!.measurementsAndColor,
+                        AppLocalizations.of(context)!.embroideryStep,
+                        AppLocalizations.of(context)!.giftRecipientData,
                       ],
                     ),
                   ),
@@ -644,7 +644,7 @@ class _GiftFabricStepState extends State<_GiftFabricStep> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            'اختر نوع القماش للهدية',
+            AppLocalizations.of(context)!.selectFabricForGift,
             style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
@@ -726,7 +726,7 @@ class _GiftFabricStepState extends State<_GiftFabricStep> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  fabric['name'] ?? 'قماش',
+                                  fabric['name'] ?? AppLocalizations.of(context)!.fabric,
                                   style: tt.bodyMedium?.copyWith(
                                     fontWeight: FontWeight.w700,
                                   ),
@@ -819,28 +819,28 @@ class _GiftMeasurementsStep extends StatelessWidget {
           children: [
             // العنوان
             Text(
-              'أدخل مقاسات مستلم الهدية',
+              AppLocalizations.of(context)!.enterGiftRecipientMeasurements,
               style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              'يمكنك طلب المقاسات من مستلم الهدية أو تخمينها',
+              AppLocalizations.of(context)!.canAskRecipientForMeasurements,
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
 
             // المقاسات
-            _buildMeasurementField('الطول', lengthCtrl, context),
-            _buildMeasurementField('الكتف', shoulderCtrl, context),
-            _buildMeasurementField('الرقبة', neckCtrl, context),
-            _buildMeasurementField('طول الذراع', armLengthCtrl, context),
-            _buildMeasurementField('عرض المعصم', wristWidthCtrl, context),
+            _buildMeasurementField(AppLocalizations.of(context)!.totalLength, lengthCtrl, context),
+            _buildMeasurementField(AppLocalizations.of(context)!.shoulder, shoulderCtrl, context),
+            _buildMeasurementField(AppLocalizations.of(context)!.neckLabel, neckCtrl, context),
+            _buildMeasurementField(AppLocalizations.of(context)!.armLength, armLengthCtrl, context),
+            _buildMeasurementField(AppLocalizations.of(context)!.wristWidthLabel, wristWidthCtrl, context),
             _buildMeasurementField(
-                'عرض الصدر مع الجانبيين', chestWidthCtrl, context),
-            _buildMeasurementField('الوسع السفلي', bottomWidthCtrl, context),
-            _buildMeasurementField('طول النقشة', patternLengthCtrl, context),
+                AppLocalizations.of(context)!.chestWidthWithSides, chestWidthCtrl, context),
+            _buildMeasurementField(AppLocalizations.of(context)!.bottomWidth, bottomWidthCtrl, context),
+            _buildMeasurementField(AppLocalizations.of(context)!.patternLength, patternLengthCtrl, context),
 
             const SizedBox(height: 24),
 
@@ -874,7 +874,7 @@ class _GiftMeasurementsStep extends StatelessWidget {
         keyboardType: TextInputType.number,
         decoration: InputDecoration(
           labelText: label,
-          suffixText: unit.labelAr,
+          suffixText: unit == MeasurementUnit.cm ? AppLocalizations.of(context)!.cm : AppLocalizations.of(context)!.inch,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -885,10 +885,10 @@ class _GiftMeasurementsStep extends StatelessWidget {
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'مطلوب';
+            return AppLocalizations.of(context)!.required;
           }
           if (double.tryParse(value) == null) {
-            return 'أدخل رقماً صحيحاً';
+            return AppLocalizations.of(context)!.enterValidNumber;
           }
           return null;
         },
@@ -1000,13 +1000,13 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'اختر تصميم التطريز',
+            AppLocalizations.of(context)!.selectEmbroideryDesign,
             style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            'حدد نوع التطريز وألوان الخيوط',
+            AppLocalizations.of(context)!.specifyEmbroideryAndColors,
             style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -1062,7 +1062,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        'اضغط لاختيار',
+                                        AppLocalizations.of(context)!.clickToSelect,
                                         style: tt.labelSmall?.copyWith(
                                           color: cs.onSurfaceVariant,
                                           fontSize: 10,
@@ -1103,7 +1103,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
                     style:
                         tt.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
                 Text(
-                  '${widget.totalPrice.toStringAsFixed(3)} ر.ع',
+                  AppLocalizations.of(context)!.currency(widget.totalPrice.toStringAsFixed(3)),
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFFE91E63),
@@ -1128,7 +1128,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
           if (hasEmbroidery && !_canProceed()) ...[
             const SizedBox(height: 12),
             Text(
-              'يرجى اختيار لون الخيط وعدد الخيوط للمتابعة',
+              AppLocalizations.of(context)!.selectThreadColorAndCount,
               style: tt.labelSmall?.copyWith(color: Colors.orange),
               textAlign: TextAlign.center,
             ),
@@ -1154,7 +1154,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
               const Icon(Icons.palette_rounded, color: Color(0xFFE91E63)),
               const SizedBox(width: 12),
               Text(
-                'تفاصيل الخيوط',
+                AppLocalizations.of(context)!.threadDetails,
                 style: tt.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFFAD1457),
@@ -1165,7 +1165,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
         ),
         const SizedBox(height: 20),
         Text(
-          'لون الخيط',
+          AppLocalizations.of(context)!.threadColor,
           style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
@@ -1188,7 +1188,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
                 Icon(Icons.info_outline, color: cs.onSurfaceVariant),
                 const SizedBox(width: 12),
                 Text(
-                  'لا توجد ألوان متاحة',
+                  AppLocalizations.of(context)!.noColorsAvailable,
                   style: tt.bodyMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
               ],
@@ -1287,7 +1287,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
           ),
         const SizedBox(height: 24),
         Text(
-          'عدد الخيوط',
+          AppLocalizations.of(context)!.threadCount,
           style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
@@ -1339,7 +1339,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
                     ),
                   ),
                   Text(
-                    'خيط',
+                    AppLocalizations.of(context)!.thread,
                     style: tt.labelSmall?.copyWith(
                       color: cs.onSurfaceVariant,
                     ),
@@ -1379,7 +1379,7 @@ class _GiftEmbroideryStepState extends State<_GiftEmbroideryStep> {
         ),
         const SizedBox(height: 8),
         Text(
-          'الحد: ${widget.selectedEmbroidery?.minThreads ?? 1} - ${widget.selectedEmbroidery?.maxThreads ?? 5} خيوط',
+          '${AppLocalizations.of(context)!.threadsLimit}: ${widget.selectedEmbroidery?.minThreads ?? 1} - ${widget.selectedEmbroidery?.maxThreads ?? 5} ${AppLocalizations.of(context)!.threads}',
           style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
           textAlign: TextAlign.center,
         ),
@@ -1466,7 +1466,7 @@ class _EmbroideryPickerSheetState extends State<_EmbroideryPickerSheet> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    'اختر تصميم التطريز',
+                    AppLocalizations.of(context)!.selectEmbroideryDesign,
                     style:
                         tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                   ),
@@ -1491,7 +1491,7 @@ class _EmbroideryPickerSheetState extends State<_EmbroideryPickerSheet> {
                 }
                 if (snapshot.hasError) {
                   return _ErrorState(
-                    message: snapshot.error?.toString() ?? 'حدث خطأ',
+                    message: snapshot.error?.toString() ?? AppLocalizations.of(context)!.errorOccurredWithDetails,
                     onRetry: () {
                       setState(() => _loadDesigns());
                     },
@@ -1540,7 +1540,7 @@ class _EmbroideryPickerSheetState extends State<_EmbroideryPickerSheet> {
                             borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
+                                color: cs.shadow.withOpacity(0.06),
                                 blurRadius: isSelected ? 16 : 10,
                                 offset: const Offset(0, 4),
                                 spreadRadius: isSelected ? 1 : 0,
@@ -1571,7 +1571,7 @@ class _EmbroideryPickerSheetState extends State<_EmbroideryPickerSheet> {
                                         design.imageUrl,
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) => Container(
-                                          color: const Color(0xFFF5F5F5),
+                                          color: cs.surfaceContainerHighest,
                                           child: Icon(
                                             Icons.design_services_rounded,
                                             size: 56,
@@ -1581,7 +1581,7 @@ class _EmbroideryPickerSheetState extends State<_EmbroideryPickerSheet> {
                                         ),
                                       )
                                     : Container(
-                                        color: const Color(0xFFF5F5F5),
+                                        color: cs.surfaceContainerHighest,
                                         child: Icon(
                                           Icons.design_services_rounded,
                                           size: 56,
@@ -1693,7 +1693,7 @@ class _ErrorState extends StatelessWidget {
             Icon(Icons.error_outline_rounded, size: 48, color: cs.error),
             const SizedBox(height: 16),
             Text(
-              'فشل تحميل التصاميم',
+              AppLocalizations.of(context)!.failedToLoadDesigns,
               style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               textAlign: TextAlign.center,
             ),
@@ -1788,7 +1788,7 @@ class _GiftRecipientStep extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'بيانات مستلم الهدية',
+                    l10n.giftRecipientInfo,
                     style: tt.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFFAD1457),
@@ -1796,7 +1796,7 @@ class _GiftRecipientStep extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'أدخل معلومات الشخص الذي سيستلم الهدية',
+                    l10n.enterGiftRecipientDetails,
                     style: tt.bodyMedium?.copyWith(
                       color: const Color(0xFFC2185B),
                     ),
@@ -1928,7 +1928,7 @@ class _GiftRecipientStep extends StatelessWidget {
                     ],
                   ),
                   Text(
-                    '${totalPrice.toStringAsFixed(3)} ر.ع',
+                    l10n.currency(totalPrice.toStringAsFixed(3)),
                     style: tt.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFFE91E63),

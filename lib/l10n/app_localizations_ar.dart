@@ -298,6 +298,20 @@ class AppLocalizationsAr extends AppLocalizations {
   // ═══════════════════════════════════════════════════════════════════════════
   @override
   String get settings => 'الإعدادات';
+    @override
+    String get appearance => 'المظهر';
+    @override
+    String get themeSystem => 'النظام';
+    @override
+    String get themeSystemSubtitle => 'اتّباع إعدادات الجهاز';
+    @override
+    String get themeLight => 'فاتح';
+    @override
+    String get themeLightSubtitle => 'استخدام الوضع الفاتح دائماً';
+    @override
+    String get themeDark => 'داكن';
+    @override
+    String get themeDarkSubtitle => 'استخدام الوضع الداكن دائماً';
   @override
   String get personalSettings => 'الإعدادات الشخصية';
   @override
@@ -1278,6 +1292,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get backButton => 'رجوع';
   @override
   String get confirmSubmit => 'تأكيد الإرسال';
+  @override
+  String get selectionMade => 'تم الاختيار';
+  @override
+  String get chestLabel => 'الصدر';
+  @override
+  String get waistLabel => 'الخصر';
+  @override
+  String get armLabel => 'الذراع';
+  @override
+  String get perLinePrice => '+0.250 ر.ع لكل خط';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Color Names
@@ -1379,6 +1403,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get totalPriceLabel => 'السعر الإجمالي';
   @override
   String get continueToRecipientData => 'متابعة لبيانات المستلم';
+  @override
+  String get pleaseSelectFabricTypeFirst => 'يرجى اختيار نوع القماش أولاً';
+  @override
+  String get pleaseSelectThreadColor => 'يرجى اختيار لون الخيط';
+  @override
+  String get pleaseSpecifyThreadCount => 'يرجى تحديد عدد الخيوط';
+  @override
+  String get giftOrderSentSuccess => 'تم إرسال طلب الهدية بنجاح!';
+  @override
+  String get threadDetails => 'تفاصيل الخيوط';
+  @override
+  String get specifyEmbroideryAndColors => 'حدد نوع التطريز وألوان الخيوط';
+  @override
+  String get threads => 'خيوط';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Tailor Store Screen
@@ -1920,4 +1958,354 @@ class AppLocalizationsAr extends AppLocalizations {
   String get measurementGuideZoom => 'دليل القياس — تكبير';
   @override
   String get enlargeImage => 'تكبير الصورة';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailor Orders Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String tailorOrdersTitle(String name) => 'طلبات $name';
+  @override
+  String get newOrders => 'جديدة';
+  @override
+  String get acceptedTab => 'مقبولة';
+  @override
+  String get inProgressTab => 'قيد التنفيذ';
+  @override
+  String get completedTab => 'مكتملة';
+  @override
+  String get searchOrders => 'البحث في الطلبات...';
+  @override
+  String get orderStatisticsTitle => 'إحصائيات الطلبات';
+  @override
+  String get totalOrdersLabel => 'إجمالي الطلبات';
+  @override
+  String get waitingLabel => 'في الانتظار';
+  @override
+  String get completedLabel => 'مكتملة';
+  @override
+  String get revenueLabel => 'الإيرادات';
+  @override
+  String get errorLoadingOrdersList => 'حدث خطأ في تحميل الطلبات';
+  @override
+  String get retryLabel => 'إعادة المحاولة';
+  @override
+  String orderHashLabel(String id) => 'طلب #$id';
+  @override
+  String get orderDateLabel => 'تاريخ الطلب';
+  @override
+  String get noNewOrders => 'لا توجد طلبات جديدة';
+  @override
+  String get noAcceptedOrders => 'لا توجد طلبات مقبولة';
+  @override
+  String get noInProgressOrders => 'لا توجد طلبات قيد التنفيذ';
+  @override
+  String get noCompletedOrders => 'لا توجد طلبات مكتملة';
+  @override
+  String get noOrdersGeneric => 'لا توجد طلبات';
+  @override
+  String get newOrdersAppearHere => 'الطلبات الجديدة ستظهر هنا';
+  @override
+  String get acceptedOrdersAppearHere => 'الطلبات المقبولة ستظهر هنا';
+  @override
+  String get inProgressOrdersAppearHere => 'الطلبات قيد التنفيذ ستظهر هنا';
+  @override
+  String get completedOrdersAppearHere => 'الطلبات المكتملة ستظهر هنا';
+  @override
+  String get orderAccepted => 'تم قبول الطلب';
+  @override
+  String get orderAcceptFailed => 'فشل في قبول الطلب';
+  @override
+  String get rejectOrderDialogTitle => 'رفض الطلب';
+  @override
+  String get enterRejectionReason => 'يرجى إدخال سبب الرفض:';
+  @override
+  String get rejectionReasonLabel => 'سبب الرفض';
+  @override
+  String get orderRejectedSnack => 'تم رفض الطلب';
+  @override
+  String get orderRejectFailed => 'فشل في رفض الطلب';
+  @override
+  String get orderStarted => 'تم بدء تنفيذ الطلب';
+  @override
+  String get orderStartFailed => 'فشل في بدء تنفيذ الطلب';
+  @override
+  String get orderCompleted => 'تم إكمال الطلب';
+  @override
+  String get orderCompleteFailed => 'فشل في إكمال الطلب';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Fabric Management Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get noColorsRegistered => 'لا توجد ألوان مسجلة';
+  @override
+  String get pressAddToAddColor => 'اضغط على زر الإضافة لإضافة لون جديد';
+  @override
+  String get editLabel2 => 'تعديل';
+  @override
+  String get deleteLabel2 => 'حذف';
+  @override
+  String get confirmDeleteTitle => 'تأكيد الحذف';
+  @override
+  String confirmDeleteFabricMessage(String name) => 'هل أنت متأكد من حذف القماش "$name"؟';
+  @override
+  String get fabricDeletedSnack => 'تم حذف القماش بنجاح';
+  @override
+  String get addNewFabric => 'إضافة قماش جديد';
+  @override
+  String get tapToAddImage => 'اضغط لإضافة صورة';
+  @override
+  String get fabricNameLabel => 'اسم القماش';
+  @override
+  String get fabricDescriptionLabel => 'وصف القماش';
+  @override
+  String get fabricTypeFieldLabel => 'نوع القماش';
+  @override
+  String get seasonLabel => 'الموسم';
+  @override
+  String get pricePerMeterLabel => 'السعر لكل متر (ر.ع)';
+  @override
+  String get pleaseEnterFabricName => 'يرجى إدخال اسم القماش';
+  @override
+  String get pleaseEnterFabricDescription => 'يرجى إدخال وصف القماش';
+  @override
+  String get pleaseEnterPrice => 'يرجى إدخال السعر';
+  @override
+  String get pleaseEnterValidNumber => 'يرجى إدخال رقم صحيح';
+  @override
+  String get pleaseSelectImage => 'يرجى اختيار صورة للقماش';
+  @override
+  String get fabricAddedSuccess => 'تم إضافة القماش بنجاح';
+  @override
+  String get fabricAddFailed => 'فشل في إضافة القماش';
+  @override
+  String get addNewColor => 'إضافة لون جديد';
+  @override
+  String get selectFabricLabel => 'اختر القماش';
+  @override
+  String get colorNameLabel => 'اسم اللون';
+  @override
+  String get colorCodeLabel => 'كود اللون (مثل: #FF5733)';
+  @override
+  String get colorCodeHint => '#FF5733';
+  @override
+  String get pleaseEnterColorName => 'يرجى إدخال اسم اللون';
+  @override
+  String get pleaseEnterColorCode => 'يرجى إدخال كود اللون';
+  @override
+  String get invalidColorCode => 'يرجى إدخال كود لون صحيح (مثل: #FF5733)';
+  @override
+  String get pleaseSelectFabricField => 'يرجى اختيار القماش';
+  @override
+  String get noFabricsAvailableLabel => 'لا توجد أقمشة متاحة';
+  @override
+  String get colorPreview => 'معاينة اللون';
+  @override
+  String get colorAddedSuccess => 'تم إضافة اللون بنجاح';
+  @override
+  String get colorAddFailed => 'فشل في إضافة اللون';
+  @override
+  String get cottonFabric => 'قطن';
+  @override
+  String get silkFabric => 'حرير';
+  @override
+  String get woolFabric => 'صوف';
+  @override
+  String get linenFabric => 'كتان';
+  @override
+  String get polyesterFabric => 'بوليستر';
+  @override
+  String get summerSeason => 'صيفي';
+  @override
+  String get winterSeason => 'شتوي';
+  @override
+  String get allSeasonLabel => 'جميع المواسم';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Profile Screens (Settings, Privacy, Payment, Help, About)
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get securityAndPrivacyData => 'إعدادات الأمان وبياناتك الشخصية';
+  @override
+  String get updatePasswordPeriodically => 'تحديث كلمة المرور بشكل دوري';
+  @override
+  String get noSavedPaymentMethodsLabel => 'لا توجد طرق دفع محفوظة';
+  @override
+  String get addPaymentWhenOrdering => 'أضف بطاقة أو طريقة دفع عند إتمام طلبك في المرة القادمة';
+  @override
+  String get addPaymentMethodButton => 'إضافة طريقة دفع';
+  @override
+  String get faqAnswers => 'إجابات على أكثر الأسئلة شيوعاً';
+  @override
+  String get supportAndInquiriesLabel => 'الدعم الفني والاستفسارات';
+  @override
+  String get happyToHelp247 => 'نسعد بمساعدتك على مدار الساعة';
+  @override
+  String get hendamLabel => 'هندام';
+  @override
+  String get version100 => 'الإصدار 1.0.0';
+  @override
+  String get hendamAppDescription => 'تطبيق هندام يربطك بأفضل محلات الخياطة الرجالية في السلطنة. اطلب دشداشاتك، عباياتك، وتفصيلاتك بسهولة مع متابعة الطلبات والتوصيل.';
+  @override
+  String get versionLabel => 'الإصدار';
+  @override
+  String get emailLabel => 'البريد';
+  @override
+  String get websiteLabel => 'الموقع';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Catalog / Services Screens
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get noItemsToShow => 'لا توجد عناصر لعرضها';
+  @override
+  String get addButton => 'أضف';
+  @override
+  String get shareLabel => 'مشاركة';
+  @override
+  String get productDetailsLabel => 'تفاصيل المنتج';
+  @override
+  String selectedServiceSnack(String name) => 'تم اختيار: $name';
+  @override
+  String get menTailoringSection => 'الخياطة الرجالي';
+  @override
+  String get abayasSection => 'العبايات';
+  @override
+  String get smallMerchantSection => 'التاجر الصغير';
+  @override
+  String get allTab => 'الكل';
+  @override
+  String get menTab => 'رجالي';
+  @override
+  String get womenTab => 'نسائي';
+  @override
+  String get searchServiceHint => 'ابحث عن خدمة (مثال: عباية، دشداشة، تعديل)';
+  @override
+  String get allCategoriesChip => 'كل الفئات';
+  @override
+  String get noMatchingServices => 'لا توجد خدمات مطابقة حاليًا';
+
+  // Tailoring Design Responsive - Additional Keys
+  @override
+  String get colorStep => 'اللون';
+  @override
+  String get measurementsStep => 'المقاسات';
+  @override
+  String get selectFabricColor => 'اختر لون القماش';
+  @override
+  String get sendOrderButton => 'إرسال الطلب';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Measurement Form Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get enterMeasurementsTitle => 'أدخل القياسات';
+  @override
+  String get saveExperimentalButton => 'حفظ (تجريبي)';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailoring Design Responsive Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get orderSentTitle => 'تم إرسال الطلب';
+  @override
+  String get willContactSoon => 'سيتم التواصل معك قريباً لتأكيد التفاصيل';
+  @override
+  String get okLabel => 'موافق';
+  @override
+  String get previousLabel => 'السابق';
+  @override
+  String get nameEmbroideryOnThobe => 'تطريز الاسم على الثوب';
+  @override
+  String get embroideryOptions => 'خيارات التطريز';
+  @override
+  String get addNameLabel => 'إضافة الاسم';
+  @override
+  String get invalidValue => 'قيمة غير صحيحة';
+  @override
+  String get colorRed => 'أحمر';
+  @override
+  String get additionalNotesOptional => 'ملاحظات إضافية (اختياري)';
+  @override
+  String get confirmSubmission => 'تأكيد الإرسال';
+  @override
+  String get noDesignSelected => 'لا يوجد';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Additional Shared Keys
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get errorOccurredWithDetails => 'حدث خطأ';
+  @override
+  String errorWithMessage(String error) => 'حدث خطأ: $error';
+  @override
+  String get paymentMethodsTitle => 'طرق الدفع';
+  @override
+  String get pricePerMeter => 'متر';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Abaya Services Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get newBadge => 'جديد';
+  @override
+  String get modelViewLabel => 'نموذج';
+  @override
+  String get productViewLabel => 'منتج';
+  @override
+  String get tryChangingCategoryOrSearch => 'جرب تغيير الفئة أو البحث';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Auth Error Messages (Firebase)
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get authErrorWeakPassword => 'كلمة المرور ضعيفة جداً';
+  @override
+  String get authErrorEmailInUse => 'البريد الإلكتروني مستخدم بالفعل';
+  @override
+  String get authErrorInvalidEmail => 'البريد الإلكتروني غير صحيح';
+  @override
+  String get authErrorUserDisabled => 'هذا الحساب معطل';
+  @override
+  String get authErrorUserNotFound => 'لا يوجد حساب بهذا البريد الإلكتروني';
+  @override
+  String get authErrorWrongPassword => 'كلمة المرور غير صحيحة';
+  @override
+  String get authErrorTooManyRequests => 'تم محاولة تسجيل الدخول عدة مرات، يرجى المحاولة لاحقاً';
+  @override
+  String get authErrorOperationNotAllowed => 'هذه العملية غير مسموح بها';
+  @override
+  String get authErrorNetworkFailed => 'فشل الاتصال بالإنترنت';
+  @override
+  String get authErrorUnexpected => 'حدث خطأ غير متوقع';
+  @override
+  String get authErrorAccountCreation => 'فشل إنشاء الحساب';
+  @override
+  String get authErrorSignIn => 'فشل تسجيل الدخول';
+  @override
+  String get authErrorNotSignedIn => 'لم يتم تسجيل الدخول';
+  @override
+  String get newUserDefaultName => 'مستخدم جديد';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Core Widget Labels
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get searchHint => 'ابحث...';
+  @override
+  String get showMore => 'عرض المزيد';
+  @override
+  String get showLess => 'عرض أقل';
+  @override
+  String get addImage => 'إضافة صورة';
+  @override
+  String get errorOccurredTitle => 'حدث خطأ';
+  @override
+  String colorsAvailableCount(int count) => '$count لون متاح';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // General UI Labels
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get orLabel => 'أو';
 }

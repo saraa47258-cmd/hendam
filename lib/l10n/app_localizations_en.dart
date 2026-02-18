@@ -298,6 +298,20 @@ class AppLocalizationsEn extends AppLocalizations {
   // ═══════════════════════════════════════════════════════════════════════════
   @override
   String get settings => 'Settings';
+    @override
+    String get appearance => 'Appearance';
+    @override
+    String get themeSystem => 'System';
+    @override
+    String get themeSystemSubtitle => 'Follow device settings';
+    @override
+    String get themeLight => 'Light';
+    @override
+    String get themeLightSubtitle => 'Always use light mode';
+    @override
+    String get themeDark => 'Dark';
+    @override
+    String get themeDarkSubtitle => 'Always use dark mode';
   @override
   String get personalSettings => 'Personal Settings';
   @override
@@ -1276,6 +1290,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backButton => 'Back';
   @override
   String get confirmSubmit => 'Confirm Submit';
+  @override
+  String get selectionMade => 'Selected';
+  @override
+  String get chestLabel => 'Chest';
+  @override
+  String get waistLabel => 'Waist';
+  @override
+  String get armLabel => 'Arm';
+  @override
+  String get perLinePrice => '+0.250 OMR per line';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Color Names
@@ -1380,6 +1404,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalPriceLabel => 'Total Price';
   @override
   String get continueToRecipientData => 'Continue to Recipient Data';
+  @override
+  String get pleaseSelectFabricTypeFirst => 'Please select fabric type first';
+  @override
+  String get pleaseSelectThreadColor => 'Please select thread color';
+  @override
+  String get pleaseSpecifyThreadCount => 'Please specify thread count';
+  @override
+  String get giftOrderSentSuccess => 'Gift order sent successfully!';
+  @override
+  String get threadDetails => 'Thread Details';
+  @override
+  String get specifyEmbroideryAndColors => 'Select embroidery type and thread colors';
+  @override
+  String get threads => 'threads';
 
   // ═══════════════════════════════════════════════════════════════════════════
   // Tailor Store Screen
@@ -1931,4 +1969,354 @@ class AppLocalizationsEn extends AppLocalizations {
   String get measurementGuideZoom => 'Measurement Guide — Zoom';
   @override
   String get enlargeImage => 'Enlarge Image';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailor Orders Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String tailorOrdersTitle(String name) => '$name\'s Orders';
+  @override
+  String get newOrders => 'New';
+  @override
+  String get acceptedTab => 'Accepted';
+  @override
+  String get inProgressTab => 'In Progress';
+  @override
+  String get completedTab => 'Completed';
+  @override
+  String get searchOrders => 'Search orders...';
+  @override
+  String get orderStatisticsTitle => 'Order Statistics';
+  @override
+  String get totalOrdersLabel => 'Total Orders';
+  @override
+  String get waitingLabel => 'Waiting';
+  @override
+  String get completedLabel => 'Completed';
+  @override
+  String get revenueLabel => 'Revenue';
+  @override
+  String get errorLoadingOrdersList => 'Error loading orders';
+  @override
+  String get retryLabel => 'Retry';
+  @override
+  String orderHashLabel(String id) => 'Order #$id';
+  @override
+  String get orderDateLabel => 'Order Date';
+  @override
+  String get noNewOrders => 'No new orders';
+  @override
+  String get noAcceptedOrders => 'No accepted orders';
+  @override
+  String get noInProgressOrders => 'No orders in progress';
+  @override
+  String get noCompletedOrders => 'No completed orders';
+  @override
+  String get noOrdersGeneric => 'No orders';
+  @override
+  String get newOrdersAppearHere => 'New orders will appear here';
+  @override
+  String get acceptedOrdersAppearHere => 'Accepted orders will appear here';
+  @override
+  String get inProgressOrdersAppearHere => 'Orders in progress will appear here';
+  @override
+  String get completedOrdersAppearHere => 'Completed orders will appear here';
+  @override
+  String get orderAccepted => 'Order accepted';
+  @override
+  String get orderAcceptFailed => 'Failed to accept order';
+  @override
+  String get rejectOrderDialogTitle => 'Reject Order';
+  @override
+  String get enterRejectionReason => 'Please enter the rejection reason:';
+  @override
+  String get rejectionReasonLabel => 'Rejection reason';
+  @override
+  String get orderRejectedSnack => 'Order rejected';
+  @override
+  String get orderRejectFailed => 'Failed to reject order';
+  @override
+  String get orderStarted => 'Order processing started';
+  @override
+  String get orderStartFailed => 'Failed to start processing';
+  @override
+  String get orderCompleted => 'Order completed';
+  @override
+  String get orderCompleteFailed => 'Failed to complete order';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Fabric Management Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get noColorsRegistered => 'No colors registered';
+  @override
+  String get pressAddToAddColor => 'Press the add button to add a new color';
+  @override
+  String get editLabel2 => 'Edit';
+  @override
+  String get deleteLabel2 => 'Delete';
+  @override
+  String get confirmDeleteTitle => 'Confirm Delete';
+  @override
+  String confirmDeleteFabricMessage(String name) => 'Are you sure you want to delete "$name"?';
+  @override
+  String get fabricDeletedSnack => 'Fabric deleted successfully';
+  @override
+  String get addNewFabric => 'Add New Fabric';
+  @override
+  String get tapToAddImage => 'Tap to add image';
+  @override
+  String get fabricNameLabel => 'Fabric Name';
+  @override
+  String get fabricDescriptionLabel => 'Fabric Description';
+  @override
+  String get fabricTypeFieldLabel => 'Fabric Type';
+  @override
+  String get seasonLabel => 'Season';
+  @override
+  String get pricePerMeterLabel => 'Price per meter (OMR)';
+  @override
+  String get pleaseEnterFabricName => 'Please enter fabric name';
+  @override
+  String get pleaseEnterFabricDescription => 'Please enter fabric description';
+  @override
+  String get pleaseEnterPrice => 'Please enter price';
+  @override
+  String get pleaseEnterValidNumber => 'Please enter a valid number';
+  @override
+  String get pleaseSelectImage => 'Please select a fabric image';
+  @override
+  String get fabricAddedSuccess => 'Fabric added successfully';
+  @override
+  String get fabricAddFailed => 'Failed to add fabric';
+  @override
+  String get addNewColor => 'Add New Color';
+  @override
+  String get selectFabricLabel => 'Select Fabric';
+  @override
+  String get colorNameLabel => 'Color Name';
+  @override
+  String get colorCodeLabel => 'Color Code (e.g. #FF5733)';
+  @override
+  String get colorCodeHint => '#FF5733';
+  @override
+  String get pleaseEnterColorName => 'Please enter color name';
+  @override
+  String get pleaseEnterColorCode => 'Please enter color code';
+  @override
+  String get invalidColorCode => 'Please enter a valid color code (e.g. #FF5733)';
+  @override
+  String get pleaseSelectFabricField => 'Please select a fabric';
+  @override
+  String get noFabricsAvailableLabel => 'No fabrics available';
+  @override
+  String get colorPreview => 'Color preview';
+  @override
+  String get colorAddedSuccess => 'Color added successfully';
+  @override
+  String get colorAddFailed => 'Failed to add color';
+  @override
+  String get cottonFabric => 'Cotton';
+  @override
+  String get silkFabric => 'Silk';
+  @override
+  String get woolFabric => 'Wool';
+  @override
+  String get linenFabric => 'Linen';
+  @override
+  String get polyesterFabric => 'Polyester';
+  @override
+  String get summerSeason => 'Summer';
+  @override
+  String get winterSeason => 'Winter';
+  @override
+  String get allSeasonLabel => 'All Seasons';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Profile Screens (Settings, Privacy, Payment, Help, About)
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get securityAndPrivacyData => 'Security settings and your personal data';
+  @override
+  String get updatePasswordPeriodically => 'Update your password periodically';
+  @override
+  String get noSavedPaymentMethodsLabel => 'No saved payment methods';
+  @override
+  String get addPaymentWhenOrdering => 'Add a card or payment method when completing your next order';
+  @override
+  String get addPaymentMethodButton => 'Add Payment Method';
+  @override
+  String get faqAnswers => 'Answers to the most common questions';
+  @override
+  String get supportAndInquiriesLabel => 'Technical support and inquiries';
+  @override
+  String get happyToHelp247 => 'Happy to help you around the clock';
+  @override
+  String get hendamLabel => 'Hindam';
+  @override
+  String get version100 => 'Version 1.0.0';
+  @override
+  String get hendamAppDescription => 'Hindam app connects you with the best men\'s tailoring shops in the Sultanate. Order your dishdashas, abayas, and tailoring with ease while tracking orders and delivery.';
+  @override
+  String get versionLabel => 'Version';
+  @override
+  String get emailLabel => 'Email';
+  @override
+  String get websiteLabel => 'Website';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Catalog / Services Screens
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get noItemsToShow => 'No items to show';
+  @override
+  String get addButton => 'Add';
+  @override
+  String get shareLabel => 'Share';
+  @override
+  String get productDetailsLabel => 'Product Details';
+  @override
+  String selectedServiceSnack(String name) => 'Selected: $name';
+  @override
+  String get menTailoringSection => 'Men\'s Tailoring';
+  @override
+  String get abayasSection => 'Abayas';
+  @override
+  String get smallMerchantSection => 'Small Merchant';
+  @override
+  String get allTab => 'All';
+  @override
+  String get menTab => 'Men';
+  @override
+  String get womenTab => 'Women';
+  @override
+  String get searchServiceHint => 'Search for a service (e.g. abaya, dishdasha, alteration)';
+  @override
+  String get allCategoriesChip => 'All Categories';
+  @override
+  String get noMatchingServices => 'No matching services found';
+
+  // Tailoring Design Responsive - Additional Keys
+  @override
+  String get colorStep => 'Color';
+  @override
+  String get measurementsStep => 'Measurements';
+  @override
+  String get selectFabricColor => 'Select fabric color';
+  @override
+  String get sendOrderButton => 'Send Order';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Measurement Form Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get enterMeasurementsTitle => 'Enter Measurements';
+  @override
+  String get saveExperimentalButton => 'Save (Experimental)';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Tailoring Design Responsive Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get orderSentTitle => 'Order Sent';
+  @override
+  String get willContactSoon => 'We will contact you soon to confirm details';
+  @override
+  String get okLabel => 'OK';
+  @override
+  String get previousLabel => 'Previous';
+  @override
+  String get nameEmbroideryOnThobe => 'Name embroidery on thobe';
+  @override
+  String get embroideryOptions => 'Embroidery Options';
+  @override
+  String get addNameLabel => 'Add Name';
+  @override
+  String get invalidValue => 'Invalid value';
+  @override
+  String get colorRed => 'Red';
+  @override
+  String get additionalNotesOptional => 'Additional Notes (Optional)';
+  @override
+  String get confirmSubmission => 'Confirm Submission';
+  @override
+  String get noDesignSelected => 'None';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Additional Shared Keys
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get errorOccurredWithDetails => 'An error occurred';
+  @override
+  String errorWithMessage(String error) => 'Error: $error';
+  @override
+  String get paymentMethodsTitle => 'Payment Methods';
+  @override
+  String get pricePerMeter => 'meter';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Abaya Services Screen
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get newBadge => 'New';
+  @override
+  String get modelViewLabel => 'Model';
+  @override
+  String get productViewLabel => 'Product';
+  @override
+  String get tryChangingCategoryOrSearch => 'Try changing the category or search';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Auth Error Messages (Firebase)
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get authErrorWeakPassword => 'Password is too weak';
+  @override
+  String get authErrorEmailInUse => 'Email is already in use';
+  @override
+  String get authErrorInvalidEmail => 'Invalid email address';
+  @override
+  String get authErrorUserDisabled => 'This account has been disabled';
+  @override
+  String get authErrorUserNotFound => 'No account found with this email';
+  @override
+  String get authErrorWrongPassword => 'Incorrect password';
+  @override
+  String get authErrorTooManyRequests => 'Too many login attempts, please try again later';
+  @override
+  String get authErrorOperationNotAllowed => 'This operation is not allowed';
+  @override
+  String get authErrorNetworkFailed => 'Network connection failed';
+  @override
+  String get authErrorUnexpected => 'An unexpected error occurred';
+  @override
+  String get authErrorAccountCreation => 'Account creation failed';
+  @override
+  String get authErrorSignIn => 'Sign in failed';
+  @override
+  String get authErrorNotSignedIn => 'Not signed in';
+  @override
+  String get newUserDefaultName => 'New User';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Core Widget Labels
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get searchHint => 'Search...';
+  @override
+  String get showMore => 'Show more';
+  @override
+  String get showLess => 'Show less';
+  @override
+  String get addImage => 'Add image';
+  @override
+  String get errorOccurredTitle => 'An error occurred';
+  @override
+  String colorsAvailableCount(int count) => '$count colors available';
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // General UI Labels
+  // ═══════════════════════════════════════════════════════════════════════════
+  @override
+  String get orLabel => 'or';
 }

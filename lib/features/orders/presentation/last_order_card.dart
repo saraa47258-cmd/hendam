@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hindam/app/theme/colors.dart';
 import 'package:hindam/l10n/app_localizations.dart';
 
 class LastOrderCard extends StatefulWidget {
@@ -82,22 +83,22 @@ class _LastOrderCardState extends State<LastOrderCard>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFF10B981),
+                      AppColors.success,
                       Color(0xFF059669),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF10B981).withOpacity(0.25),
+                      color: AppColors.success.withOpacity(0.25),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.local_shipping_rounded,
-                  color: Colors.white,
+                  color: cs.onPrimary,
                   size: 22,
                 ),
               ),
@@ -144,7 +145,7 @@ class _LastOrderCardState extends State<LastOrderCard>
                           height: 6,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color(0xFF10B981),
+                            color: AppColors.success,
                           ),
                         ),
                         const SizedBox(width: 6),

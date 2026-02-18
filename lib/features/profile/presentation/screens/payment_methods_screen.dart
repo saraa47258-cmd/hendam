@@ -1,6 +1,7 @@
 // lib/features/profile/presentation/screens/payment_methods_screen.dart
 import 'package:flutter/material.dart';
 import 'package:hindam/shared/widgets/profile_page_scaffold.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 /// صفحة طرق الدفع
 class PaymentMethodsScreen extends StatelessWidget {
@@ -10,14 +11,15 @@ class PaymentMethodsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return ProfilePageScaffold(
-      title: 'طرق الدفع',
+      title: l10n.paymentMethodsTitle,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         children: [
           Text(
-            'إدارة البطاقات وطرق الدفع المحفوظة',
+            l10n.manageCardsAndPayment,
             style: tt.bodyLarge?.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
@@ -37,7 +39,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'لا توجد طرق دفع محفوظة',
+                  l10n.noSavedPaymentMethodsLabel,
                   style: tt.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: cs.onSurface,
@@ -45,7 +47,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'أضف بطاقة أو طريقة دفع عند إتمام طلبك في المرة القادمة',
+                  l10n.addPaymentWhenOrdering,
                   style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
@@ -53,7 +55,7 @@ class PaymentMethodsScreen extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: () {},
                   icon: const Icon(Icons.add_rounded, size: 20),
-                  label: const Text('إضافة طريقة دفع'),
+                  label: Text(l10n.addPaymentMethodButton),
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,

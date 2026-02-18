@@ -12,6 +12,7 @@ import '../../auth/providers/auth_provider.dart';
 import '../../../shared/widgets/gift_recipient_bottom_sheet.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../core/state/draft_store.dart';
+import 'tailor_store_screen.dart';
 
 bool _isNetworkPath(String p) =>
     p.startsWith('http://') || p.startsWith('https://');
@@ -121,6 +122,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   final _lowerSleeveCtrl = TextEditingController();
   final _chestCtrl = TextEditingController();
   final _waistCtrl = TextEditingController();
+  final _bottomCtrl = TextEditingController();
   final _neckCtrl = TextEditingController();
   final _embroideryCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
@@ -191,18 +193,19 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   }
 
   String _getColorName(Color color) {
-    const names = {
-      0xFF1A2F4B: 'كحلي',
-      0xFF2C4A6E: 'أزرق',
-      0xFF4A5568: 'رمادي',
-      0xFF38A169: 'أخضر',
-      0xFFB8860B: 'ذهبي',
-      0xFF8B4513: 'بني',
-      0xFF553C9A: 'بنفسجي',
-      0xFF1A1F2E: 'أسود',
-      0xFFC0C0C0: 'فضي',
+    final l10n = AppLocalizations.of(context)!;
+    final names = {
+      0xFF1A2F4B: l10n.colorNavy,
+      0xFF2C4A6E: l10n.colorBlue,
+      0xFF4A5568: l10n.colorGray,
+      0xFF38A169: l10n.colorGreen,
+      0xFFB8860B: l10n.colorGold,
+      0xFF8B4513: l10n.colorBrown,
+      0xFF553C9A: l10n.colorPurple,
+      0xFF1A1F2E: l10n.colorBlack,
+      0xFFC0C0C0: l10n.colorSilver,
     };
-    return names[color.value] ?? 'لون مخصص';
+    return names[color.value] ?? l10n.customColor;
   }
 
   @override
@@ -217,6 +220,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       _lowerSleeveCtrl,
       _chestCtrl,
       _waistCtrl,
+      _bottomCtrl,
       _neckCtrl,
       _embroideryCtrl,
       _notesCtrl
@@ -236,6 +240,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       _lowerSleeveCtrl,
       _chestCtrl,
       _waistCtrl,
+      _bottomCtrl,
       _neckCtrl,
       _embroideryCtrl,
       _notesCtrl,
@@ -297,6 +302,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       final lowerSleeve = measurements['lowerSleeve'];
       final chest = measurements['chest'];
       final waist = measurements['waist'];
+      final bottom = measurements['bottom'];
       final neck = measurements['neck'];
       final embroidery = measurements['embroidery'];
       final notes = measurements['notes'];
@@ -307,6 +313,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       if (lowerSleeve is String) _lowerSleeveCtrl.text = lowerSleeve;
       if (chest is String) _chestCtrl.text = chest;
       if (waist is String) _waistCtrl.text = waist;
+      if (bottom is String) _bottomCtrl.text = bottom;
       if (neck is String) _neckCtrl.text = neck;
       if (embroidery is String) _embroideryCtrl.text = embroidery;
       if (notes is String) _notesCtrl.text = notes;
@@ -346,6 +353,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
           'lowerSleeve': _lowerSleeveCtrl.text,
           'chest': _chestCtrl.text,
           'waist': _waistCtrl.text,
+          'bottom': _bottomCtrl.text,
           'neck': _neckCtrl.text,
           'embroidery': _embroideryCtrl.text,
           'notes': _notesCtrl.text,
@@ -404,14 +412,14 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       case 0:
         if (_fabricType == null || _selectedFabricId == null) {
           HapticFeedback.mediumImpact();
-          _showSnackBar('يرجى اختيار نوع القماش', isError: true);
+          _showSnackBar(AppLocalizations.of(context)!.pleaseSelectFabricType, isError: true);
           return false;
         }
         return true;
       case 1:
         if (!(_formKey.currentState?.validate() ?? false)) {
           HapticFeedback.mediumImpact();
-          _showSnackBar('يرجى إدخال المقاسات بشكل صحيح', isError: true);
+          _showSnackBar(AppLocalizations.of(context)!.pleaseEnterMeasurementsCorrectly, isError: true);
           return false;
         }
         return true;
@@ -479,6 +487,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
         lowerSleeveCtrl: _lowerSleeveCtrl,
         chestCtrl: _chestCtrl,
         waistCtrl: _waistCtrl,
+        bottomCtrl: _bottomCtrl,
         neckCtrl: _neckCtrl,
         embroideryCtrl: _embroideryCtrl,
         notesCtrl: _notesCtrl,
@@ -529,7 +538,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   Future<void> _submitOrder() async {
     if (!_formKey.currentState!.validate()) return;
     if (_fabricType == null || _selectedFabricId == null) {
-      _showSnackBar('يرجى اختيار القماش', isError: true);
+      _showSnackBar(AppLocalizations.of(context)!.pleaseSelectFabric, isError: true);
       return;
     }
 
@@ -546,7 +555,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
 
       if (currentUser == null) {
         Navigator.pop(context);
-        _showSnackBar('يرجى تسجيل الدخول', isError: true);
+        _showSnackBar(AppLocalizations.of(context)!.pleaseLoginToOrder, isError: true);
         return;
       }
 
@@ -571,6 +580,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
           'محيط الكم السفلي': double.tryParse(_lowerSleeveCtrl.text) ?? 0.0,
           'الصدر': double.tryParse(_chestCtrl.text) ?? 0.0,
           'الخصر': double.tryParse(_waistCtrl.text) ?? 0.0,
+          'المحيط السفلي': double.tryParse(_bottomCtrl.text) ?? 0.0,
           'محيط الرقبة': double.tryParse(_neckCtrl.text) ?? 0.0,
           'التطريز الامامي': double.tryParse(_embroideryCtrl.text) ?? 0.0,
         },
@@ -587,31 +597,45 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
       );
 
       final orderId = await OrderService.submitOrder(order);
+      if (!mounted) return;
       Navigator.pop(context); // Close loading
 
       if (orderId != null) {
         await _clearDraft();
+        if (!mounted) return;
         _showSuccessDialog(orderId);
       } else {
-        _showSnackBar('حدث خطأ في إرسال الطلب', isError: true);
+        _showSnackBar(AppLocalizations.of(context)!.orderSubmissionError, isError: true);
       }
     } catch (e) {
+      if (!mounted) return;
       Navigator.pop(context);
-      _showSnackBar('حدث خطأ: $e', isError: true);
+      _showSnackBar(AppLocalizations.of(context)!.errorWithMessage(e.toString()), isError: true);
     }
   }
 
   void _showSuccessDialog(String orderId) {
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
     showDialog(
       context: context,
+      useRootNavigator: true,
       barrierDismissible: false,
       builder: (_) => _SuccessDialog(
         orderId: orderId,
         tailorName: widget.tailorName,
         price: _totalPrice,
         onDismiss: () {
-          Navigator.pop(context);
-          Navigator.pop(context);
+          // Close dialog and reset flow to TailorStoreScreen
+          rootNavigator.pop();
+          rootNavigator.pushAndRemoveUntil(
+            MaterialPageRoute(
+              builder: (_) => TailorStoreScreen(
+                tailorId: widget.tailorId,
+                tailorName: widget.tailorName,
+              ),
+            ),
+            (route) => false,
+          );
         },
       ),
     );
@@ -642,6 +666,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return PopScope(
       canPop: _currentStep == 0,
@@ -663,7 +688,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                 // Progress Indicator
                 _ProgressIndicator(
                   currentStep: _currentStep,
-                  steps: const ['القماش', 'المقاسات و اللون', 'التطريز'],
+                  steps: [l10n.fabricStep, l10n.measurementsAndColor, l10n.embroideryStep],
                 ),
 
                 // Content
@@ -697,6 +722,7 @@ class _TailoringDesignScreenState extends State<TailoringDesignScreen>
                           lowerSleeve: _lowerSleeveCtrl,
                           chest: _chestCtrl,
                           waist: _waistCtrl,
+                          bottom: _bottomCtrl,
                           neck: _neckCtrl,
                           embroidery: _embroideryCtrl,
                           notes: _notesCtrl,
@@ -809,7 +835,7 @@ class _AppBar extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      'مسقط',
+                      AppLocalizations.of(context)!.muscat,
                       style: TextStyle(
                         fontSize: 13,
                         color: isDark
@@ -960,6 +986,7 @@ class _BottomActionBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
     final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -987,7 +1014,7 @@ class _BottomActionBar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'التكلفة التقديرية',
+                  l10n.estimatedCost,
                   style: TextStyle(
                     fontSize: 12,
                     color: isDark
@@ -997,7 +1024,7 @@ class _BottomActionBar extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'ر.ع ${price.toStringAsFixed(3)}',
+                  l10n.currency(price.toStringAsFixed(3)),
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -1011,14 +1038,14 @@ class _BottomActionBar extends StatelessWidget {
 
           // Back button
           _OutlinedButton(
-            label: step == 0 ? 'رجوع' : 'السابق',
+            label: step == 0 ? l10n.backButton : l10n.previousLabel,
             onTap: onBack,
           ),
           const SizedBox(width: _DesignTokens.spaceMD),
 
           // Next button
           _FilledButton(
-            label: step == 2 ? 'إرسال الطلب' : 'التالي',
+            label: step == 2 ? l10n.sendOrderButton : l10n.next,
             icon: step == 2 ? Icons.check_rounded : Icons.arrow_back_rounded,
             onTap: onNext,
           ),
@@ -1079,6 +1106,7 @@ class _FabricSelectionStep extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -1109,7 +1137,7 @@ class _FabricSelectionStep extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'اختر نوع القماش',
+                        l10n.selectFabricType,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -1119,7 +1147,7 @@ class _FabricSelectionStep extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'تصفح الأقمشة المتوفرة',
+                        l10n.browseFabricsAvailable,
                         style: TextStyle(
                           fontSize: 13,
                           color: isDark
@@ -1164,7 +1192,7 @@ class _FabricSelectionStep extends StatelessWidget {
                       ),
                       const SizedBox(height: _DesignTokens.spaceMD),
                       Text(
-                        'لا توجد أقمشة متاحة',
+                        l10n.noFabricsAvailableNow,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -1184,11 +1212,11 @@ class _FabricSelectionStep extends StatelessWidget {
                   orElse: () => <String, dynamic>{},
                 );
                 if (selected.isNotEmpty) {
-                  return _buildSelectedCard(selected, cs, isDark);
+                  return _buildSelectedCard(selected, cs, isDark, l10n);
                 }
               }
 
-              return _buildGrid(fabrics, cs, isDark);
+              return _buildGrid(fabrics, cs, isDark, l10n);
             },
           ),
         ],
@@ -1197,7 +1225,10 @@ class _FabricSelectionStep extends StatelessWidget {
   }
 
   Widget _buildGrid(
-      List<Map<String, dynamic>> fabrics, ColorScheme cs, bool isDark) {
+      List<Map<String, dynamic>> fabrics,
+      ColorScheme cs,
+      bool isDark,
+      AppLocalizations l10n) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -1273,7 +1304,7 @@ class _FabricSelectionStep extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          fabric['name'] ?? 'قماش',
+                          fabric['name'] ?? l10n.fabric,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -1286,7 +1317,7 @@ class _FabricSelectionStep extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'ر.ع ${price.toStringAsFixed(3)}',
+                          l10n.currency(price.toStringAsFixed(3)),
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -1308,7 +1339,10 @@ class _FabricSelectionStep extends StatelessWidget {
   }
 
   Widget _buildSelectedCard(
-      Map<String, dynamic> fabric, ColorScheme cs, bool isDark) {
+      Map<String, dynamic> fabric,
+      ColorScheme cs,
+      bool isDark,
+      AppLocalizations l10n) {
     final imageUrl = fabric['imageUrl'] as String? ?? '';
     final price = (fabric['pricePerMeter'] as num?)?.toDouble() ?? 0.0;
 
@@ -1341,7 +1375,7 @@ class _FabricSelectionStep extends StatelessWidget {
                             BorderRadius.circular(_DesignTokens.radiusMD),
                       ),
                       child: Text(
-                        'ر.ع ${price.toStringAsFixed(3)}',
+                        l10n.currency(price.toStringAsFixed(3)),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -1375,9 +1409,9 @@ class _FabricSelectionStep extends StatelessWidget {
                                 color: Colors.white, size: 12),
                           ),
                           const SizedBox(width: _DesignTokens.spaceSM),
-                          const Text(
-                            'تم الاختيار',
-                            style: TextStyle(
+                          Text(
+                            l10n.selected,
+                            style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                               color: _DesignTokens.success,
@@ -1387,7 +1421,7 @@ class _FabricSelectionStep extends StatelessWidget {
                       ),
                       const SizedBox(height: _DesignTokens.spaceSM),
                       Text(
-                        fabric['name'] ?? 'قماش',
+                        fabric['name'] ?? l10n.fabric,
                         style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
@@ -1399,7 +1433,7 @@ class _FabricSelectionStep extends StatelessWidget {
                   ),
                 ),
                 _OutlinedButton(
-                  label: 'تغيير',
+                  label: l10n.change,
                   onTap: () => onFabricSelected(null, null, null),
                 ),
               ],
@@ -1423,6 +1457,7 @@ class _MeasurementControllers {
   final TextEditingController lowerSleeve;
   final TextEditingController chest;
   final TextEditingController waist;
+  final TextEditingController bottom;
   final TextEditingController neck;
   final TextEditingController embroidery;
   final TextEditingController notes;
@@ -1435,6 +1470,7 @@ class _MeasurementControllers {
     required this.lowerSleeve,
     required this.chest,
     required this.waist,
+    required this.bottom,
     required this.neck,
     required this.embroidery,
     required this.notes,
@@ -1474,21 +1510,30 @@ class _MeasurementsStepState extends State<_MeasurementsStep>
     super.build(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final c = widget.controllers;
 
     final measurements = [
       _MeasurementSpec(
-          'الطول', c.length, _toUnit(110), _toUnit(170), Icons.height_rounded),
-      _MeasurementSpec('الكتف', c.shoulder, _toUnit(38), _toUnit(56),
+          l10n.totalLength, c.length, _toUnit(110), _toUnit(170), Icons.height_rounded),
+      _MeasurementSpec(l10n.shoulder, c.shoulder, _toUnit(38), _toUnit(56),
           Icons.straighten_rounded),
-      _MeasurementSpec(
-          'الرقبة', c.neck, _toUnit(34), _toUnit(48), Icons.circle_outlined),
-      _MeasurementSpec('طول الذراع', c.sleeve, _toUnit(45), _toUnit(75),
+      _MeasurementSpec(l10n.sleeveLength, c.sleeve, _toUnit(45), _toUnit(75),
           Icons.back_hand_outlined),
-      _MeasurementSpec('الصدر', c.chest, _toUnit(80), _toUnit(140),
+      _MeasurementSpec(l10n.upperSleeve, c.upperSleeve, _toUnit(20), _toUnit(50),
+          Icons.expand_rounded),
+      _MeasurementSpec(l10n.lowerSleeve, c.lowerSleeve, _toUnit(15), _toUnit(40),
+          Icons.compress_rounded),
+      _MeasurementSpec(l10n.chest, c.chest, _toUnit(80), _toUnit(140),
           Icons.favorite_border_rounded),
-      _MeasurementSpec('الخصر', c.waist, _toUnit(70), _toUnit(130),
+      _MeasurementSpec(l10n.waist, c.waist, _toUnit(70), _toUnit(130),
           Icons.horizontal_rule_rounded),
+      _MeasurementSpec(l10n.bottomCircumference, c.bottom, _toUnit(70), _toUnit(160),
+          Icons.panorama_horizontal_rounded),
+      _MeasurementSpec(
+          l10n.neckCircumference, c.neck, _toUnit(34), _toUnit(48), Icons.circle_outlined),
+      _MeasurementSpec(l10n.frontEmbroidery, c.embroidery, _toUnit(0), _toUnit(50),
+          Icons.auto_awesome_rounded),
     ];
 
     return SingleChildScrollView(
@@ -1511,7 +1556,7 @@ class _MeasurementsStepState extends State<_MeasurementsStep>
                   const SizedBox(width: _DesignTokens.spaceMD),
                   Expanded(
                     child: Text(
-                      'وحدة القياس',
+                      l10n.measurementUnit,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
@@ -1537,7 +1582,7 @@ class _MeasurementsStepState extends State<_MeasurementsStep>
                     min: m.min,
                     max: m.max,
                     step: _step,
-                    unit: widget.unit.labelAr,
+                    unit: widget.unit == MeasurementUnit.cm ? l10n.cm : l10n.inch,
                     decimals: _decimals,
                     icon: m.icon,
                   ),
@@ -1549,7 +1594,7 @@ class _MeasurementsStepState extends State<_MeasurementsStep>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ملاحظات إضافية',
+                    l10n.additionalNotesLabel,
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -1561,7 +1606,7 @@ class _MeasurementsStepState extends State<_MeasurementsStep>
                     controller: c.notes,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      hintText: 'أدخل أي تفاصيل إضافية...',
+                      hintText: l10n.addNotesHint,
                       hintStyle: TextStyle(
                         color: isDark
                             ? cs.onSurfaceVariant
@@ -1616,8 +1661,8 @@ class _UnitToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildOption('سم', MeasurementUnit.cm, isDark, cs),
-          _buildOption('إنش', MeasurementUnit.inch, isDark, cs),
+          _buildOption(AppLocalizations.of(context)!.cm, MeasurementUnit.cm, isDark, cs),
+          _buildOption(AppLocalizations.of(context)!.inch, MeasurementUnit.inch, isDark, cs),
         ],
       ),
     );
@@ -1921,7 +1966,7 @@ class _EmbroideryStep extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'لون خيط التطريز',
+                  AppLocalizations.of(context)!.embroideryThreadColor,
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -1988,7 +2033,7 @@ class _EmbroideryStep extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'الخطوط الزخرفية',
+                        AppLocalizations.of(context)!.decorativeLines,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
@@ -1998,7 +2043,7 @@ class _EmbroideryStep extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '+0.250 ر.ع لكل خط',
+                        AppLocalizations.of(context)!.perLinePrice,
                         style: TextStyle(
                           fontSize: 12,
                           color: isDark
@@ -2100,7 +2145,7 @@ class _EmbroideryDesignsCard extends StatelessWidget {
                         : _DesignTokens.textTertiary),
                 const SizedBox(width: _DesignTokens.spaceMD),
                 Text(
-                  'لا توجد تصاميم متاحة',
+                  AppLocalizations.of(context)!.noDesignsAvailable,
                   style: TextStyle(
                       color: isDark
                           ? cs.onSurfaceVariant
@@ -2116,7 +2161,7 @@ class _EmbroideryDesignsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'تصاميم التطريز',
+                AppLocalizations.of(context)!.embroideryDesigns,
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
@@ -2479,7 +2524,7 @@ class _SuccessDialog extends StatelessWidget {
             ),
             const SizedBox(height: _DesignTokens.spaceLG),
             Text(
-              'تم إرسال الطلب بنجاح',
+              AppLocalizations.of(context)!.orderSentSuccess,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -2487,13 +2532,13 @@ class _SuccessDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: _DesignTokens.spaceLG),
-            _buildRow('رقم الطلب', orderId, isDark, cs),
-            _buildRow('الخياط', tailorName, isDark, cs),
+            _buildRow(AppLocalizations.of(context)!.orderNumber, orderId, isDark, cs),
+            _buildRow(AppLocalizations.of(context)!.tailor, tailorName, isDark, cs),
             _buildRow(
-                'الإجمالي', 'ر.ع ${price.toStringAsFixed(3)}', isDark, cs),
+                AppLocalizations.of(context)!.totalLabel, AppLocalizations.of(context)!.currency(price.toStringAsFixed(3)), isDark, cs),
             const SizedBox(height: _DesignTokens.spaceMD),
             Text(
-              'سيتم التواصل معك قريباً',
+              AppLocalizations.of(context)!.willContactSoon,
               style: TextStyle(
                 fontSize: 13,
                 color:
@@ -2504,7 +2549,7 @@ class _SuccessDialog extends StatelessWidget {
             const SizedBox(height: _DesignTokens.spaceLG),
             SizedBox(
               width: double.infinity,
-              child: _FilledButton(label: 'موافق', onTap: onDismiss),
+              child: _FilledButton(label: AppLocalizations.of(context)!.okLabel, onTap: onDismiss),
             ),
           ],
         ),
@@ -2553,6 +2598,7 @@ class _OrderReviewSheet extends StatelessWidget {
       lowerSleeveCtrl,
       chestCtrl,
       waistCtrl,
+      bottomCtrl,
       neckCtrl,
       embroideryCtrl,
       notesCtrl;
@@ -2579,6 +2625,7 @@ class _OrderReviewSheet extends StatelessWidget {
     required this.lowerSleeveCtrl,
     required this.chestCtrl,
     required this.waistCtrl,
+    required this.bottomCtrl,
     required this.neckCtrl,
     required this.embroideryCtrl,
     required this.notesCtrl,
@@ -2636,7 +2683,7 @@ class _OrderReviewSheet extends StatelessWidget {
 
                 // Title
                 Text(
-                  'مراجعة الطلب',
+                  AppLocalizations.of(context)!.reviewOrder,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -2646,25 +2693,29 @@ class _OrderReviewSheet extends StatelessWidget {
                 const SizedBox(height: _DesignTokens.spaceLG),
 
                 // Sections
-                _ReviewSection(title: 'الخياط', rows: [
-                  _ReviewItem('الاسم', tailorName),
-                  _ReviewItem('المدينة', 'مسقط'),
+                _ReviewSection(title: AppLocalizations.of(context)!.tailor, rows: [
+                  _ReviewItem(AppLocalizations.of(context)!.name, tailorName),
+                  _ReviewItem(AppLocalizations.of(context)!.city, AppLocalizations.of(context)!.muscat),
                 ]),
-                _ReviewSection(title: 'القماش', rows: [
-                  _ReviewItem('النوع', fabricType ?? '—'),
+                _ReviewSection(title: AppLocalizations.of(context)!.fabric, rows: [
+                  _ReviewItem(AppLocalizations.of(context)!.fabricTypeLabel, fabricType ?? '—'),
                 ]),
-                _ReviewSection(title: 'التطريز', rows: [
-                  _ReviewItem('التصميم', selectedEmbroidery?.name ?? 'لا يوجد'),
-                  _ReviewItem('لون الخيط', getColorName(embroideryColor)),
-                  _ReviewItem('الخطوط', '$embroideryLines'),
+                _ReviewSection(title: AppLocalizations.of(context)!.embroideryStep, rows: [
+                  _ReviewItem(AppLocalizations.of(context)!.designLabel, selectedEmbroidery?.name ?? AppLocalizations.of(context)!.noDesignSelected),
+                  _ReviewItem(AppLocalizations.of(context)!.threadColorLabel, getColorName(embroideryColor)),
+                  _ReviewItem(AppLocalizations.of(context)!.linesLabel, '$embroideryLines'),
                 ]),
-                _ReviewSection(title: 'المقاسات', rows: [
-                  _ReviewItem('الطول', fmt(lengthCtrl)),
-                  _ReviewItem('الكتف', fmt(shoulderCtrl)),
-                  _ReviewItem('الذراع', fmt(sleeveCtrl)),
-                  _ReviewItem('الصدر', fmt(chestCtrl)),
-                  _ReviewItem('الخصر', fmt(waistCtrl)),
-                  _ReviewItem('الرقبة', fmt(neckCtrl)),
+                _ReviewSection(title: AppLocalizations.of(context)!.measurementsStep, rows: [
+                  _ReviewItem(AppLocalizations.of(context)!.totalLength, fmt(lengthCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.shoulder, fmt(shoulderCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.sleeveLength, fmt(sleeveCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.upperSleeve, fmt(upperSleeveCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.lowerSleeve, fmt(lowerSleeveCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.chest, fmt(chestCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.waist, fmt(waistCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.bottomCircumference, fmt(bottomCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.neckCircumference, fmt(neckCtrl)),
+                  _ReviewItem(AppLocalizations.of(context)!.frontEmbroidery, fmt(embroideryCtrl)),
                 ]),
 
                 // Gift Section
@@ -2682,7 +2733,7 @@ class _OrderReviewSheet extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'الإجمالي',
+                        AppLocalizations.of(context)!.totalLabel,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -2691,7 +2742,7 @@ class _OrderReviewSheet extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'ر.ع ${price.toStringAsFixed(3)}',
+                        AppLocalizations.of(context)!.currency(price.toStringAsFixed(3)),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -2709,7 +2760,7 @@ class _OrderReviewSheet extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _OutlinedButton(
-                        label: 'رجوع',
+                        label: AppLocalizations.of(context)!.backButton,
                         onTap: () => Navigator.pop(context),
                       ),
                     ),
@@ -2717,7 +2768,7 @@ class _OrderReviewSheet extends StatelessWidget {
                     Expanded(
                       flex: 2,
                       child: _FilledButton(
-                        label: 'تأكيد الإرسال',
+                        label: AppLocalizations.of(context)!.confirmSubmission,
                         icon: Icons.send_rounded,
                         onTap: () {
                           Navigator.pop(context);

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hindam/shared/widgets/profile_page_scaffold.dart';
+import 'package:hindam/l10n/app_localizations.dart';
 
 /// صفحة المساعدة والدعم
 class HelpSupportScreen extends StatelessWidget {
@@ -11,43 +12,44 @@ class HelpSupportScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return ProfilePageScaffold(
-      title: 'المساعدة والدعم',
+      title: l10n.helpAndSupport,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         children: [
           _HelpCard(
             icon: Icons.help_outline_rounded,
-            title: 'الأسئلة الشائعة',
-            subtitle: 'إجابات على أكثر الأسئلة شيوعاً',
-            onTap: () => _showSnack(context, 'الأسئلة الشائعة'),
+            title: l10n.faqTitle,
+            subtitle: l10n.faqAnswers,
+            onTap: () => _showSnack(context, l10n.faqTitle),
           ),
           const SizedBox(height: 12),
           _HelpCard(
             icon: Icons.chat_bubble_outline_rounded,
-            title: 'تواصل معنا',
-            subtitle: 'الدعم الفني والاستفسارات',
-            onTap: () => _showSnack(context, 'تواصل معنا'),
+            title: l10n.contactUs,
+            subtitle: l10n.supportAndInquiriesLabel,
+            onTap: () => _showSnack(context, l10n.contactUs),
           ),
           const SizedBox(height: 12),
           _HelpCard(
             icon: Icons.mail_outline_rounded,
-            title: 'البريد الإلكتروني',
+            title: l10n.email,
             subtitle: 'support@hindam.app',
-            onTap: () => _showSnack(context, 'البريد الإلكتروني'),
+            onTap: () => _showSnack(context, l10n.email),
           ),
           const SizedBox(height: 12),
           _HelpCard(
             icon: Icons.phone_outlined,
-            title: 'الهاتف',
+            title: l10n.phone,
             subtitle: '+968 XXXX XXXX',
-            onTap: () => _showSnack(context, 'الهاتف'),
+            onTap: () => _showSnack(context, l10n.phone),
           ),
           const SizedBox(height: 32),
           Center(
             child: Text(
-              'نسعد بمساعدتك على مدار الساعة',
+              l10n.happyToHelp247,
               style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
             ),
           ),

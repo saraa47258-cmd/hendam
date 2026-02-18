@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// شاشة البداية - التحقق من حالة المصادقة والتوجيه المناسب
 class SplashScreen extends StatefulWidget {
@@ -81,6 +82,7 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: cs.surface,
@@ -143,7 +145,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                   // اسم التطبيق
                   Text(
-                    'هندام',
+                    l10n.hindam,
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: cs.onSurface,
@@ -154,7 +156,7 @@ class _SplashScreenState extends State<SplashScreen>
 
                   // الوصف
                   Text(
-                    'أفضل الخياطين والمحلات في مكان واحد',
+                    l10n.bestTailorsInOnePlace,
                     style: textTheme.bodyMedium?.copyWith(
                       color: cs.onSurfaceVariant,
                     ),

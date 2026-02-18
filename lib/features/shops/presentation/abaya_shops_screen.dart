@@ -390,7 +390,7 @@ class _ShopCardModern extends StatelessWidget {
           border: Border.all(color: cs.outlineVariant),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(.04),
+              color: cs.shadow.withOpacity(.04),
               blurRadius: 14,
               offset: const Offset(0, 6),
             ),
@@ -497,10 +497,10 @@ class _ShopCardModern extends StatelessWidget {
                                       : l10n.noDelivery,
                                   bg: shop.delivery
                                       ? const Color(0xFFE7F6EC)
-                                      : const Color(0xFFF0F0F0),
+                                      : cs.surfaceContainerHigh,
                                   fg: shop.delivery
                                       ? const Color(0xFF1B5E20)
-                                      : Colors.black54,
+                                      : cs.onSurfaceVariant,
                                 ),
                                 _MiniIconText(
                                   icon: Icons.design_services_outlined,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show ValueListenable, ValueNotifier;
 import 'package:hindam/l10n/app_localizations.dart';
+import 'package:hindam/app/theme/colors.dart';
 
 import '../features/home/presentation/home_screen.dart';
 import '../features/orders/presentation/my_orders_screen.dart';
@@ -33,7 +34,7 @@ class _NavShellState extends State<NavShell> {
     _TabSpec(
       icon: Icons.home_outlined,
       selectedIcon: Icons.home_rounded,
-      color: const Color(0xFF0EA5E9), // أزرق سماوي
+      color: AppColors.homeAccent,
       navigator: _TabNavigator(
         navKey: _navKeys[0],
         routes: {
@@ -44,7 +45,7 @@ class _NavShellState extends State<NavShell> {
     _TabSpec(
       icon: Icons.receipt_long_outlined,
       selectedIcon: Icons.receipt_long_rounded,
-      color: const Color(0xFF10B981), // أخضر
+      color: AppColors.ordersAccent,
       navigator: _TabNavigator(
         navKey: _navKeys[1],
         routes: {'/': (_) => const MyOrdersScreen()},
@@ -53,7 +54,7 @@ class _NavShellState extends State<NavShell> {
     _TabSpec(
       icon: Icons.shopping_bag_outlined,
       selectedIcon: Icons.shopping_bag_rounded,
-      color: const Color(0xFFF59E0B), // برتقالي
+      color: AppColors.cartAccent,
       navigator: _TabNavigator(
         navKey: _navKeys[2],
         routes: {'/': (_) => const CartScreen()},
@@ -63,7 +64,7 @@ class _NavShellState extends State<NavShell> {
     _TabSpec(
       icon: Icons.person_outline_rounded,
       selectedIcon: Icons.person_rounded,
-      color: const Color(0xFF8B5CF6), // بنفسجي
+      color: AppColors.profileAccent,
       navigator: _TabNavigator(
         navKey: _navKeys[3],
         routes: {'/': (_) => const ProfileScreen()},
@@ -131,13 +132,7 @@ class _NavShellState extends State<NavShell> {
       );
     }).toList();
 
-    // Detect if dark mode
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Clean, minimal background colors
-    final navBgColor = isDark
-        ? const Color(0xFF1C1C1E) // iOS dark mode gray
-        : const Color(0xFFFAFAFA); // Very light off-white
+    final navBgColor = cs.surfaceContainerLow;
 
     return WillPopScope(
       onWillPop: _onWillPop,
@@ -163,9 +158,7 @@ class _NavShellState extends State<NavShell> {
             // Very subtle top border
             border: Border(
               top: BorderSide(
-                color: isDark
-                    ? Colors.white.withOpacity(0.08)
-                    : Colors.black.withOpacity(0.06),
+                color: cs.outlineVariant.withOpacity(0.6),
                 width: 0.5,
               ),
             ),
@@ -348,8 +341,8 @@ class _Badge extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         count > 99 ? '99+' : '$count',
-        style: const TextStyle(
-          color: Colors.white,
+        style: TextStyle(
+          color: cs.onPrimary,
           fontSize: 10,
           fontWeight: FontWeight.w800,
           height: 1.1,

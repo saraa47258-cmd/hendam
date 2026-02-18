@@ -250,7 +250,7 @@ class CartState extends ChangeNotifier {
     final snapshot = _items.map((e) => e.copy()).toList(growable: false);
     final order = Order(
       id: id,
-      status: 'قيد المعالجة',
+      status: 'pending',
       createdAt: DateTime.now(),
       totalOmr: total,
       items: snapshot,

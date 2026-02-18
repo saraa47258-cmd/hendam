@@ -109,6 +109,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
     final measureCount = service.measurementSchema.length;
 
     // خلفية: Network أو Asset أو Placeholder
@@ -187,7 +188,7 @@ class _Header extends StatelessWidget {
                   const Icon(Icons.payments_outlined, size: 14, color: Colors.white),
                   const SizedBox(width: 4),
                   Text(
-                    '${service.basePriceOmr.toStringAsFixed(2)} ر.ع',
+                    l10n.currency(service.basePriceOmr.toStringAsFixed(2)),
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,

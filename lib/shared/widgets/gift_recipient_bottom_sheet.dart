@@ -115,7 +115,7 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: cs.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -140,7 +140,7 @@ class _GiftRecipientBottomSheetState extends State<GiftRecipientBottomSheet> {
                 Text(
                   l10n.enterGiftRecipientDetails,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
+                        color: cs.onSurfaceVariant,
                       ),
                 ),
                 const SizedBox(height: 20),
@@ -316,38 +316,38 @@ class GiftRecipientSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          _infoRow(Icons.person_outline_rounded, details.recipientName),
+          _infoRow(Icons.person_outline_rounded, details.recipientName, cs),
           if (details.recipientPhone != null &&
               details.recipientPhone!.isNotEmpty)
-            _infoRow(Icons.phone_outlined, details.recipientPhone!),
+            _infoRow(Icons.phone_outlined, details.recipientPhone!, cs),
           if (details.city != null && details.city!.isNotEmpty)
-            _infoRow(Icons.location_city_outlined, details.city!),
+            _infoRow(Icons.location_city_outlined, details.city!, cs),
           if (details.address != null && details.address!.isNotEmpty)
-            _infoRow(Icons.location_on_outlined, details.address!),
+            _infoRow(Icons.location_on_outlined, details.address!, cs),
           if (details.giftMessage != null && details.giftMessage!.isNotEmpty)
-            _infoRow(Icons.message_outlined, details.giftMessage!),
+            _infoRow(Icons.message_outlined, details.giftMessage!, cs),
           if (details.deliveryNotes != null &&
               details.deliveryNotes!.isNotEmpty)
-            _infoRow(Icons.note_alt_outlined, details.deliveryNotes!),
+            _infoRow(Icons.note_alt_outlined, details.deliveryNotes!, cs),
           if (details.hidePrice)
-            _infoRow(Icons.visibility_off_outlined, l10n.hidePriceFromRecipient),
+            _infoRow(Icons.visibility_off_outlined, l10n.hidePriceFromRecipient, cs),
         ],
       ),
     );
   }
 
-  Widget _infoRow(IconData icon, String text) {
+  Widget _infoRow(IconData icon, String text, ColorScheme cs) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 15, color: Colors.grey[600]),
+          Icon(icon, size: 15, color: cs.onSurfaceVariant),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 13, color: Colors.grey[800]),
+              style: TextStyle(fontSize: 13, color: cs.onSurface),
             ),
           ),
         ],

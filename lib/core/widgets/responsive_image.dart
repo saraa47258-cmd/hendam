@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../styles/responsive.dart';
+import '../../l10n/app_localizations.dart';
 
 class ResponsiveImage extends StatelessWidget {
   final String? imageUrl;
@@ -237,7 +238,7 @@ class ResponsiveImageGrid extends StatelessWidget {
             ),
             SizedBox(height: context.responsiveSpacing() * 0.5),
             Text(
-              'إضافة صورة',
+              AppLocalizations.of(context)!.addImage,
               style: TextStyle(
                 color: cs.onSurfaceVariant,
                 fontSize: context.responsiveFontSize(12.0),

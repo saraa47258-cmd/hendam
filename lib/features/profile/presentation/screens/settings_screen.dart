@@ -2,6 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hindam/shared/widgets/profile_page_scaffold.dart';
+import 'package:hindam/l10n/app_localizations.dart';
+import 'package:hindam/app/theme/colors.dart';
+import 'package:hindam/app/theme/theme_controller.dart';
+import 'package:provider/provider.dart';
 
 /// صفحة الإعدادات: إشعارات، عروض، إلخ
 class SettingsScreen extends StatefulWidget {
@@ -18,19 +22,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context)!;
+    final themeController = context.watch<ThemeController>();
 
     return ProfilePageScaffold(
-      title: 'الإعدادات',
+      title: l10n.settings,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
         children: [
-          _SectionTitle(title: 'الإشعارات'),
+          _SectionTitle(title: l10n.appearance),
+          const SizedBox(height: 12),
+          _SettingsTile(
+            icon: Icons.brightness_auto_rounded,
+            iconColor: cs.primary,
+            title: l10n.themeSystem,
+            subtitle: l10n.themeSystemSubtitle,
+            trailing: Radio<AppThemeMode>(
+              value: AppThemeMode.system,
+              groupValue: themeController.mode,
+              onChanged: (v) {
+                if (v == null) return;
+                HapticFeedback.selectionClick();
+                themeController.setMode(v);
+              },
+              activeColor: cs.primary,
+            ),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              themeController.setMode(AppThemeMode.system);
+            },
+          ),
+          const SizedBox(height: 8),
+          _SettingsTile(
+            icon: Icons.light_mode_rounded,
+            iconColor: cs.primary,
+            title: l10n.themeLight,
+            subtitle: l10n.themeLightSubtitle,
+            trailing: Radio<AppThemeMode>(
+              value: AppThemeMode.light,
+              groupValue: themeController.mode,
+              onChanged: (v) {
+                if (v == null) return;
+                HapticFeedback.selectionClick();
+                themeController.setMode(v);
+              },
+              activeColor: cs.primary,
+            ),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              themeController.setMode(AppThemeMode.light);
+            },
+          ),
+          const SizedBox(height: 8),
+          _SettingsTile(
+            icon: Icons.dark_mode_rounded,
+            iconColor: cs.primary,
+            title: l10n.themeDark,
+            subtitle: l10n.themeDarkSubtitle,
+            trailing: Radio<AppThemeMode>(
+              value: AppThemeMode.dark,
+              groupValue: themeController.mode,
+              onChanged: (v) {
+                if (v == null) return;
+                HapticFeedback.selectionClick();
+                themeController.setMode(v);
+              },
+              activeColor: cs.primary,
+            ),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              themeController.setMode(AppThemeMode.dark);
+            },
+          ),
+
+          const SizedBox(height: 20),
+          _SectionTitle(title: l10n.notifications),
           const SizedBox(height: 12),
           _SettingsTile(
             icon: Icons.notifications_active_rounded,
             iconColor: cs.primary,
-            title: 'الإشعارات',
-            subtitle: 'تنبيهات حالة الطلب والعروض',
+            title: l10n.notifications,
+            subtitle: l10n.orderStatusAlerts,
             trailing: Switch(
               value: _notificationsEnabled,
               onChanged: (v) {
@@ -43,9 +115,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 8),
           _SettingsTile(
             icon: Icons.local_offer_rounded,
-            iconColor: const Color(0xFF10B981),
-            title: 'عروض وتخفيضات',
-            subtitle: 'استقبال العروض الحصرية',
+            iconColor: AppColors.success,
+            title: l10n.offersAndDiscounts,
+            subtitle: l10n.receiveExclusiveOffers,
             trailing: Switch(
               value: _offersEnabled,
               onChanged: (v) {
@@ -90,6 +162,7 @@ class _SettingsTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final Widget trailing;
+  final VoidCallback? onTap;
 
   const _SettingsTile({
     required this.icon,
@@ -97,6 +170,7 @@ class _SettingsTile extends StatelessWidget {
     required this.title,
     this.subtitle,
     required this.trailing,
+    this.onTap,
   });
 
   @override
@@ -104,7 +178,7 @@ class _SettingsTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
-    return Container(
+    final child = Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: cs.surfaceContainerLow,
@@ -145,6 +219,17 @@ class _SettingsTile extends StatelessWidget {
           ),
           trailing,
         ],
+      ),
+    );
+
+    if (onTap == null) return child;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: child,
       ),
     );
   }

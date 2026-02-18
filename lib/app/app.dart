@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:hindam/app/router.dart';
-import 'package:hindam/app/theme.dart' as theme;
+import 'package:hindam/app/theme/theme.dart' as theme;
 import 'package:hindam/core/state/cart_scope.dart' as cart;
 import 'package:hindam/core/styles/dimens.dart';
 import 'package:hindam/core/providers/locale_provider.dart';
+import 'package:hindam/app/theme/theme_controller.dart';
 import 'package:hindam/features/auth/providers/auth_provider.dart';
 import 'package:hindam/l10n/app_localizations.dart';
 
@@ -13,7 +14,14 @@ class HendamApp extends StatelessWidget {
   /// مزود اللغة المُهيأ مسبقاً من main.dart
   final LocaleProvider localeProvider;
 
-  const HendamApp({super.key, required this.localeProvider});
+  /// مزود الثيم المُهيأ مسبقاً من main.dart
+  final ThemeController themeController;
+
+  const HendamApp({
+    super.key,
+    required this.localeProvider,
+    required this.themeController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -38,11 +46,13 @@ class HendamApp extends StatelessWidget {
         ),
         // ✅ استخدام LocaleProvider المُهيأ مسبقاً (لا نُنشئ واحد جديد)
         ChangeNotifierProvider.value(value: localeProvider),
+        // ✅ استخدام ThemeController المُهيأ مسبقاً (لا نُنشئ واحد جديد)
+        ChangeNotifierProvider.value(value: themeController),
       ],
       child: cart.CartScope(
         state: cartState,
-        child: Consumer<LocaleProvider>(
-          builder: (context, localeProvider, _) {
+        child: Consumer2<LocaleProvider, ThemeController>(
+          builder: (context, localeProvider, themeController, _) {
             final currentLocale = localeProvider.locale ?? const Locale('ar');
             
             return MaterialApp.router(
@@ -51,7 +61,7 @@ class HendamApp extends StatelessWidget {
 
               theme: theme.AppTheme.light,
               darkTheme: theme.AppTheme.dark,
-              themeMode: ThemeMode.system,
+              themeMode: themeController.themeMode,
 
               // ✅ استخدام اللغة من المزود - يعيد البناء تلقائياً عند التغيير
               locale: currentLocale,

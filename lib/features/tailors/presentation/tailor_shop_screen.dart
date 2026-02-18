@@ -118,7 +118,7 @@ class TailorShopScreen extends StatelessWidget {
                           child: Row(
                             children: [
                               Text(
-                                'ر.ع ${it.price.toStringAsFixed(3)}',
+                                l10n.currency(it.price.toStringAsFixed(3)),
                                 style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w900),
                               ),
                               const Spacer(),

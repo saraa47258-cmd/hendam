@@ -127,15 +127,15 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                     Container(
                       height: 52,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cs.surfaceContainerLowest,
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: Colors.grey.withOpacity(0.25),
+                          color: cs.outlineVariant.withOpacity(0.25),
                           width: 0.8,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
+                            color: cs.shadow.withOpacity(0.03),
                             blurRadius: 18,
                             offset: const Offset(0, 6),
                           ),
@@ -153,7 +153,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                                 border: InputBorder.none,
                                 isDense: true,
                                 hintStyle: tt.bodyLarge?.copyWith(
-                                  color: Colors.grey.shade500,
+                                  color: cs.onSurfaceVariant,
                                   fontSize: 15,
                                 ),
                               ),
@@ -279,11 +279,11 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
         child: Container(
           height: 280,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cs.surfaceContainerLowest,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: cs.shadow.withOpacity(0.08),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -321,7 +321,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                     Text(
                       'No trips',
                       style: tt.bodyMedium?.copyWith(
-                        color: Colors.grey.shade600,
+                        color: cs.onSurfaceVariant,
                         fontSize: 14,
                       ),
                     ),
@@ -477,7 +477,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                     color =
                         Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
                   } catch (e) {
-                    color = Colors.grey;
+                    color = cs.outline;
                   }
                   return Container(
                     width: 40,
@@ -485,7 +485,7 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: color,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: cs.surfaceContainerLowest, width: 2),
                     ),
                   );
                 }).toList(),
@@ -518,15 +518,15 @@ class _FabricStepWidgetState extends State<FabricStepWidget>
           width: 120,
           decoration: BoxDecoration(
             color:
-                selected ? cs.primaryContainer.withOpacity(0.3) : Colors.white,
+                selected ? cs.primaryContainer.withOpacity(0.3) : cs.surfaceContainerLowest,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected ? cs.primary : Colors.grey.shade200,
+              color: selected ? cs.primary : cs.outlineVariant,
               width: selected ? 2 : 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: cs.shadow.withOpacity(0.05),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

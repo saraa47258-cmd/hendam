@@ -82,7 +82,7 @@ class _Header extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: cs.shadow.withOpacity(0.1),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
